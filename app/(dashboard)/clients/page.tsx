@@ -34,6 +34,18 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+import { ClientViewModal } from "@/components/Custom/ClientViewModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Eye, Edit2, Trash2 } from "lucide-react";
+
 const clientsData = [
   {
     id: "C-001",
@@ -85,6 +97,9 @@ const clientsData = [
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const filteredClients = clientsData.filter((client) => {
     const matchesSearch =
@@ -96,24 +111,36 @@ export default function ClientsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const handleViewClient = (client: any) => {
+    setSelectedClient(client);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEditClient = (client: any) => {
+    setSelectedClient(client);
+    setIsEditModalOpen(true);
+  };
+
   return (
     <div className="flex flex-col gap-3 w-full md:px-4">
       <PageHeader
         title="Clients"
         description="Manage client profiles, guarantors, and documents"
       >
-        <FormModal trigger={
-          <Button className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300">
-            <Plus className="h-4 w-4" />
-            New Client
-          </Button>
-        } />
+        <FormModal
+          trigger={
+            <Button className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300">
+              <Plus className="h-4 w-4" />
+              New Client
+            </Button>
+          }
+        />
       </PageHeader>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row items-center justify-between p-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-full max-w-md">
+            <div className="relative flex-1 w-full max-md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by name, ID, or NIC..."
@@ -216,7 +243,6 @@ export default function ClientsPage() {
                               ),
                             )}
                           </div>
-                          
                         </div>
                       </TableCell>
                       <TableCell>
@@ -237,13 +263,45 @@ export default function ClientsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger>
+                            <div
+                              // // variant="ghost"
+                              // size="icon"
+                              className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-40 bg-card/95 backdrop-blur-md"
+                          >
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            </DropdownMenuGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleViewClient(client)}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <Eye className="h-4 w-4 text-primary" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleEditClient(client)}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <Edit2 className="h-4 w-4 " />
+                              Edit Client
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -262,6 +320,19 @@ export default function ClientsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ClientViewModal
+        client={selectedClient}
+        open={isViewModalOpen}
+        onOpenChange={setIsViewModalOpen}
+      />
+
+      <FormModal
+        trigger={<div className="hidden" />}
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        // Note: For actual edit, you'd pass the client data to pre-fill
+      />
     </div>
   );
 }
