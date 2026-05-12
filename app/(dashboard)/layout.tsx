@@ -43,7 +43,7 @@ export default function DashboardLayout({
       {/* Main Content Section */}
       <div className={`flex-1 flex flex-col transition-all duration-300 bg-background`}>
         <NavBar />
-        <main className="px-5 w-full h-[calc(100vh-64px)] overflow-y-auto">
+        <main className="p-5 w-full h-[calc(100vh-64px)] overflow-y-auto">
           <div className="w-full min-h-full">
             {children}
           </div>
