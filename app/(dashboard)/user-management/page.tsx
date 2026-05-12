@@ -108,7 +108,7 @@ export default function UserManagementPage() {
       >
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogTrigger >
-            <div className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300">
+            <div className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 h-9 px-4 py-2 cursor-pointer hover:shadow-xl transition-all duration-300">
               <Plus className="h-4 w-4" />
               Add User
             </div>
@@ -207,7 +207,7 @@ export default function UserManagementPage() {
                     </TableCell>
                     <TableCell className="text-right">
                        <DropdownMenu>
-                          <DropdownMenuTrigger>
+                          <DropdownMenuTrigger >
                             <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer">
                               <MoreVertical className="h-4 w-4" />
                             </div>

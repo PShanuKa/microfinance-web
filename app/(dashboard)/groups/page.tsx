@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, MoreVertical, Search, Filter, Users, Calendar, User, MapPin, Building } from "lucide-react";
+import { Plus, MoreVertical, Search, Filter, Users, Calendar, User, MapPin, Building, UserCog, UserPlus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -153,8 +153,8 @@ export default function GroupsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="h-3.5 w-3.5 text-muted-foreground" />
+                        <div className="flex items-center gap-2 text-sm font-bold text-primary">
+                          <User className="h-3.5 w-3.5" />
                           {group.leader}
                         </div>
                       </TableCell>
@@ -196,27 +196,38 @@ export default function GroupsPage() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger >
-                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer">
+                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
                               <MoreVertical className="h-4 w-4" />
                             </div>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40 bg-card/95 backdrop-blur-md">
+                          <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md">
                             <DropdownMenuGroup>
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                            <DropdownMenuItem 
+                              onClick={() => router.push(`/groups/${group.id}`)}
+                              className="gap-2 cursor-pointer"
+                            >
                               <Eye className="h-4 w-4 text-primary" />
-                              View Group
+                              View Group Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                              <UserCog className="h-4 w-4 text-amber-500" />
+                              Change Leader
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                              <UserPlus className="h-4 w-4 text-emerald-500" />
+                              Transfer/Manage Members
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2 cursor-pointer">
                               <Edit2 className="h-4 w-4" />
-                              Edit Group
+                              Edit Group Info
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">
                               <Trash2 className="h-4 w-4" />
-                              Delete
+                              Delete Group
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -238,3 +249,4 @@ export default function GroupsPage() {
     </div>
   );
 }
+

@@ -15,7 +15,9 @@ import {
   ArrowUpRight, 
   FileText,
   Banknote,
-  Receipt
+  Receipt,
+  FileUp,
+  ClipboardList
 } from "lucide-react";
 import {
   Table,
@@ -56,6 +58,7 @@ const collectionsData = [
     week: 10,
     collector: "Saman Perera",
     amount: 18750,
+    remainingDue: 0,
     bankRef: "DEP-99812",
     status: "Verified",
   },
@@ -66,6 +69,7 @@ const collectionsData = [
     week: 12,
     collector: "Kamal Siri",
     amount: 25000,
+    remainingDue: 5000,
     bankRef: "DEP-99815",
     status: "Verified",
   },
@@ -76,6 +80,7 @@ const collectionsData = [
     week: 5,
     collector: "Saman Perera",
     amount: 7500,
+    remainingDue: 2500,
     bankRef: "PENDING",
     status: "Pending",
   },
@@ -189,6 +194,7 @@ export default function CollectionsPage() {
                   <TableHead className="font-bold text-foreground">Week</TableHead>
                   <TableHead className="font-bold text-foreground">Collector</TableHead>
                   <TableHead className="font-bold text-foreground">Amount</TableHead>
+                  <TableHead className="font-bold text-foreground">Remaining Due</TableHead>
                   <TableHead className="font-bold text-foreground">Bank Ref</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                 </TableRow>
@@ -203,6 +209,9 @@ export default function CollectionsPage() {
                     </TableCell>
                     <TableCell className="text-sm">{col.collector}</TableCell>
                     <TableCell className="font-black text-emerald-600">Rs. {col.amount.toLocaleString()}</TableCell>
+                    <TableCell className="font-bold text-rose-500">
+                      {col.remainingDue > 0 ? `Rs. ${col.remainingDue.toLocaleString()}` : "-"}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-muted-foreground">
                         <Receipt className="h-3 w-3" />
@@ -211,12 +220,12 @@ export default function CollectionsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                        <DropdownMenu>
-                          <DropdownMenuTrigger>
-                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer">
+                          <DropdownMenuTrigger >
+                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
                               <MoreVertical className="h-4 w-4" />
                             </div>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-card/95 backdrop-blur-md">
+                          <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md">
                             <DropdownMenuGroup>
                               <DropdownMenuLabel>Collection Actions</DropdownMenuLabel>
                             </DropdownMenuGroup>
@@ -227,6 +236,14 @@ export default function CollectionsPage() {
                             >
                               <FileText className="h-4 w-4 text-primary" />
                               View Breakdown
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                              <ClipboardList className="h-4 w-4 text-blue-500" />
+                              Add Breakdown Details (Notes)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                              <FileUp className="h-4 w-4 text-amber-500" />
+                              Attach Documents (Tally sheets, receipts)
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2 cursor-pointer">
                               <ArrowUpRight className="h-4 w-4 text-emerald-500" />
@@ -250,3 +267,4 @@ export default function CollectionsPage() {
     </div>
   );
 }
+

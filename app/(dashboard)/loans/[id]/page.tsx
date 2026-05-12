@@ -170,30 +170,30 @@ export default function LoanViewPage() {
       </div>
 
       <Tabs defaultValue="details" className="w-full">
-        <TabsList className="bg-muted/50 p-1 rounded-xl mb-6">
-          <TabsTrigger value="details" className="rounded-lg gap-2">
+        <TabsList className="bg-card/60 backdrop-blur-md border h-12 p-1 gap-2 mb-6">
+          <TabsTrigger value="details" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
             <Info className="h-4 w-4" />
             Loan Details
           </TabsTrigger>
-          <TabsTrigger value="schedule" className="rounded-lg gap-2">
+          <TabsTrigger value="schedule" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
             <Calendar className="h-4 w-4" />
             Payment Schedule
           </TabsTrigger>
-          <TabsTrigger value="members" className="rounded-lg gap-2">
+          <TabsTrigger value="members" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
             <Users className="h-4 w-4" />
             Member Status
           </TabsTrigger>
-          <TabsTrigger value="documents" className="rounded-lg gap-2">
+          <TabsTrigger value="documents" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
             <FileText className="h-4 w-4" />
             Documents
           </TabsTrigger>
-          <TabsTrigger value="history" className="rounded-lg gap-2">
+          <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
             <HistoryIcon className="h-4 w-4" />
             History
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details">
+        <TabsContent value="details" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
                 <CardHeader>
@@ -254,7 +254,7 @@ export default function LoanViewPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="schedule">
+        <TabsContent value="schedule" className="mt-6">
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
              <CardHeader className="flex flex-row items-center justify-between">
                 <div>
@@ -307,7 +307,7 @@ export default function LoanViewPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="members">
+        <TabsContent value="members" className="mt-6">
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
              <CardHeader>
                 <CardTitle>Member Loan Status</CardTitle>
@@ -361,7 +361,7 @@ export default function LoanViewPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="documents">
+        <TabsContent value="documents" className="mt-6">
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2">
                  <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
@@ -415,7 +415,7 @@ export default function LoanViewPage() {
            </div>
         </TabsContent>
 
-        <TabsContent value="history">
+        <TabsContent value="history" className="mt-6">
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
              <CardHeader>
                 <CardTitle>Loan History & Activity</CardTitle>

@@ -11,6 +11,8 @@ import {
   Users,
   Phone,
   CreditCard,
+  FileUp,
+  FileText,
 } from "lucide-react";
 import {
   Table,
@@ -53,8 +55,19 @@ const clientsData = [
     nic: "741234567V",
     phone: "0771234567",
     job: "Government Teacher",
-    guarantors: 2,
     status: "Active",
+    guarantor1: {
+      name: "Saman Kumara",
+      nic: "701234567V",
+      address: "123, Main St, Colombo",
+      phone: "0711234567"
+    },
+    guarantor2: {
+      name: "Sunil Shantha",
+      nic: "721234567V",
+      address: "456, Galle Rd, Kalutara",
+      phone: "0721234567"
+    }
   },
   {
     id: "C-002",
@@ -62,8 +75,19 @@ const clientsData = [
     nic: "823456789V",
     phone: "0719876543",
     job: "Shop Owner",
-    guarantors: 1,
     status: "Active",
+    guarantor1: {
+      name: "Kamal Perera",
+      nic: "803456789V",
+      address: "78, Negombo Rd, Ja-Ela",
+      phone: "0779876543"
+    },
+    guarantor2: {
+      name: "Nimal Perera",
+      nic: "813456789V",
+      address: "90, Kandy Rd, Kadawatha",
+      phone: "0789876543"
+    }
   },
   {
     id: "C-003",
@@ -71,26 +95,14 @@ const clientsData = [
     nic: "651122334V",
     phone: "0755566778",
     job: "Unemployed",
-    guarantors: 0,
     status: "Blacklisted",
-  },
-  {
-    id: "C-004",
-    name: "Kamal Gunarathne",
-    nic: "901239876V",
-    phone: "0723344556",
-    job: "Driver",
-    guarantors: 2,
-    status: "Active",
-  },
-  {
-    id: "C-005",
-    name: "Saman Kumara",
-    nic: "786543210V",
-    phone: "0781122334",
-    job: "Security Officer",
-    guarantors: 1,
-    status: "Active",
+    guarantor1: {
+      name: "Jagath Siri",
+      nic: "601122334V",
+      address: "12, Temple Rd, Malabe",
+      phone: "0715566778"
+    },
+    guarantor2: null
   },
 ];
 
@@ -232,15 +244,18 @@ export default function ClientsPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="flex -space-x-2">
-                            {[...Array(Math.min(client.guarantors, 3))].map(
-                              (_, i) => (
-                                <div
-                                  key={i}
-                                  className="h-7 w-7 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold"
-                                >
-                                  G{i + 1}
-                                </div>
-                              ),
+                            {client.guarantor1 && (
+                              <div className="h-7 w-7 rounded-full border-2 border-background bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold" title={client.guarantor1.name}>
+                                G1
+                              </div>
+                            )}
+                            {client.guarantor2 && (
+                              <div className="h-7 w-7 rounded-full border-2 border-background bg-emerald-500/20 text-emerald-600 flex items-center justify-center text-[10px] font-bold" title={client.guarantor2.name}>
+                                G2
+                              </div>
+                            )}
+                            {!client.guarantor1 && !client.guarantor2 && (
+                              <span className="text-xs text-muted-foreground italic">None</span>
                             )}
                           </div>
                         </div>
@@ -264,18 +279,14 @@ export default function ClientsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger>
-                            <div
-                              // // variant="ghost"
-                              // size="icon"
-                              className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
-                            >
+                          <DropdownMenuTrigger >
+                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
                               <MoreVertical className="h-4 w-4" />
                             </div>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
                             align="end"
-                            className="w-40 bg-card/95 backdrop-blur-md"
+                            className="w-56 bg-card/95 backdrop-blur-md"
                           >
                             <DropdownMenuGroup>
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -294,6 +305,15 @@ export default function ClientsPage() {
                             >
                               <Edit2 className="h-4 w-4 " />
                               Edit Client
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                              <FileUp className="h-4 w-4 text-blue-500" />
+                              Upload/View Client Attachments
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                              <FileText className="h-4 w-4 text-amber-500" />
+                              Upload/View Guarantor Attachments
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">
@@ -331,8 +351,8 @@ export default function ClientsPage() {
         trigger={<div className="hidden" />}
         open={isEditModalOpen}
         onOpenChange={setIsEditModalOpen}
-        // Note: For actual edit, you'd pass the client data to pre-fill
       />
     </div>
   );
 }
+

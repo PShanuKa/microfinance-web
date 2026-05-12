@@ -12,7 +12,8 @@ import {
   Calendar,
   Eye,
   UserCheck,
-  Trash2
+  Trash2,
+  AlertCircle
 } from "lucide-react";
 import {
   Table,
@@ -45,10 +46,12 @@ const blacklistData = [
     nic: "651122334V",
     phone: "0755566778",
     reason: "Consistent non-payment and unreachable for 3 months.",
+    lateWeeks: 12,
     date: "2026-01-15",
     job: "Unemployed",
-    guarantors: 0,
-    status: "Blacklisted"
+    status: "Blacklisted",
+    guarantor1: { name: "Jagath Siri", phone: "0715566778" },
+    guarantor2: null
   },
   {
     id: "C-012",
@@ -56,10 +59,12 @@ const blacklistData = [
     nic: "882345671V",
     phone: "0712233445",
     reason: "Fraudulent documentation provided during loan application.",
+    lateWeeks: 4,
     date: "2026-03-22",
     job: "Laborer",
-    guarantors: 1,
-    status: "Blacklisted"
+    status: "Blacklisted",
+    guarantor1: { name: "Sunil Perera", phone: "0771234567" },
+    guarantor2: { name: "Kamal Perera", phone: "0781234567" }
   },
 ];
 
@@ -113,6 +118,7 @@ export default function BlacklistPage() {
                   <TableHead className="font-bold text-foreground">Client</TableHead>
                   <TableHead className="font-bold text-foreground">ID Number</TableHead>
                   <TableHead className="font-bold text-foreground">Phone</TableHead>
+                  <TableHead className="font-bold text-foreground">Late Weeks</TableHead>
                   <TableHead className="font-bold text-foreground">Reason</TableHead>
                   <TableHead className="font-bold text-foreground">Blacklist Date</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
@@ -141,6 +147,12 @@ export default function BlacklistPage() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <div className="flex items-center gap-1.5 font-black text-rose-600">
+                           <AlertCircle className="h-3.5 w-3.5" />
+                           {client.lateWeeks} Weeks
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <div className="max-w-[250px] text-xs text-muted-foreground leading-relaxed italic">
                            "{client.reason}"
                         </div>
@@ -153,19 +165,19 @@ export default function BlacklistPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger>
-                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer">
+                          <DropdownMenuTrigger >
+                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
                               <MoreVertical className="h-4 w-4" />
                             </div>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52 bg-card/95 backdrop-blur-md">
+                          <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md">
                             <DropdownMenuGroup>
                               <DropdownMenuLabel>Blacklist Actions</DropdownMenuLabel>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleViewDetails(client)} className="gap-2 cursor-pointer">
                               <Eye className="h-4 w-4 text-primary" />
-                              View Full Profile
+                              View Full Profile & Guarantors
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2 text-emerald-600 cursor-pointer">
                               <UserCheck className="h-4 w-4" />
@@ -183,7 +195,7 @@ export default function BlacklistPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">
                       No blacklisted clients found matching your search.
                     </TableCell>
                   </TableRow>
@@ -202,3 +214,4 @@ export default function BlacklistPage() {
     </div>
   );
 }
+
