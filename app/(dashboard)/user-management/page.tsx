@@ -107,11 +107,11 @@ export default function UserManagementPage() {
         description="Configure system access, roles, and administrative permissions."
       >
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300">
+          <DialogTrigger >
+            <div className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300">
               <Plus className="h-4 w-4" />
               Add User
-            </Button>
+            </div>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-none shadow-2xl">
             <DialogHeader>

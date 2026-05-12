@@ -203,11 +203,7 @@ export default function LoansPage() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger >
-                            <div
-                             
-                        
-                              className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
-                            >
+                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer">
                               <MoreVertical className="h-4 w-4" />
                             </div>
                           </DropdownMenuTrigger>

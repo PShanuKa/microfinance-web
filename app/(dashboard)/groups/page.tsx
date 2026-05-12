@@ -195,14 +195,10 @@ export default function GroupsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
-                            >
+                          <DropdownMenuTrigger >
+                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer">
                               <MoreVertical className="h-4 w-4" />
-                            </Button>
+                            </div>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-40 bg-card/95 backdrop-blur-md">
                             <DropdownMenuGroup>
