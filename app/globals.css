@@ -56,7 +56,7 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
+  /* --background: oklch(1 0 0); */
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -96,6 +96,10 @@
   --sidebar-border: #2E3A55;
   --sidebar-text: #A6B1BC;
   --sidebar-button-bg: #2B3A5A;
+
+
+  --navbar-border: #D9DFE5;
+  --background: #F3F5F9;
   
 
   

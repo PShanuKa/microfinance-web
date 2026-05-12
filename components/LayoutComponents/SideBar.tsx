@@ -44,7 +44,7 @@ export default function SideBar() {
               href={item.href}
               isActive={pathname == item.href}
               key={item.label}
-              icon={<item.icon className="text-(--sidebar-text) h-5 w-5" />}
+              icon={<item.icon className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`} />}
               text={item.label}
             />
           ))}
@@ -71,7 +71,7 @@ function SideBarButton({
         className={`rounded-lg w-full h-[40px] flex flex-row items-center gap-3 pl-3 hover:cursor-pointer  ${isActive ? "bg-(--sidebar-button-bg)" : ""}`}
       >
         {icon}
-        <h1 className="text-(--sidebar-text) text-lg ">{text}</h1>
+        <h1 className={`  ${isActive ? "text-white" : "text-(--sidebar-text)"} text-md font-semibold `}>{text}</h1>
       </div>
     </Link>
   );
