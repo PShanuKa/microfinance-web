@@ -202,21 +202,24 @@ export default function LoansPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
+                          <DropdownMenuTrigger >
+                            <div
+                             
+                        
                               className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
                             >
                               <MoreVertical className="h-4 w-4" />
-                            </Button>
+                            </div>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48 bg-card/95 backdrop-blur-md">
                             <DropdownMenuGroup>
                               <DropdownMenuLabel>Loan Actions</DropdownMenuLabel>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                            <DropdownMenuItem 
+                              onClick={() => router.push(`/loans/${loan.id}`)}
+                              className="gap-2 cursor-pointer"
+                            >
                               <Eye className="h-4 w-4 text-primary" />
                               View Schedule
                             </DropdownMenuItem>
