@@ -41,7 +41,7 @@ export default function DashboardLayout({
       </div>
 
       {/* Main Content Section */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 bg-background`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 bg-background w-full`}>
         <NavBar />
         <main className="p-5 w-full h-[calc(100vh-64px)] overflow-y-auto">
           <div className="w-full min-h-full">
