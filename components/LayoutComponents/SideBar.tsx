@@ -42,7 +42,7 @@ const systemSettingsItems = [
   { icon: ShieldUser, label: "User Management", href: "/user-management" },
   { icon: CalendarDays, label: "Non-Collection Weeks", href: "/con-weeks" },
   { icon: Target, label: "Collection Targets", href: "/col-targets" },
-  { icon: Cog, label: " Settings", href: "/con-settings" },
+  { icon: Cog, label: "Settings", href: "/settings" },
  
 ];
 
