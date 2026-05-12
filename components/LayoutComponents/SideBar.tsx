@@ -13,6 +13,10 @@ import {
   Settings,
   X,
   Box,
+  ShieldUser,
+  CalendarDays,
+  Target,
+  Cog,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -26,12 +30,20 @@ const navItems = [
   { icon: Receipt, label: "Collections", href: "/collections" },
   { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
   { icon: FileBarChart, label: "Reports", href: "/reports" },
-  { icon: Settings, label: "Administration", href: "/admin" },
+  // { icon: Settings, label: "Administration", href: "/admin" },
 
   /* Dev links */
   { icon: Box, label: "Components-Dev", href: "/components" },
   
 
+];
+
+const systemSettingsItems = [
+  { icon: ShieldUser, label: "User Management", href: "/user-management" },
+  { icon: CalendarDays, label: "Non-Collection Weeks", href: "/con-weeks" },
+  { icon: Target, label: "Collection Targets", href: "/col-targets" },
+  { icon: Cog, label: " Settings", href: "/con-settings" },
+ 
 ];
 
 
@@ -49,7 +61,18 @@ export default function SideBar() {
 
       <div>
         <div className="w-full  flex flex-col gap-1 mt-5 px-2">
+           <p className="text-xs text-muted-foreground mt-5 px-2">Modules</p>
           {navItems.map((item) => (
+            <SideBarButton
+              href={item.href}
+              isActive={pathname == item.href}
+              key={item.label}
+              icon={<item.icon className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`} />}
+              text={item.label}
+            />
+          ))}
+          <p className="text-xs text-muted-foreground mt-5 px-2">System Settings</p>
+          {systemSettingsItems.map((item) => (
             <SideBarButton
               href={item.href}
               isActive={pathname == item.href}
