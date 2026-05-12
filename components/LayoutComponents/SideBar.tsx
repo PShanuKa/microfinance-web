@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useUiStore } from "@/store/useUiStore";
 import {
   LayoutDashboard,
   Users,
@@ -10,6 +11,8 @@ import {
   ShieldAlert,
   FileBarChart,
   Settings,
+  X,
+  Box,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,17 +27,24 @@ const navItems = [
   { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
   { icon: FileBarChart, label: "Reports", href: "/reports" },
   { icon: Settings, label: "Administration", href: "/admin" },
+
+  /* Dev links */
+  { icon: Box, label: "Components-Dev", href: "/components" },
+  
+
 ];
 
 
 
 export default function SideBar() {
   const pathname = usePathname();
+  const { toggleSideBar } = useUiStore();
 
   return (
     <div className="bg-(--sidebar-bg) h-screen w-full">
-      <div className="border-b border-(--sidebar-border) w-full h-[60px] flex items-center justify-center">
+      <div className="border-b border-(--sidebar-border) w-full h-[60px] flex items-center justify-between px-4">
         <h1 className="text-white text-2xl font-bold">Logo</h1>
+        <X className="text-white" size={18} onClick={() => toggleSideBar()} />
       </div>
 
       <div>
