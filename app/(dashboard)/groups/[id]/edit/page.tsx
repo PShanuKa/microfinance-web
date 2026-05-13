@@ -423,7 +423,7 @@ export default function EditGroupPage() {
             <AlertDialogDescription>
               This will permanently delete the group <strong>{group?.name}</strong> and remove all member associations.
               <br /><br />
-              <span className="text-xs font-bold text-muted-foreground uppercase">Note: Groups with active or completed loans cannot be deleted.</span>
+              <span className="text-xs font-bold text-rose-600 uppercase">Warning: This group cannot be deleted if it has ANY associated loan applications (Draft, Pending, or Active).</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
