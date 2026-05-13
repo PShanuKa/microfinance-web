@@ -35,7 +35,8 @@ import {
   useUpdateGroupMutation,
   useAddMemberMutation, 
   useUpdateMemberMutation, 
-  useRemoveMemberMutation 
+  useRemoveMemberMutation,
+  useDeleteGroupMutation
 } from "@/services/groupApi";
 import { useClientsQuery } from "@/services/clientApi";
 import { useUsersQuery } from "@/services/userApi";
@@ -53,6 +54,16 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { MemberDetailsModal } from "@/components/Custom/MemberDetailsModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const DAYS = [
   { id: 1, name: "Monday" },
@@ -72,6 +83,9 @@ export default function EditGroupPage() {
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
+  
+  // Delete Dialog State
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: groupData, isLoading: groupLoading } = useGroupQuery(id as string);
   const { data: clientsData } = useClientsQuery({ search: clientSearch, limit: 5 });
@@ -83,6 +97,11 @@ export default function EditGroupPage() {
   const addMemberMutation = useAddMemberMutation();
   const updateMemberMutation = useUpdateMemberMutation();
   const removeMemberMutation = useRemoveMemberMutation();
+  const deleteMutation = useDeleteGroupMutation({
+    onSuccess: () => {
+      router.push("/groups");
+    }
+  });
 
   const {
     register,
@@ -139,6 +158,10 @@ export default function EditGroupPage() {
     }
   };
 
+  const handleDeleteGroup = () => {
+    deleteMutation.mutate(id as string);
+  };
+
   const handleViewMember = (member: any) => {
     setSelectedMember(member);
     setIsDetailsOpen(true);
@@ -165,6 +188,13 @@ export default function EditGroupPage() {
           >
             <Settings2 className="h-4 w-4" /> 
             {isEditingInfo ? "Cancel Editing" : "Edit Group Info"}
+          </Button>
+          <Button 
+            variant="destructive" 
+            onClick={() => setIsDeleteDialogOpen(true)}
+            className="gap-2 shadow-lg shadow-destructive/20"
+          >
+            <Trash2 className="h-4 w-4" /> Delete Group
           </Button>
         </div>
       </PageHeader>
@@ -382,6 +412,32 @@ export default function EditGroupPage() {
         open={isDetailsOpen}
         onOpenChange={setIsDetailsOpen}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" /> Are you absolutely sure?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the group <strong>{group?.name}</strong> and remove all member associations.
+              <br /><br />
+              <span className="text-xs font-bold text-muted-foreground uppercase">Note: Groups with active or completed loans cannot be deleted.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteGroup}
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete Group"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -30,6 +30,10 @@ const groupService = {
     const response = await api.delete(`/groups/members/${memberId}`);
     return response.data;
   },
+  deleteGroup: async (id: string) => {
+    const response = await api.delete(`/groups/${id}`);
+    return response.data;
+  },
 };
 
 export const useGroupsQuery = (params: any = {}) => {
@@ -94,8 +98,18 @@ export const useRemoveMemberMutation = (options = {}) => {
   return useMutation({
     mutationFn: groupService.removeMember,
     onSuccess: () => {
-      // We don't have groupId here, so we might need to pass it or invalidate all Group queries
       queryClient.invalidateQueries({ queryKey: ["Group"] });
+    },
+    ...options,
+  });
+};
+
+export const useDeleteGroupMutation = (options = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: groupService.deleteGroup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["Groups"] });
     },
     ...options,
   });
