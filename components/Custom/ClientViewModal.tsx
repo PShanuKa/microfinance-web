@@ -4,12 +4,9 @@ import React from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, CreditCard, MapPin, Phone, User, Users } from "lucide-react";
+import { Briefcase, CreditCard, MapPin, Phone, User, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ClientViewModalProps {
@@ -20,6 +17,15 @@ interface ClientViewModalProps {
 
 export function ClientViewModal({ client, open, onOpenChange }: ClientViewModalProps) {
   if (!client) return null;
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ACTIVE": return "bg-emerald-500 hover:bg-emerald-600";
+      case "INACTIVE": return "bg-amber-500 hover:bg-amber-600";
+      case "BLACKLISTED": return "bg-rose-500 hover:bg-rose-600";
+      default: return "bg-slate-500";
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -32,21 +38,23 @@ export function ClientViewModal({ client, open, onOpenChange }: ClientViewModalP
            </div>
            <div className="absolute bottom-4 right-8">
              <Badge 
-                variant={client.status === "Active" ? "default" : "destructive"}
                 className={cn(
-                  "font-bold px-4 py-1.5 rounded-full text-sm shadow-md",
-                  client.status === "Active" ? "bg-emerald-500" : "bg-rose-500"
+                  "font-bold px-4 py-1.5 rounded-full text-sm shadow-md border-none text-white",
+                  getStatusColor(client.status)
                 )}
               >
-                {client.status}
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  {client.status}
+                </div>
               </Badge>
            </div>
         </div>
 
         <div className="pt-16 pb-8 px-8 space-y-6">
           <header className="space-y-1">
-            <h2 className="text-3xl font-bold text-foreground">{client.name}</h2>
-            <p className="text-sm text-muted-foreground font-medium">Client ID: {client.id}</p>
+            <h2 className="text-3xl font-bold text-foreground">{client.fullname}</h2>
+            <p className="text-sm text-muted-foreground font-medium font-mono">Client ID: {client.clientNo}</p>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
@@ -70,36 +78,26 @@ export function ClientViewModal({ client, open, onOpenChange }: ClientViewModalP
                   <p className="text-sm font-bold text-foreground">{client.phone}</p>
                 </div>
               </div>
+            </div>
 
+            <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                   <Briefcase className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold">Job / Occupation</p>
-                  <p className="text-sm font-bold text-foreground">{client.job}</p>
+                  <p className="text-sm font-bold text-foreground">{client.job || "Not specified"}</p>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                   <MapPin className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold">Address</p>
-                  <p className="text-sm font-bold text-foreground">Colombo, Sri Lanka</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-semibold">Guarantors</p>
-                  <p className="text-sm font-bold text-foreground">{client.guarantors} Registered</p>
+                  <p className="text-sm font-bold text-foreground">{client.address || "Not specified"}</p>
                 </div>
               </div>
             </div>
