@@ -14,8 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import api from "@/lib/axios";
+import { useLoginMutation } from "@/services/authApi";
 
 type LoginFormValues = {
   email: string;
@@ -29,15 +28,12 @@ export function LoginForm() {
   const {
     register,
     handleSubmit,
-    setError, // To set field-level errors from backend
+    setError,
+    formState: { errors },
   } = useForm<LoginFormValues>();
 
-  const loginMutation = useMutation({
-    mutationFn: async (data: LoginFormValues) => {
-      const response = await api.post("/auth/login", data);
-      return response.data;
-    },
-    onSuccess: (data) => {
+  const loginMutation = useLoginMutation({
+    onSuccess: (data: any) => {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
       window.location.href = "/dashboard";
@@ -45,16 +41,21 @@ export function LoginForm() {
     onError: (error: any) => {
       const response = error.response?.data;
       
+      // Set the general error message (e.g., "Validation error")
+      if (response?.error) {
+        setServerError(response.error);
+      }
+
       if (response?.fields) {
-        // Map backend validation errors to react-hook-form
+        // Map backend validation errors to field-level errors
         Object.keys(response.fields).forEach((field: any) => {
           setError(field, {
             type: "manual",
             message: response.fields[field],
           });
         });
-      } else {
-        setServerError(response?.error || "Login failed. Please check your credentials.");
+      } else if (!response?.error) {
+        setServerError("Login failed. Please check your credentials.");
       }
     },
   });
@@ -95,10 +96,15 @@ export function LoginForm() {
                 id="email"
                 type="email"
                 placeholder="name@example.com"
-                className="pl-10 h-11 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-gray-50/50"
+                className={`pl-10 h-11 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-gray-50/50 ${errors.email ? 'border-destructive focus:border-destructive focus:ring-destructive' : ''}`}
                 {...register("email")}
               />
             </div>
+            {errors.email && (
+              <p className="text-xs text-destructive font-medium mt-1 animate-in fade-in slide-in-from-top-1">
+                {errors.email.message}
+              </p>
+            )}
           </div>
           <div className="grid gap-2.5">
             <div className="flex items-center justify-between">
@@ -118,7 +124,7 @@ export function LoginForm() {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                className="pl-10 pr-10 h-11 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-gray-50/50"
+                className={`pl-10 pr-10 h-11 border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary transition-all bg-gray-50/50 ${errors.password ? 'border-destructive focus:border-destructive focus:ring-destructive' : ''}`}
                 {...register("password")}
               />
               <button
@@ -133,6 +139,11 @@ export function LoginForm() {
                 )}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-xs text-destructive font-medium mt-1 animate-in fade-in slide-in-from-top-1">
+                {errors.password.message}
+              </p>
+            )}
           </div>
         </CardContent>
         <CardFooter className="px-8 pb-8 flex flex-col space-y-4">
