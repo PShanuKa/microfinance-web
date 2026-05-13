@@ -2,7 +2,25 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, MoreVertical, Search, Filter, HandCoins, Users, Calendar, ArrowUpRight, CheckCircle2, Clock, FileCheck, XCircle, Ban, FileUp } from "lucide-react";
+import { 
+  Plus, 
+  MoreVertical, 
+  Search, 
+  Filter, 
+  HandCoins, 
+  Users, 
+  Calendar, 
+  ArrowUpRight, 
+  CheckCircle2, 
+  Clock, 
+  FileCheck, 
+  XCircle, 
+  Ban, 
+  FileUp,
+  Eye,
+  Trash2,
+  FileText
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -33,88 +51,50 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Eye, Edit2, Trash2, FileText } from "lucide-react";
-
-const loansData = [
-  {
-    id: "LN-001",
-    group: "Sunlight Group",
-    totalPrincipal: 500000,
-    leaderWeeklyAmount: 2500,
-    memberWeeklyAmount: 2000,
-    processingFee: 5000,
-    weeks: 50,
-    status: "Active",
-  },
-  {
-    id: "LN-002",
-    group: "Prosperity Circle",
-    totalPrincipal: 300000,
-    leaderWeeklyAmount: 1500,
-    memberWeeklyAmount: 1200,
-    processingFee: 3000,
-    weeks: 50,
-    status: "Pending approval",
-  },
-  {
-    id: "LN-003",
-    group: "Helping Hands",
-    totalPrincipal: 1000000,
-    leaderWeeklyAmount: 5000,
-    memberWeeklyAmount: 4000,
-    processingFee: 10000,
-    weeks: 48,
-    status: "Approved",
-  },
-  {
-    id: "LN-004",
-    group: "Golden Harvest",
-    totalPrincipal: 200000,
-    leaderWeeklyAmount: 1000,
-    memberWeeklyAmount: 800,
-    processingFee: 2000,
-    weeks: 40,
-    status: "Draft",
-  },
-];
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useLoansQuery } from "@/services/loanApi";
+import { format } from "date-fns";
 
 export default function LoansPage() {
   const router = useRouter();
+  const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  const filteredLoans = loansData.filter((loan) => {
-    const matchesSearch =
-      loan.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      loan.group.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "All" || loan.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  const { data, isLoading } = useLoansQuery({ 
+    page, 
+    limit: 10, 
+    search: searchTerm,
+    status: statusFilter === "All" ? undefined : statusFilter 
   });
 
   const getStatusBadge = (status: string) => {
+    const baseStyle = "border-none px-3 py-1 rounded-full font-bold text-white flex items-center gap-1 w-fit";
     switch (status) {
-      case "Active":
-        return <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-none px-3 py-1 rounded-full font-bold"><Clock className="mr-1 h-3 w-3" />Active</Badge>;
-      case "Pending approval":
-        return <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-none px-3 py-1 rounded-full font-bold"><Clock className="mr-1 h-3 w-3" />Pending Approval</Badge>;
-      case "Approved":
-        return <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-none px-3 py-1 rounded-full font-bold"><CheckCircle2 className="mr-1 h-3 w-3" />Approved</Badge>;
-      case "Rejected":
-        return <Badge className="bg-rose-500 hover:bg-rose-600 text-white border-none px-3 py-1 rounded-full font-bold"><XCircle className="mr-1 h-3 w-3" />Rejected</Badge>;
-      case "Completed":
-        return <Badge className="bg-slate-500 hover:bg-slate-600 text-white border-none px-3 py-1 rounded-full font-bold"><CheckCircle2 className="mr-1 h-3 w-3" />Completed</Badge>;
-      case "Draft":
+      case "APPROVED":
+        return <Badge className={cn(baseStyle, "bg-emerald-500 hover:bg-emerald-600")}><CheckCircle2 className="h-3 w-3" />Approved</Badge>;
+      case "PENDING":
+        return <Badge className={cn(baseStyle, "bg-amber-500 hover:bg-amber-600")}><Clock className="h-3 w-3" />Pending</Badge>;
+      case "REJECTED":
+        return <Badge className={cn(baseStyle, "bg-rose-500 hover:bg-rose-600")}><XCircle className="h-3 w-3" />Rejected</Badge>;
+      case "COMPLETED":
+        return <Badge className={cn(baseStyle, "bg-blue-500 hover:bg-blue-600")}><CheckCircle2 className="h-3 w-3" />Completed</Badge>;
+      case "DRAFT":
         return <Badge variant="outline" className="text-muted-foreground px-3 py-1 rounded-full font-bold">Draft</Badge>;
-      case "Written-off / Cancelled":
-        return <Badge className="bg-slate-800 hover:bg-slate-900 text-white border-none px-3 py-1 rounded-full font-bold"><Ban className="mr-1 h-3 w-3" />Cancelled</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   return (
-    <div className="flex flex-col gap-3 w-full md:px-4">
+    <div className="flex flex-col gap-3 w-full md:px-4 pb-10">
       <PageHeader
         title="Loans"
         description="Monitor group-based loans, repayment schedules, and processing status"
@@ -134,15 +114,18 @@ export default function LoansPage() {
             <div className="relative flex-1 w-full max-md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by loan ID or group..."
+                placeholder="Search by group name..."
                 className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1); }}>
                 <SelectTrigger className="w-full md:w-[180px] h-11 bg-background/50">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-muted-foreground" />
@@ -151,13 +134,11 @@ export default function LoansPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All Statuses</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="Pending approval">Pending Approval</SelectItem>
-                  <SelectItem value="Approved">Approved</SelectItem>
-                  <SelectItem value="Rejected">Rejected</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Written-off / Cancelled">Cancelled</SelectItem>
+                  <SelectItem value="DRAFT">Draft</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="APPROVED">Approved</SelectItem>
+                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -167,54 +148,54 @@ export default function LoansPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-                  <TableHead className="w-[180px] font-bold text-foreground">Loan ID & Group</TableHead>
-                  <TableHead className="font-bold text-foreground text-right">Total Principal</TableHead>
-                  <TableHead className="font-bold text-foreground text-right">Leader Weekly</TableHead>
-                  <TableHead className="font-bold text-foreground text-right">Member Weekly</TableHead>
+                  <TableHead className="w-[200px] font-bold text-foreground">Group & Branch</TableHead>
+                  <TableHead className="font-bold text-foreground text-right">Lent (L/M)</TableHead>
+                  <TableHead className="font-bold text-foreground text-right">Weekly (L/M)</TableHead>
                   <TableHead className="font-bold text-foreground text-right">Proc. Fee</TableHead>
-                  <TableHead className="font-bold text-foreground">Weeks</TableHead>
+                  <TableHead className="font-bold text-foreground">Duration</TableHead>
                   <TableHead className="font-bold text-foreground">Status</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLoans.length > 0 ? (
-                  filteredLoans.map((loan) => (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">Loading loans...</TableCell>
+                  </TableRow>
+                ) : data?.loans?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">No loans found.</TableCell>
+                  </TableRow>
+                ) : (
+                  data?.loans?.map((loan: any) => (
                     <TableRow key={loan.id} className="hover:bg-primary/5 transition-colors group">
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">{loan.group}</span>
-                          <span className="text-xs text-muted-foreground font-mono">{loan.id}</span>
+                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">{loan.group?.name}</span>
+                          <span className="text-xs text-muted-foreground">{loan.group?.branch}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="font-bold text-foreground">
-                          <span className="text-xs text-muted-foreground mr-1">Rs.</span>
-                          {loan.totalPrincipal.toLocaleString()}
+                        <div className="flex flex-col items-end">
+                          <span className="font-bold text-foreground">Rs. {Number(loan.leaderLentAmount).toLocaleString()}</span>
+                          <span className="text-[10px] text-muted-foreground">M: Rs. {Number(loan.memberLentAmount).toLocaleString()}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="font-bold text-emerald-600">
-                          <span className="text-xs opacity-70 mr-1">Rs.</span>
-                          {loan.leaderWeeklyAmount.toLocaleString()}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="font-bold text-emerald-600">
-                          <span className="text-xs opacity-70 mr-1">Rs.</span>
-                          {loan.memberWeeklyAmount.toLocaleString()}
+                        <div className="flex flex-col items-end">
+                          <span className="font-bold text-emerald-600">Rs. {Number(loan.leaderWeeklyAmount).toLocaleString()}</span>
+                          <span className="text-[10px] text-muted-foreground">M: Rs. {Number(loan.memberWeeklyAmount).toLocaleString()}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="text-sm font-medium text-muted-foreground">
-                          <span className="text-xs mr-1">Rs.</span>
-                          {loan.processingFee.toLocaleString()}
+                          Rs. {Number(loan.processingFee).toLocaleString()}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                          {loan.weeks}
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {loan.totalWeeks} Weeks
                         </div>
                       </TableCell>
                       <TableCell>
@@ -222,7 +203,7 @@ export default function LoansPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger >
+                          <DropdownMenuTrigger>
                             <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
                               <MoreVertical className="h-4 w-4" />
                             </div>
@@ -243,14 +224,6 @@ export default function LoansPage() {
                               <FileCheck className="h-4 w-4 text-blue-500" />
                               Approve/Reject Loan
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <FileUp className="h-4 w-4 text-amber-500" />
-                              View/Upload Attachments
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <ArrowUpRight className="h-4 w-4 text-emerald-500" />
-                              Make Payment
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">
                               <Trash2 className="h-4 w-4" />
@@ -261,19 +234,49 @@ export default function LoansPage() {
                       </TableCell>
                     </TableRow>
                   ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
-                      No loans found.
-                    </TableCell>
-                  </TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {data?.pagination && data.pagination.totalPages > 1 && (
+            <div className="p-4 border-t bg-muted/20">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      href="#" 
+                      onClick={(e) => { e.preventDefault(); if (page > 1) setPage(page - 1); }} 
+                      className={cn(page === 1 && "pointer-events-none opacity-50")}
+                    />
+                  </PaginationItem>
+                  
+                  {[...Array(data.pagination.totalPages)].map((_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink 
+                        href="#" 
+                        isActive={page === i + 1}
+                        onClick={(e) => { e.preventDefault(); setPage(i + 1); }}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext 
+                      href="#" 
+                      onClick={(e) => { e.preventDefault(); if (page < data.pagination.totalPages) setPage(page + 1); }}
+                      className={cn(page === data.pagination.totalPages && "pointer-events-none opacity-50")}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
-
