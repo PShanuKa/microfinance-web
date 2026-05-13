@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUpdateMemberMutation } from "@/services/groupApi";
 import { User, Phone, CreditCard, MapPin, Plus, Trash2, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "../ui/badge";
 
 interface MemberDetailsModalProps {
   member: any;

@@ -14,7 +14,8 @@ import {
   Edit2,
   Eye,
   Trash2,
-  CalendarDays
+  CalendarDays,
+  Edit2Icon
 } from "lucide-react";
 import {
   Table,
@@ -193,7 +194,7 @@ export default function NonCollectionWeeksPage() {
                               View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2 cursor-pointer text-emerald-600">
-                              <Edit2 className="h-4 w-4 " />
+                              <Edit2Icon className="h-4 w-4 " />
                               Edit Schedule
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />

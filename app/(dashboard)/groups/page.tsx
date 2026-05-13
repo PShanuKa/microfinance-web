@@ -16,7 +16,8 @@ import {
   Eye, 
   Edit2, 
   Trash2,
-  Clock
+  Clock,
+  Edit2Icon
 } from "lucide-react";
 import {
   Table,
@@ -190,7 +191,7 @@ export default function GroupsPage() {
                               onClick={() => router.push(`/groups/${group.id}/edit`)}
                               className="gap-2 cursor-pointer"
                             >
-                              <Edit2 className="h-4 w-4 text-amber-500" />
+                              <Edit2Icon className="h-4 w-4 text-amber-500" />
                               Manage Group
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2 cursor-pointer">
