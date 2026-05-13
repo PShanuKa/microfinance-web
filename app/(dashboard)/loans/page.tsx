@@ -7,19 +7,15 @@ import {
   MoreVertical, 
   Search, 
   Filter, 
-  HandCoins, 
   Users, 
   Calendar, 
-  ArrowUpRight, 
   CheckCircle2, 
   Clock, 
   FileCheck, 
   XCircle, 
-  Ban, 
-  FileUp,
   Eye,
   Trash2,
-  FileText
+  Edit2Icon
 } from "lucide-react";
 import {
   Table,
@@ -60,7 +56,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useLoansQuery } from "@/services/loanApi";
-import { format } from "date-fns";
 
 export default function LoansPage() {
   const router = useRouter();
@@ -218,9 +213,23 @@ export default function LoansPage() {
                               className="gap-2 cursor-pointer"
                             >
                               <Eye className="h-4 w-4 text-primary" />
-                              View Schedule
+                              View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
+                            
+                            {loan.status === "PENDING" && (
+                              <DropdownMenuItem 
+                                className="gap-2 cursor-pointer text-emerald-600"
+                                onClick={() => router.push(`/loans/${loan.id}/edit-schedule`)}
+                              >
+                                <Edit2Icon className="h-4 w-4" />
+                                Edit Schedule
+                              </DropdownMenuItem>
+                            )}
+
+                            <DropdownMenuItem 
+                              className="gap-2 cursor-pointer"
+                              onClick={() => router.push(`/loans/${loan.id}`)}
+                            >
                               <FileCheck className="h-4 w-4 text-blue-500" />
                               Approve/Reject Loan
                             </DropdownMenuItem>

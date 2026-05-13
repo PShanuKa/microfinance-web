@@ -188,6 +188,13 @@ export default function GroupsPage() {
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
+                              onClick={() => router.push(`/groups/${group.id}`)}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <Eye className="h-4 w-4 text-primary" />
+                              View Group Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
                               onClick={() => router.push(`/groups/${group.id}/edit`)}
                               className="gap-2 cursor-pointer"
                             >

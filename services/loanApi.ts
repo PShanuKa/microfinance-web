@@ -22,6 +22,10 @@ const loanService = {
     const response = await api.put(`/loans/${id}/reject`, { rejectionReason });
     return response.data;
   },
+  updateLoanSchedule: async ({ id, data }: { id: string; data: any }) => {
+    const response = await api.put(`/loans/${id}/schedule`, data);
+    return response.data;
+  },
 };
 
 export const useLoansQuery = (params: any = {}) => {
@@ -68,6 +72,18 @@ export const useRejectLoanMutation = (options = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.rejectLoan,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["Loans"] });
+    },
+    ...options,
+  });
+};
+
+export const useUpdateLoanScheduleMutation = (options = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: loanService.updateLoanSchedule,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["Loans"] });

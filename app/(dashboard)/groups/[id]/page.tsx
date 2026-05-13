@@ -2,25 +2,8 @@
 
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Users, 
-  User, 
-  Calendar, 
-  Building, 
-  ArrowLeft, 
-  HandCoins, 
-  History, 
-  UserCheck, 
-  Edit,
-  Clock,
-  CheckCircle2,
-  FileText,
-  BadgeCent,
-  MoreVertical
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -29,354 +12,230 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/Custom/PageHeader";
+import { useGroupQuery } from "@/services/groupApi";
+import { 
+  ArrowLeft, 
+  Users, 
+  User, 
+  Building, 
+  Calendar, 
+  HandCoins,
+  ShieldCheck,
+  Crown,
+  Eye,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  TrendingUp
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
-// Mock data for a single group
-const groupDetails = {
-  id: "G-001",
-  name: "Sunlight Group",
-  status: "Active",
-  leader: "Anura Kumara",
-  officer: "Saman Perera",
-  branch: "Colombo North",
-  collectionDay: "Monday",
-  establishedDate: "2025-06-10",
-  members: [
-    { id: "C-001", name: "Anura Kumara", nic: "741234567V", role: "Leader", status: "Active" },
-    { id: "C-005", name: "Saman Kumara", nic: "786543210V", role: "Member", status: "Active" },
-    { id: "C-009", name: "Pathum Nissanka", nic: "921122334V", role: "Member", status: "Active" },
-    { id: "C-010", name: "Kusal Mendis", nic: "951122334V", role: "Member", status: "Active" },
-    { id: "C-011", name: "Wanindu Hasaranga", nic: "971122334V", role: "Member", status: "Active" },
-  ],
-  loans: [
-    { id: "LN-001", type: "Business Loan", amount: 500000, status: "Active", date: "2026-01-10" },
-    { id: "LN-054", type: "Emergency Loan", amount: 50000, status: "Completed", date: "2025-08-15" },
-  ],
-  recentCollections: [
-    { id: "COL-101", date: "2026-05-04", week: 16, amount: 15000, status: "Verified" },
-    { id: "COL-095", date: "2026-04-27", week: 15, amount: 15000, status: "Verified" },
-    { id: "COL-088", date: "2026-04-20", week: 14, amount: 15000, status: "Verified" },
-  ]
-};
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export default function SingleGroupPage() {
-  const params = useParams();
+export default function ViewGroupPage() {
+  const { id } = useParams();
   const router = useRouter();
-  const groupId = params.id as string;
 
-  // In a real app, you would fetch group data based on groupId
-  const group = groupDetails; 
+  const { data: groupData, isLoading } = useGroupQuery(id as string);
+
+  if (isLoading) return <div className="p-10 text-center text-muted-foreground">Loading group details...</div>;
+  if (!groupData?.group) return <div className="p-10 text-center text-muted-foreground">Group not found.</div>;
+
+  const group = groupData.group;
+
+  const getLoanStatusBadge = (status: string) => {
+    const baseStyle = "px-2 py-0.5 rounded-full font-bold text-[10px] text-white flex items-center gap-1 w-fit uppercase";
+    switch (status) {
+      case "APPROVED":
+        return <Badge className={cn(baseStyle, "bg-emerald-500")}><CheckCircle2 className="h-3 w-3" />Approved</Badge>;
+      case "PENDING":
+        return <Badge className={cn(baseStyle, "bg-amber-500")}><Clock className="h-3 w-3" />Pending</Badge>;
+      case "REJECTED":
+        return <Badge className={cn(baseStyle, "bg-rose-500")}><XCircle className="h-3 w-3" />Rejected</Badge>;
+      case "COMPLETED":
+        return <Badge className={cn(baseStyle, "bg-blue-500")}><CheckCircle2 className="h-3 w-3" />Completed</Badge>;
+      case "DRAFT":
+        return <Badge variant="outline" className="text-muted-foreground px-2 py-0.5 rounded-full font-bold text-[10px]">Draft</Badge>;
+      default:
+        return <Badge variant="secondary" className="text-[10px]">{status}</Badge>;
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => router.back()}
-            className="rounded-full hover:bg-background/80"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-black tracking-tight">{group.name}</h1>
-              <Badge className="bg-emerald-500 hover:bg-emerald-600 border-none font-bold">
-                {group.status}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground font-medium">Group ID: {group.id} • Established {group.establishedDate}</p>
-          </div>
+      <PageHeader
+        title={group.name}
+        description={`Group details, members, and active loans for ${group.branch} branch.`}
+      >
+        <Button variant="outline" onClick={() => router.push("/groups")} className="gap-2">
+          <ArrowLeft className="h-4 w-4" /> Back to Groups
+        </Button>
+      </PageHeader>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Group Stats & Info */}
+        <div className="md:col-span-1 space-y-6">
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="border-b bg-muted/10">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Building className="w-5 h-5 text-primary" /> Group Info
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase">Branch</p>
+                  <p className="text-sm font-bold flex items-center gap-2">
+                    <Building className="h-4 w-4 text-primary/60" />
+                    {group.branch}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase">Collection Day</p>
+                  <p className="text-sm font-bold flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary/60" />
+                    {DAYS[group.collectionDay - 1]}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase">Collection Officer</p>
+                  <p className="text-sm font-bold flex items-center gap-2">
+                    <User className="h-4 w-4 text-primary/60" />
+                    {group.officer?.fullname}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase">Status</p>
+                  <Badge className={cn("font-bold border-none text-white", group.status ? "bg-emerald-500" : "bg-rose-500")}>
+                    {group.status ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-primary text-primary-foreground">
+            <CardContent className="p-6 flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase font-bold opacity-70">Total Members</p>
+                <p className="text-3xl font-black">{group.members?.length || 0}</p>
+              </div>
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                 <Users className="w-6 h-6" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="gap-2">
-            <Edit className="h-4 w-4" />
-            Edit Group
-          </Button>
-          <Button className="gap-2 shadow-lg">
-            <UserCheck className="h-4 w-4" />
-            Manage Members
-          </Button>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-none shadow-lg bg-card/60 backdrop-blur-md">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Leader</p>
-                <p className="text-xl font-black mt-1">{group.leader}</p>
-              </div>
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                 <User className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-lg bg-card/60 backdrop-blur-md">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Members</p>
-                <p className="text-2xl font-black mt-1">{group.members.length} Members</p>
-              </div>
-              <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
-                 <Users className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-lg bg-card/60 backdrop-blur-md">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Collection Day</p>
-                <p className="text-2xl font-black mt-1">{group.collectionDay}</p>
-              </div>
-              <div className="p-2 bg-amber-500/10 rounded-lg text-amber-600">
-                 <Calendar className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-lg bg-card/60 backdrop-blur-md">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Officer</p>
-                <p className="text-xl font-black mt-1">{group.officer}</p>
-              </div>
-              <div className="p-2 bg-blue-500/10 rounded-lg text-blue-600">
-                 <Building className="h-5 w-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="loans" className="w-full">
-        <TabsList className="bg-card/60 backdrop-blur-md border h-12 p-1 gap-2">
-          <TabsTrigger value="loans" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
-            <HandCoins className="h-4 w-4" />
-            Group Loans
-          </TabsTrigger>
-          <TabsTrigger value="members" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
-            <Users className="h-4 w-4" />
-            Members
-          </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
-            <History className="h-4 w-4" />
-            Collection History
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="loans" className="mt-6">
+        {/* Members & Loans */}
+        <div className="md:col-span-2 space-y-6">
+          {/* Members Table */}
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
-            <CardHeader className="border-b bg-muted/20">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <HandCoins className="h-5 w-5 text-primary" />
-                  Active & Past Loans
-                </CardTitle>
-                <Button size="sm" className="gap-2">
-                   <Plus className="h-4 w-4" />
-                   Add Loan
-                </Button>
-              </div>
+            <CardHeader className="border-b bg-muted/10">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" /> Members
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="font-bold">Loan ID</TableHead>
-                    <TableHead className="font-bold">Type</TableHead>
-                    <TableHead className="font-bold">Date Issued</TableHead>
-                    <TableHead className="font-bold text-right">Amount</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
-                    <TableHead className="text-right font-bold">Action</TableHead>
+                  <TableRow className="bg-muted/20 border-none">
+                    <TableHead className="font-bold text-foreground">Name</TableHead>
+                    <TableHead className="font-bold text-foreground">NIC</TableHead>
+                    <TableHead className="font-bold text-foreground">Role</TableHead>
+                    <TableHead className="font-bold text-foreground text-center">Guarantors</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {group.loans.map((loan) => (
-                    <TableRow key={loan.id} className="hover:bg-primary/5 transition-colors">
-                      <TableCell className="font-mono font-bold text-sm">{loan.id}</TableCell>
-                      <TableCell className="font-medium">{loan.type}</TableCell>
-                      <TableCell className="text-muted-foreground">{loan.date}</TableCell>
-                      <TableCell className="text-right font-black text-foreground">Rs. {loan.amount.toLocaleString()}</TableCell>
+                  {group.members?.map((member: any) => (
+                    <TableRow key={member.id} className="hover:bg-primary/5 transition-colors border-muted/50">
+                      <TableCell className="font-bold">{member.client?.fullname}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{member.client?.nic}</TableCell>
                       <TableCell>
-                        <Badge variant={loan.status === "Active" ? "default" : "secondary"} className={cn(
-                          "font-bold",
-                          loan.status === "Active" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-slate-500 hover:bg-slate-600"
-                        )}>
-                          {loan.status}
-                        </Badge>
+                        {member.isLeader ? (
+                          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] font-bold">
+                            <Crown className="w-3 h-3 mr-1" /> LEADER
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] font-bold">MEMBER</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center items-center gap-1">
+                          <ShieldCheck className={cn("w-4 h-4", member.guarantors?.length >= 2 ? "text-emerald-500" : "text-rose-500")} />
+                          <span className="text-xs font-bold">{member.guarantors?.length || 0}/2</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {group.members?.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-20 text-center text-muted-foreground italic">No members assigned.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Loans Table */}
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+            <CardHeader className="border-b bg-muted/10">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <HandCoins className="w-5 h-5 text-primary" /> Group Loans
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/20 border-none">
+                    <TableHead className="font-bold text-foreground">Loan ID</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Lent (L/M)</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Weekly (L/M)</TableHead>
+                    <TableHead className="font-bold text-foreground text-center">Status</TableHead>
+                    <TableHead className="font-bold text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {group.loans?.map((loan: any) => (
+                    <TableRow key={loan.id} className="hover:bg-primary/5 transition-colors border-muted/50">
+                      <TableCell className="font-mono text-[11px] font-bold">{loan.id}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col text-[10px]">
+                          <span className="font-bold">L: Rs.{Number(loan.leaderLentAmount).toLocaleString()}</span>
+                          <span className="text-muted-foreground">M: Rs.{Number(loan.memberLentAmount).toLocaleString()}</span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="h-8 font-bold text-primary hover:text-primary hover:bg-primary/10">
-                           View Details
+                        <div className="flex flex-col text-[10px]">
+                          <span className="font-bold text-emerald-600">L: Rs.{Number(loan.leaderWeeklyAmount).toLocaleString()}</span>
+                          <span className="text-muted-foreground">M: Rs.{Number(loan.memberWeeklyAmount).toLocaleString()}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="flex justify-center py-4">
+                        {getLoanStatusBadge(loan.status)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" onClick={() => router.push(`/loans/${loan.id}`)}>
+                          <Eye className="h-4 w-4 text-primary" />
                         </Button>
                       </TableCell>
                     </TableRow>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="members" className="mt-6">
-          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
-            <CardHeader className="border-b bg-muted/20">
-               <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <Users className="h-5 w-5 text-primary" />
-                  Group Members ({group.members.length})
-               </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="font-bold">Member Name</TableHead>
-                    <TableHead className="font-bold">NIC Number</TableHead>
-                    <TableHead className="font-bold">Role</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
-                    <TableHead className="text-right font-bold">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {group.members.map((member) => (
-                    <TableRow key={member.id} className="hover:bg-primary/5 transition-colors">
-                      <TableCell>
-                        <div className="flex flex-col">
-                           <span className="font-bold">{member.name}</span>
-                           <span className="text-xs text-muted-foreground">{member.id}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm font-medium">{member.nic}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={cn(
-                          "font-bold border-none",
-                          member.role === "Leader" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                        )}>
-                          {member.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600">
-                           <CheckCircle2 className="h-3 w-3" />
-                           {member.status}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                         <DropdownMenu>
-                            <DropdownMenuTrigger >
-                               <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
-                                  <MoreVertical className="h-4 w-4" />
-                               </div>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                               <DropdownMenuItem className="gap-2">
-                                  <Edit className="h-4 w-4" />
-                                  Edit Member
-                               </DropdownMenuItem>
-                               <DropdownMenuItem className="gap-2 text-destructive">
-                                  <Trash2 className="h-4 w-4" />
-                                  Remove Member
-                               </DropdownMenuItem>
-                            </DropdownMenuContent>
-                         </DropdownMenu>
-                      </TableCell>
+                  {group.loans?.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-20 text-center text-muted-foreground italic">No loans history.</TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="history" className="mt-6">
-          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
-            <CardHeader className="border-b bg-muted/20">
-               <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <History className="h-5 w-5 text-primary" />
-                  Recent Collection History
-               </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="font-bold">Collection ID</TableHead>
-                    <TableHead className="font-bold">Date</TableHead>
-                    <TableHead className="font-bold">Week</TableHead>
-                    <TableHead className="font-bold text-right">Amount Paid</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
-                    <TableHead className="text-right font-bold">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {group.recentCollections.map((col) => (
-                    <TableRow key={col.id} className="hover:bg-primary/5 transition-colors">
-                      <TableCell className="font-mono font-bold text-sm text-muted-foreground">{col.id}</TableCell>
-                      <TableCell className="font-medium">{col.date}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-bold">Week {col.week}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-black text-emerald-600">Rs. {col.amount.toLocaleString()}</TableCell>
-                      <TableCell>
-                         <div className="flex items-center gap-1.5 text-xs font-bold text-blue-600">
-                            <BadgeCent className="h-3 w-3" />
-                            {col.status}
-                         </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="h-8 font-bold">
-                           View Receipt
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
-}
-
-function Plus(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
-  )
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -10,7 +10,6 @@ import {
   History as HistoryIcon, 
   Info, 
   MoreVertical, 
-  Plus, 
   Printer, 
   Search, 
   Upload, 
@@ -20,7 +19,9 @@ import {
   Building,
   TrendingUp,
   Download,
-  Trash2
+  Trash2,
+  XCircle,
+  FileCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -37,409 +38,459 @@ import {
 } from "@/components/ui/table";
 import { useRouter, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useLoanQuery, useApproveLoanMutation, useRejectLoanMutation } from "@/services/loanApi";
+import { format } from "date-fns";
 
 export default function LoanViewPage() {
   const router = useRouter();
-  const params = useParams();
-  const loanId = params.id || "LN-001";
+  const { id } = useParams();
 
-  // Mock data for the specific loan
-  const loanDetails = {
-    id: loanId,
-    client: "Anura Kumara",
-    group: "Sunlight Group",
-    principal: 50000,
-    paid: 12500,
-    balance: 37500,
-    weeks: 50,
-    weeksPaid: 10,
-    status: "Active",
-    officer: "Saman Perera",
-    branch: "Colombo North",
-    issuedDate: "2026-03-01",
-    processingFee: 1000,
+  const { data, isLoading } = useLoanQuery(id as string);
+  const approveMutation = useApproveLoanMutation();
+  const rejectMutation = useRejectLoanMutation();
+
+  const loan = data?.loan;
+
+  const stats = useMemo(() => {
+    if (!loan) return null;
+
+    const totalMembers = loan.group?.members?.length || 0;
+    const leaderLent = Number(loan.leaderLentAmount);
+    const memberLent = Number(loan.memberLentAmount);
+    
+    const principal = leaderLent + (memberLent * (totalMembers - 1));
+    const paid = loan.instalments.reduce((acc: number, inst: any) => acc + Number(inst.paidAmount), 0);
+    const balance = loan.instalments.reduce((acc: number, inst: any) => acc + (Number(inst.dueAmount) - Number(inst.paidAmount)), 0);
+    
+    const totalInstalments = loan.instalments.length;
+    const paidInstalments = loan.instalments.filter((inst: any) => inst.status === "PAID").length;
+
+    return {
+      principal,
+      paid,
+      balance,
+      totalInstalments,
+      paidInstalments,
+      progress: principal > 0 ? (paid / principal) * 100 : 0
+    };
+  }, [loan]);
+
+  // Group instalments by week for the schedule view
+  const weeklySchedule = useMemo(() => {
+    if (!loan?.instalments) return [];
+    
+    const weeks: any = {};
+    loan.instalments.forEach((inst: any) => {
+      if (!weeks[inst.weekNumber]) {
+        weeks[inst.weekNumber] = {
+          week: inst.weekNumber,
+          date: inst.dueDate,
+          dueAmount: 0,
+          paidAmount: 0,
+          status: "PAID",
+        };
+      }
+      weeks[inst.weekNumber].dueAmount += Number(inst.dueAmount);
+      weeks[inst.weekNumber].paidAmount += Number(inst.paidAmount);
+      if (inst.status !== "PAID") {
+        weeks[inst.weekNumber].status = "PENDING";
+      }
+    });
+
+    return Object.values(weeks).sort((a: any, b: any) => a.week - b.week);
+  }, [loan]);
+
+  // Calculate member-wise status
+  const memberStatus = useMemo(() => {
+    if (!loan?.group?.members || !loan?.instalments) return [];
+
+    return loan.group.members.map((m: any) => {
+      const memberInstalments = loan.instalments.filter((inst: any) => inst.clientId === m.clientId);
+      const amount = m.isLeader ? Number(loan.leaderLentAmount) : Number(loan.memberLentAmount);
+      const paid = memberInstalments.reduce((acc: number, inst: any) => acc + Number(inst.paidAmount), 0);
+      const isDelayed = memberInstalments.some((inst: any) => inst.status === "OVERDUE");
+
+      return {
+        id: m.client?.clientNo,
+        name: m.client?.fullname,
+        role: m.isLeader ? "Leader" : "Member",
+        amount,
+        paid,
+        status: isDelayed ? "Delayed" : "On-Track"
+      };
+    });
+  }, [loan]);
+
+  const handleApprove = () => {
+    if (confirm("Approve this loan application?")) {
+      approveMutation.mutate({ id: id as string, approvedById: "system" });
+    }
   };
 
-  const scheduleData = [
-    { week: 1, date: "2026-03-08", amount: 1250, status: "Paid", paidDate: "2026-03-08" },
-    { week: 2, date: "2026-03-15", amount: 1250, status: "Paid", paidDate: "2026-03-16" },
-    { week: 3, date: "2026-03-22", amount: 1250, status: "Paid", paidDate: "2026-03-22" },
-    { week: 11, date: "2026-05-17", amount: 1250, status: "Pending", paidDate: "-" },
-    { week: 12, date: "2026-05-24", amount: 1250, status: "Pending", paidDate: "-" },
-  ];
+  const handleReject = () => {
+    const reason = prompt("Enter rejection reason:");
+    if (reason) {
+      rejectMutation.mutate({ id: id as string, rejectionReason: reason });
+    }
+  };
 
-  const membersData = [
-    { id: "C-001", name: "Anura Kumara", role: "Leader", amount: 50000, paid: 12500, status: "On-Track" },
-    { id: "C-002", name: "Sunil Perera", role: "Member", amount: 30000, paid: 7500, status: "On-Track" },
-    { id: "C-004", name: "Kamal Gunarathne", role: "Member", amount: 30000, paid: 6000, status: "Delayed" },
-  ];
+  if (isLoading) return <div className="p-10 text-center">Loading loan details...</div>;
+  if (!loan) return <div className="p-10 text-center">Loan not found.</div>;
 
-  const historyData = [
-    { event: "Loan Issued", date: "2026-03-01 10:45 AM", user: "Admin", note: "Loan approved and funds disbursed." },
-    { event: "Document Uploaded", date: "2026-03-01 11:00 AM", user: "Officer Saman", note: "Agreement signed by all members." },
-    { event: "10th Payment Received", date: "2026-05-10 09:20 AM", user: "System", note: "Automatic recording of weekly collection." },
-  ];
-
-  const [documents, setDocuments] = useState([
-    { name: "Loan_Agreement_V1.pdf", type: "PDF", size: "1.2 MB", date: "2026-03-01" },
-    { name: "Client_NIC_Scans.zip", type: "ZIP", size: "4.5 MB", date: "2026-03-01" },
-  ]);
+  const getStatusBadge = (status: string) => {
+    const baseStyle = "px-3 py-1 rounded-full font-bold text-white flex items-center gap-1 w-fit";
+    switch (status) {
+      case "APPROVED":
+        return <Badge className={cn(baseStyle, "bg-emerald-500")}><CheckCircle2 className="h-3 w-3" />Approved</Badge>;
+      case "PENDING":
+        return <Badge className={cn(baseStyle, "bg-amber-500")}><Clock className="h-3 w-3" />Pending Approval</Badge>;
+      case "REJECTED":
+        return <Badge className={cn(baseStyle, "bg-rose-500")}><XCircle className="h-3 w-3" />Rejected</Badge>;
+      case "COMPLETED":
+        return <Badge className={cn(baseStyle, "bg-blue-500")}><CheckCircle2 className="h-3 w-3" />Completed</Badge>;
+      case "DRAFT":
+        return <Badge variant="outline" className="text-muted-foreground px-3 py-1 rounded-full font-bold">Draft</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-primary/10">
+            <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-             <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">{loanDetails.id}</h1>
-                <Badge className="bg-emerald-500">{loanDetails.status}</Badge>
+             <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-black tracking-tight">{loan.id}</h1>
+                {getStatusBadge(loan.status)}
              </div>
-             <p className="text-sm text-muted-foreground">{loanDetails.client} • {loanDetails.group}</p>
+             <p className="text-sm text-muted-foreground font-medium">{loan.group?.name} • {loan.group?.branch} Branch</p>
           </div>
         </div>
         <div className="flex gap-2">
-           <Button variant="outline" size="sm" className="gap-2">
-             <Printer className="h-4 w-4" />
-             Print
-           </Button>
-           <Button size="sm" className="gap-2">
-             <Download className="h-4 w-4" />
-             Download PDF
+           {loan.status === "PENDING" && (
+             <>
+               <Button onClick={handleApprove} variant="default" className="gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20" disabled={approveMutation.isPending}>
+                 <FileCheck className="h-4 w-4" /> Approve
+               </Button>
+               <Button onClick={handleReject} variant="destructive" className="gap-2 shadow-lg shadow-rose-600/20" disabled={rejectMutation.isPending}>
+                 <XCircle className="h-4 w-4" /> Reject
+               </Button>
+             </>
+           )}
+           <Button variant="outline" size="sm" className="gap-2 h-10 px-4">
+             <Printer className="h-4 w-4" /> Print
            </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-none shadow-lg bg-card/60 backdrop-blur-md">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden relative group">
+           <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+              <TrendingUp className="w-12 h-12" />
+           </div>
            <CardContent className="p-6">
-              <div className="flex flex-col gap-1">
-                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Principal</p>
-                 <p className="text-2xl font-black">Rs. {loanDetails.principal.toLocaleString()}</p>
-                 <div className="flex items-center gap-1 mt-2 text-xs text-primary font-bold">
-                    <TrendingUp className="h-3 w-3" />
-                    Issued on {loanDetails.issuedDate}
-                 </div>
-              </div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Principal</p>
+              <p className="text-2xl font-black">Rs. {stats?.principal.toLocaleString()}</p>
+              <p className="text-[10px] text-primary font-bold mt-2">Issued on {format(new Date(loan.createdAt), "yyyy-MM-dd")}</p>
            </CardContent>
         </Card>
-        <Card className="border-none shadow-lg bg-card/60 backdrop-blur-md">
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden relative group">
+           <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity text-emerald-500">
+              <CheckCircle2 className="w-12 h-12" />
+           </div>
            <CardContent className="p-6">
-              <div className="flex flex-col gap-1">
-                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Paid</p>
-                 <p className="text-2xl font-black text-emerald-600">Rs. {loanDetails.paid.toLocaleString()}</p>
-                 <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                    {loanDetails.weeksPaid} of {loanDetails.weeks} weeks
-                 </div>
-              </div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Total Paid</p>
+              <p className="text-2xl font-black text-emerald-600">Rs. {stats?.paid.toLocaleString()}</p>
+              <p className="text-[10px] text-muted-foreground font-bold mt-2 flex items-center gap-1">
+                <Badge variant="secondary" className="h-4 text-[9px] px-1 bg-emerald-500/10 text-emerald-600 border-none">
+                  {stats?.paidInstalments} / {stats?.totalInstalments}
+                </Badge>
+                Instalments Paid
+              </p>
            </CardContent>
         </Card>
-        <Card className="border-none shadow-lg bg-card/60 backdrop-blur-md">
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden relative group">
+           <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity text-rose-500">
+              <Clock className="w-12 h-12" />
+           </div>
            <CardContent className="p-6">
-              <div className="flex flex-col gap-1">
-                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding</p>
-                 <p className="text-2xl font-black text-rose-500">Rs. {loanDetails.balance.toLocaleString()}</p>
-                 <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3 text-rose-500" />
-                    {loanDetails.weeks - loanDetails.weeksPaid} weeks remaining
-                 </div>
-              </div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Outstanding</p>
+              <p className="text-2xl font-black text-rose-500">Rs. {stats?.balance.toLocaleString()}</p>
+              <p className="text-[10px] text-muted-foreground font-bold mt-2">Week {weeklySchedule.filter(w => w.status === "PAID").length + 1} of {loan.totalWeeks} Active</p>
            </CardContent>
         </Card>
-        <Card className="border-none shadow-lg bg-card/60 backdrop-blur-md">
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden relative group">
            <CardContent className="p-6">
-              <div className="flex flex-col gap-1">
-                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Progress</p>
-                 <div className="flex items-end gap-2">
-                    <p className="text-2xl font-black">{Math.round((loanDetails.paid / loanDetails.principal) * 100)}%</p>
-                    <div className="flex-1 h-2 bg-muted rounded-full mb-2 overflow-hidden">
-                       <div 
-                         className="h-full bg-primary" 
-                         style={{ width: `${(loanDetails.paid / loanDetails.principal) * 100}%` }} 
-                       />
-                    </div>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Progress</p>
+              <div className="flex items-end gap-2">
+                 <p className="text-2xl font-black">{Math.round(stats?.progress || 0)}%</p>
+                 <div className="flex-1 h-2 bg-muted rounded-full mb-2 overflow-hidden shadow-inner">
+                    <div 
+                      className="h-full bg-primary shadow-lg shadow-primary/50 transition-all duration-1000" 
+                      style={{ width: `${stats?.progress}%` }} 
+                    />
                  </div>
-                 <p className="text-xs text-muted-foreground font-medium mt-1">Repayment Status</p>
               </div>
+              <p className="text-[10px] text-muted-foreground font-bold mt-1">Repayment Completion</p>
            </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="details" className="w-full">
-        <TabsList className="bg-card/60 backdrop-blur-md border h-12 p-1 gap-2 mb-6">
-          <TabsTrigger value="details" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
+        <TabsList className="bg-card/40 backdrop-blur-md border h-14 p-1 gap-2 mb-6 w-full md:w-auto overflow-x-auto justify-start">
+          <TabsTrigger value="details" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold rounded-lg transition-all">
             <Info className="h-4 w-4" />
-            Loan Details
+            Details
           </TabsTrigger>
-          <TabsTrigger value="schedule" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
+          <TabsTrigger value="schedule" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold rounded-lg transition-all">
             <Calendar className="h-4 w-4" />
-            Payment Schedule
+            Repayment
           </TabsTrigger>
-          <TabsTrigger value="members" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
+          <TabsTrigger value="members" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold rounded-lg transition-all">
             <Users className="h-4 w-4" />
-            Member Status
+            Members
           </TabsTrigger>
-          <TabsTrigger value="documents" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
-            <FileText className="h-4 w-4" />
-            Documents
-          </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold">
+          <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold rounded-lg transition-all">
             <HistoryIcon className="h-4 w-4" />
             History
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="mt-6">
+        <TabsContent value="details" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-                <CardHeader>
-                   <CardTitle className="text-lg">General Information</CardTitle>
+                <CardHeader className="border-b bg-muted/10">
+                   <CardTitle className="text-lg font-bold">General Information</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                   <div className="grid grid-cols-2 gap-4">
-                      <div>
-                         <p className="text-xs text-muted-foreground font-semibold">Group Name</p>
-                         <p className="text-sm font-bold flex items-center gap-2 mt-1">
-                            <Users className="h-4 w-4 text-primary" />
-                            {loanDetails.group}
+                <CardContent className="p-6">
+                   <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                      <div className="space-y-1">
+                         <p className="text-[10px] text-muted-foreground font-bold uppercase">Group Name</p>
+                         <p className="text-sm font-bold flex items-center gap-2">
+                            <Users className="h-4 w-4 text-primary/60" />
+                            {loan.group?.name}
                          </p>
                       </div>
-                      <div>
-                         <p className="text-xs text-muted-foreground font-semibold">Collection Officer</p>
-                         <p className="text-sm font-bold flex items-center gap-2 mt-1">
-                            <User className="h-4 w-4 text-primary" />
-                            {loanDetails.officer}
+                      <div className="space-y-1">
+                         <p className="text-[10px] text-muted-foreground font-bold uppercase">Officer</p>
+                         <p className="text-sm font-bold flex items-center gap-2">
+                            <User className="h-4 w-4 text-primary/60" />
+                            {loan.group?.officer?.fullname}
                          </p>
                       </div>
-                      <div>
-                         <p className="text-xs text-muted-foreground font-semibold">Branch</p>
-                         <p className="text-sm font-bold flex items-center gap-2 mt-1">
-                            <Building className="h-4 w-4 text-primary" />
-                            {loanDetails.branch}
+                      <div className="space-y-1">
+                         <p className="text-[10px] text-muted-foreground font-bold uppercase">Branch</p>
+                         <p className="text-sm font-bold flex items-center gap-2">
+                            <Building className="h-4 w-4 text-primary/60" />
+                            {loan.group?.branch}
                          </p>
                       </div>
-                      <div>
-                         <p className="text-xs text-muted-foreground font-semibold">Processing Fee</p>
-                         <p className="text-sm font-bold flex items-center gap-2 mt-1">
-                            <CreditCard className="h-4 w-4 text-primary" />
-                            Rs. {loanDetails.processingFee.toLocaleString()}
+                      <div className="space-y-1">
+                         <p className="text-[10px] text-muted-foreground font-bold uppercase">Processing Fee</p>
+                         <p className="text-sm font-bold flex items-center gap-2">
+                            <CreditCard className="h-4 w-4 text-primary/60" />
+                            Rs. {Number(loan.processingFee).toLocaleString()}
                          </p>
                       </div>
                    </div>
                 </CardContent>
              </Card>
              <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-                <CardHeader>
-                   <CardTitle className="text-lg">Terms Summary</CardTitle>
+                <CardHeader className="border-b bg-muted/10">
+                   <CardTitle className="text-lg font-bold">Lending Terms</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                   <div className="flex justify-between items-center py-2 border-b border-muted/50">
-                      <span className="text-sm text-muted-foreground">Total Duration</span>
-                      <span className="font-bold">{loanDetails.weeks} Weeks</span>
-                   </div>
-                   <div className="flex justify-between items-center py-2 border-b border-muted/50">
-                      <span className="text-sm text-muted-foreground">Repayment Frequency</span>
-                      <span className="font-bold uppercase">Weekly</span>
-                   </div>
-                   <div className="flex justify-between items-center py-2 border-b border-muted/50">
-                      <span className="text-sm text-muted-foreground">Weekly Payment (Group Total)</span>
-                      <span className="font-bold text-emerald-600">Rs. 3,750</span>
+                <CardContent className="p-0">
+                   <div className="divide-y divide-muted/50">
+                      <div className="flex justify-between items-center p-4">
+                         <span className="text-sm text-muted-foreground font-medium">Duration</span>
+                         <span className="font-bold">{loan.totalWeeks} Weeks</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4">
+                         <span className="text-sm text-muted-foreground font-medium">Frequency</span>
+                         <span className="font-bold uppercase text-primary text-xs">Weekly</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4">
+                         <span className="text-sm text-muted-foreground font-medium">Leader Weekly</span>
+                         <span className="font-bold text-emerald-600">Rs. {Number(loan.leaderWeeklyAmount).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-4">
+                         <span className="text-sm text-muted-foreground font-medium">Member Weekly</span>
+                         <span className="font-bold text-emerald-600">Rs. {Number(loan.memberWeeklyAmount).toLocaleString()}</span>
+                      </div>
                    </div>
                 </CardContent>
              </Card>
           </div>
         </TabsContent>
 
-        <TabsContent value="schedule" className="mt-6">
+        <TabsContent value="schedule" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-             <CardHeader className="flex flex-row items-center justify-between">
+             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10">
                 <div>
-                   <CardTitle>Repayment Schedule</CardTitle>
-                   <CardDescription>Track weekly payment dates and status.</CardDescription>
+                   <CardTitle className="font-bold">Group Repayment Schedule</CardTitle>
+                   <CardDescription>Consolidated weekly collection targets.</CardDescription>
                 </div>
                 <Button size="sm" variant="outline" className="gap-2">
                    <Printer className="h-4 w-4" />
                    Print Schedule
                 </Button>
              </CardHeader>
-             <CardContent>
-                <Table>
-                   <TableHeader>
-                      <TableRow className="bg-muted/30">
-                         <TableHead className="font-bold">Week</TableHead>
-                         <TableHead className="font-bold">Due Date</TableHead>
-                         <TableHead className="font-bold">Amount Due</TableHead>
-                         <TableHead className="font-bold">Paid Date</TableHead>
-                         <TableHead className="font-bold text-center">Status</TableHead>
-                      </TableRow>
-                   </TableHeader>
-                   <TableBody>
-                      {scheduleData.map((item) => (
-                        <TableRow key={item.week} className="hover:bg-primary/5 transition-colors">
-                           <TableCell className="font-bold">Week {item.week}</TableCell>
-                           <TableCell className="text-sm">{item.date}</TableCell>
-                           <TableCell className="font-bold text-primary">Rs. {item.amount.toLocaleString()}</TableCell>
-                           <TableCell className="text-sm text-muted-foreground">{item.paidDate}</TableCell>
-                           <TableCell className="text-center">
-                              <Badge variant={item.status === "Paid" ? "default" : "outline"} 
-                                className={cn(
-                                  "font-bold",
-                                  item.status === "Paid" ? "bg-emerald-500 text-white border-none" : "border-amber-500/50 text-amber-600"
-                                )}
-                              >
-                                {item.status}
-                              </Badge>
-                           </TableCell>
+             <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                     <TableHeader>
+                        <TableRow className="bg-muted/20 border-none">
+                           <TableHead className="font-bold text-foreground">Week</TableHead>
+                           <TableHead className="font-bold text-foreground">Due Date</TableHead>
+                           <TableHead className="font-bold text-foreground text-right">Target Amount</TableHead>
+                           <TableHead className="font-bold text-foreground text-right">Collected</TableHead>
+                           <TableHead className="font-bold text-center">Status</TableHead>
                         </TableRow>
-                      ))}
-                      <TableRow className="bg-muted/10 italic">
-                         <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-4">
-                            ... and {loanDetails.weeks - scheduleData.length} more weeks
-                         </TableCell>
-                      </TableRow>
-                   </TableBody>
-                </Table>
+                     </TableHeader>
+                     <TableBody>
+                        {weeklySchedule.map((item: any) => (
+                          <TableRow key={item.week} className="hover:bg-primary/5 transition-colors border-muted/50 group">
+                             <TableCell className="font-bold py-4">Week {item.week}</TableCell>
+                             <TableCell className="text-sm font-medium">{format(new Date(item.date), "PPP")}</TableCell>
+                             <TableCell className="font-bold text-primary text-right">Rs. {item.dueAmount.toLocaleString()}</TableCell>
+                             <TableCell className="font-bold text-emerald-600 text-right">Rs. {item.paidAmount.toLocaleString()}</TableCell>
+                             <TableCell className="flex justify-center py-4">
+                                <Badge variant={item.status === "PAID" ? "default" : "outline"} 
+                                  className={cn(
+                                    "font-bold px-3 py-1 rounded-full",
+                                    item.status === "PAID" ? "bg-emerald-500 text-white border-none" : "border-amber-500/50 text-amber-600"
+                                  )}
+                                >
+                                  {item.status === "PAID" ? "Collected" : "Pending"}
+                                </Badge>
+                             </TableCell>
+                          </TableRow>
+                        ))}
+                     </TableBody>
+                  </Table>
+                </div>
              </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="members" className="mt-6">
+        <TabsContent value="members" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-             <CardHeader>
-                <CardTitle>Member Loan Status</CardTitle>
-                <CardDescription>Individual repayment tracking for group members.</CardDescription>
+             <CardHeader className="border-b bg-muted/10">
+                <CardTitle className="font-bold">Individual Member Status</CardTitle>
+                <CardDescription>Repayment tracking for each group member.</CardDescription>
              </CardHeader>
-             <CardContent>
-                <Table>
-                   <TableHeader>
-                      <TableRow className="bg-muted/30">
-                         <TableHead className="font-bold">Member Name</TableHead>
-                         <TableHead className="font-bold">Role</TableHead>
-                         <TableHead className="font-bold">Amount Lent</TableHead>
-                         <TableHead className="font-bold">Paid Amount</TableHead>
-                         <TableHead className="font-bold">Remaining</TableHead>
-                         <TableHead className="font-bold text-right">Status</TableHead>
-                      </TableRow>
-                   </TableHeader>
-                   <TableBody>
-                      {membersData.map((member) => (
-                        <TableRow key={member.id} className="hover:bg-primary/5 transition-colors group">
-                           <TableCell>
-                              <div className="flex flex-col">
-                                 <span className="font-bold">{member.name}</span>
-                                 <span className="text-xs text-muted-foreground">{member.id}</span>
-                              </div>
-                           </TableCell>
-                           <TableCell>
-                              <Badge variant="outline" className={cn(
-                                "text-[10px] font-bold uppercase",
-                                member.role === "Leader" ? "border-amber-500/50 text-amber-600" : "border-primary/50 text-primary"
-                              )}>
-                                {member.role}
-                              </Badge>
-                           </TableCell>
-                           <TableCell className="font-semibold">Rs. {member.amount.toLocaleString()}</TableCell>
-                           <TableCell className="font-semibold text-emerald-600">Rs. {member.paid.toLocaleString()}</TableCell>
-                           <TableCell className="font-semibold text-rose-500">Rs. {(member.amount - member.paid).toLocaleString()}</TableCell>
-                           <TableCell className="text-right">
-                              <Badge className={cn(
-                                "font-bold",
-                                member.status === "On-Track" ? "bg-emerald-500" : "bg-amber-500"
-                              )}>
-                                {member.status}
-                              </Badge>
-                           </TableCell>
+             <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <Table>
+                     <TableHeader>
+                        <TableRow className="bg-muted/20 border-none">
+                           <TableHead className="font-bold text-foreground">Member</TableHead>
+                           <TableHead className="font-bold text-foreground">Role</TableHead>
+                           <TableHead className="font-bold text-foreground text-right">Total Principal</TableHead>
+                           <TableHead className="font-bold text-foreground text-right">Total Paid</TableHead>
+                           <TableHead className="font-bold text-foreground text-right">Balance</TableHead>
+                           <TableHead className="font-bold text-center">Status</TableHead>
                         </TableRow>
-                      ))}
-                   </TableBody>
-                </Table>
+                     </TableHeader>
+                     <TableBody>
+                        {memberStatus.map((member: any) => (
+                          <TableRow key={member.id} className="hover:bg-primary/5 transition-colors border-muted/50 group">
+                             <TableCell className="py-4">
+                                <div className="flex flex-col">
+                                   <span className="font-bold group-hover:text-primary transition-colors">{member.name}</span>
+                                   <span className="text-[10px] font-mono text-muted-foreground uppercase">{member.id}</span>
+                                </div>
+                             </TableCell>
+                             <TableCell>
+                                <Badge variant="outline" className={cn(
+                                  "text-[10px] font-black uppercase px-2 py-0.5 rounded-sm shadow-sm",
+                                  member.role === "Leader" ? "border-amber-500/50 text-amber-600 bg-amber-500/5" : "border-primary/50 text-primary bg-primary/5"
+                                )}>
+                                  {member.role}
+                                </Badge>
+                             </TableCell>
+                             <TableCell className="font-bold text-right py-4">Rs. {member.amount.toLocaleString()}</TableCell>
+                             <TableCell className="font-bold text-emerald-600 text-right py-4">Rs. {member.paid.toLocaleString()}</TableCell>
+                             <TableCell className="font-bold text-rose-500 text-right py-4">Rs. {(member.amount - member.paid).toLocaleString()}</TableCell>
+                             <TableCell className="flex justify-center py-4">
+                                <Badge className={cn(
+                                  "font-bold px-3 py-1 rounded-full",
+                                  member.status === "On-Track" ? "bg-emerald-500" : "bg-rose-500 shadow-lg shadow-rose-500/20"
+                                )}>
+                                  {member.status}
+                                </Badge>
+                             </TableCell>
+                          </TableRow>
+                        ))}
+                     </TableBody>
+                  </Table>
+                </div>
              </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="documents" className="mt-6">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
-                 <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-                    <CardHeader>
-                       <CardTitle>Uploaded Documents</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       <div className="space-y-3">
-                          {documents.map((doc, i) => (
-                            <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-muted/50 hover:bg-muted/50 transition-colors group">
-                               <div className="flex items-center gap-4">
-                                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                                     <FileText className="h-5 w-5 text-primary" />
-                                  </div>
-                                  <div>
-                                     <p className="text-sm font-bold">{doc.name}</p>
-                                     <p className="text-xs text-muted-foreground">{doc.type} • {doc.size} • {doc.date}</p>
-                                  </div>
-                               </div>
-                               <div className="flex gap-2">
-                                  <Button variant="ghost" size="icon" className="rounded-full">
-                                     <Download className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="rounded-full text-destructive">
-                                     <Trash2 className="h-4 w-4" />
-                                  </Button>
-                               </div>
-                            </div>
-                          ))}
-                       </div>
-                    </CardContent>
-                 </Card>
-              </div>
-              <div className="md:col-span-1">
-                 <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-                    <CardHeader>
-                       <CardTitle className="text-lg">Upload New</CardTitle>
-                       <CardDescription>Add additional scans or documents.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <div className="border-2 border-dashed border-muted-foreground/20 rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer relative">
-                          <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
-                          <div className="flex flex-col items-center gap-2">
-                             <Upload className="h-6 w-6 text-muted-foreground" />
-                             <p className="text-xs font-semibold">Click to upload</p>
-                          </div>
-                       </div>
-                    </CardContent>
-                 </Card>
-              </div>
-           </div>
-        </TabsContent>
-
-        <TabsContent value="history" className="mt-6">
+        <TabsContent value="history" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-             <CardHeader>
-                <CardTitle>Loan History & Activity</CardTitle>
+             <CardHeader className="border-b bg-muted/10">
+                <CardTitle className="font-bold">Activity Log</CardTitle>
              </CardHeader>
-             <CardContent>
+             <CardContent className="p-8">
                 <div className="space-y-8 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-px before:bg-muted">
-                   {historyData.map((item, i) => (
-                     <div key={i} className="relative pl-10">
-                        <div className="absolute left-0 top-1 w-[34px] h-[34px] rounded-full bg-background border-2 border-primary flex items-center justify-center z-10 shadow-sm">
-                           <div className="w-2 h-2 rounded-full bg-primary" />
+                   <div className="relative pl-10">
+                      <div className="absolute left-0 top-1 w-[34px] h-[34px] rounded-full bg-background border-2 border-emerald-500 flex items-center justify-center z-10 shadow-lg shadow-emerald-500/20">
+                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                         <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-bold text-foreground">Loan Application Created</h4>
+                            <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">{format(new Date(loan.createdAt), "PPP p")}</span>
+                         </div>
+                         <p className="text-xs text-muted-foreground">The loan application was submitted for group {loan.group?.name} and instalments were generated.</p>
+                         <p className="text-[10px] font-bold text-primary mt-1 flex items-center gap-1">
+                            <User className="h-2.5 w-2.5" />
+                            By {loan.createdBy}
+                         </p>
+                      </div>
+                   </div>
+
+                   {loan.approvedBy && (
+                      <div className="relative pl-10">
+                        <div className="absolute left-0 top-1 w-[34px] h-[34px] rounded-full bg-background border-2 border-blue-500 flex items-center justify-center z-10 shadow-lg shadow-blue-500/20">
+                           <div className="w-2 h-2 rounded-full bg-blue-500" />
                         </div>
                         <div className="flex flex-col gap-1">
                            <div className="flex items-center justify-between">
-                              <h4 className="text-sm font-bold text-foreground">{item.event}</h4>
-                              <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">{item.date}</span>
+                              <h4 className="text-sm font-bold text-foreground">Loan Approved</h4>
+                              <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">{format(new Date(loan.updatedAt), "PPP p")}</span>
                            </div>
-                           <p className="text-xs text-muted-foreground">{item.note}</p>
-                           <p className="text-[10px] font-semibold text-primary mt-1 flex items-center gap-1">
+                           <p className="text-xs text-muted-foreground">The loan was officially approved and marked as ready for disbursement.</p>
+                           <p className="text-[10px] font-bold text-primary mt-1 flex items-center gap-1">
                               <User className="h-2.5 w-2.5" />
-                              By {item.user}
+                              By {loan.approvedBy.fullname}
                            </p>
                         </div>
                      </div>
-                   ))}
+                   )}
+
+                   {loan.rejectionReason && (
+                      <div className="relative pl-10">
+                        <div className="absolute left-0 top-1 w-[34px] h-[34px] rounded-full bg-background border-2 border-rose-500 flex items-center justify-center z-10 shadow-lg shadow-rose-500/20">
+                           <div className="w-2 h-2 rounded-full bg-rose-500" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                           <div className="flex items-center justify-between">
+                              <h4 className="text-sm font-bold text-foreground">Loan Rejected</h4>
+                              <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">{format(new Date(loan.updatedAt), "PPP p")}</span>
+                           </div>
+                           <p className="text-xs text-rose-500 font-medium">Reason: {loan.rejectionReason}</p>
+                        </div>
+                     </div>
+                   )}
                 </div>
              </CardContent>
           </Card>
