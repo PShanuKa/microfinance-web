@@ -1,9 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-;
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,110 +12,178 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCreateUserMutation, useUpdateUserMutation } from "@/services/userApi";
+import { useState } from "react";
 
-const formSchema = z.object({
-  fullName: z.string().min(2, { message: "Full name is required." }),
-  email: z.string().email({ message: "Invalid email address." }),
-  role: z.string({ required_error: "Please select a role." }),
-  branch: z.string({ required_error: "Please select a branch." }),
-  status: z.string({ required_error: "Please select a status." }),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = {
+  id?: string;
+  fullname: string;
+  email: string;
+  role: string;
+  status: boolean;
+  branch: string[];
+};
 
 interface UserFormProps {
+  initialData?: any;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export function UserForm({ onSuccess, onCancel }: UserFormProps) {
+const ROLES = [
+  "ADMIN",
+  "BRANCH_MANAGER",
+  "LOAN_OFFICER",
+  "COLLECTION_OFFICER",
+  "APPROVER",
+  "AUDITOR",
+];
+
+export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
+    setError,
     formState: { errors },
+    reset,
   } = useForm<FormValues>({
-    defaultValues: {
-      fullName: "",
+    defaultValues: initialData || {
+      fullname: "",
       email: "",
-      status: "Active",
+      role: "LOAN_OFFICER",
+      status: true,
+      branch: [],
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    console.log("User Data:", data);
-    alert("User Created Successfully!");
-    if (onSuccess) onSuccess();
+  useEffect(() => {
+    if (initialData) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
+
+  const createMutation = useCreateUserMutation({
+    onSuccess: () => onSuccess?.(),
+    onError: (error: any) => handleApiError(error),
+  });
+
+  const updateMutation = useUpdateUserMutation({
+    onSuccess: () => onSuccess?.(),
+    onError: (error: any) => handleApiError(error),
+  });
+
+  const handleApiError = (error: any) => {
+    const response = error.response?.data;
+    if (response?.fields) {
+      Object.keys(response.fields).forEach((field: any) => {
+        setError(field, { type: "manual", message: response.fields[field] });
+      });
+    } else {
+      setServerError(response?.error || "An error occurred. Please try again.");
+    }
   };
 
+  const onSubmit = (data: FormValues) => {
+    setServerError(null);
+    if (initialData?.id) {
+      updateMutation.mutate({ id: initialData.id, ...data });
+    } else {
+      // For creation, we also need a default password if not provided
+      createMutation.mutate({ ...data, password: "password123" });
+    }
+  };
+
+  const selectedRole = watch("role");
+  const selectedStatus = watch("status");
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="fullName" className="font-semibold text-sm">Full Name</Label>
-          <Input id="fullName" placeholder="Enter full name" className="bg-background/50 h-11" {...register("fullName")} />
-          {errors.fullName && <p className="text-xs text-destructive">{errors.fullName.message}</p>}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
+      {serverError && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium p-3 rounded-lg text-center">
+          {serverError}
+        </div>
+      )}
+
+      <div className="grid gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="fullname">Full Name</Label>
+          <Input
+            id="fullname"
+            placeholder="John Doe"
+            {...register("fullname")}
+            className={errors.fullname ? "border-destructive" : ""}
+          />
+          {errors.fullname && (
+            <p className="text-xs text-destructive">{errors.fullname.message}</p>
+          )}
         </div>
 
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="email" className="font-semibold text-sm">Email Address</Label>
-          <Input id="email" type="email" placeholder="example@microfinance.com" className="bg-background/50 h-11" {...register("email")} />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email Address</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="john@example.com"
+            {...register("email")}
+            className={errors.email ? "border-destructive" : ""}
+          />
+          {errors.email && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
+          )}
         </div>
 
-        <div className="space-y-2">
-          <Label className="font-semibold text-sm">Role</Label>
-          <Select onValueChange={(value) => setValue("role", value)}>
-            <SelectTrigger className="bg-background/50 h-11">
-              <SelectValue placeholder="Select Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Admin">Admin</SelectItem>
-              <SelectItem value="BranchManager">Branch Manager</SelectItem>
-              <SelectItem value="LoanOfficer">Loan Officer</SelectItem>
-              <SelectItem value="CollectionOfficer">Collection Officer</SelectItem>
-              <SelectItem value="Auditor">Auditor</SelectItem>
-              <SelectItem value="Approver">Approver</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.role && <p className="text-xs text-destructive">{errors.role.message}</p>}
-        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label>Role</Label>
+            <Select
+              value={selectedRole}
+              onValueChange={(value) => setValue("role", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {ROLES.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {role.replace("_", " ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-2">
-          <Label className="font-semibold text-sm">Branch</Label>
-          <Select onValueChange={(value) => setValue("branch", value)}>
-            <SelectTrigger className="bg-background/50 h-11">
-              <SelectValue placeholder="Select Branch" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Colombo">Colombo</SelectItem>
-              <SelectItem value="Kandy">Kandy</SelectItem>
-              <SelectItem value="Galle">Galle</SelectItem>
-              <SelectItem value="Jaffna">Jaffna</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.branch && <p className="text-xs text-destructive">{errors.branch.message}</p>}
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label className="font-semibold text-sm">Status</Label>
-          <Select onValueChange={(value) => setValue("status", value)} defaultValue="Active">
-            <SelectTrigger className="bg-background/50 h-11">
-              <SelectValue placeholder="Select Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Inactive">Inactive</SelectItem>
-              <SelectItem value="Suspended">Suspended</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
+          <div className="grid gap-2">
+            <Label>Status</Label>
+            <Select
+              value={selectedStatus ? "active" : "inactive"}
+              onValueChange={(value) => setValue("status", value === "active")}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-6 border-t">
-        <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" className="w-32 shadow-lg shadow-primary/20">Create User</Button>
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button 
+          type="submit" 
+          disabled={createMutation.isPending || updateMutation.isPending}
+        >
+          {createMutation.isPending || updateMutation.isPending ? "Saving..." : initialData ? "Update User" : "Create User"}
+        </Button>
       </div>
     </form>
   );

@@ -1,22 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { 
-  Plus, 
-  MoreVertical, 
-  Search, 
-  Filter, 
-  User, 
-  ShieldCheck, 
-  Building, 
-  Clock, 
-  Mail,
-  Eye,
-  Edit2,
-  Trash2,
-  Lock
-} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -25,106 +9,117 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader } from "@/components/Custom/PageHeader";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import { 
+  MoreVertical, 
+  Plus, 
+  Search, 
+  UserPen, 
+  KeyRound, 
+  UserMinus, 
+  UserCheck,
+  Clock,
+  Calendar
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/Custom/PageHeader";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useUsersQuery, useUpdateUserStatusMutation, useResetPasswordMutation } from "@/services/userApi";
 import { UserForm } from "@/components/Custom/UserForm";
-
-const usersData = [
-  {
-    id: "U-001",
-    name: "Admin Shanu",
-    email: "admin@microfinance.com",
-    role: "Admin",
-    branch: "Head Office",
-    status: "Active",
-    lastLogin: "2026-05-12 09:30 AM",
-  },
-  {
-    id: "U-002",
-    name: "Saman Perera",
-    email: "saman.p@microfinance.com",
-    role: "BranchManager",
-    branch: "Colombo North",
-    status: "Active",
-    lastLogin: "2026-05-12 08:15 AM",
-  },
-  {
-    id: "U-003",
-    name: "Kamal Siri",
-    email: "kamal.s@microfinance.com",
-    role: "LoanOfficer",
-    branch: "Kaduwela",
-    status: "Active",
-    lastLogin: "2026-05-11 10:00 AM",
-  },
-  {
-    id: "U-004",
-    name: "Nimal Gunawardena",
-    email: "nimal.g@microfinance.com",
-    role: "Auditor",
-    branch: "Colombo North",
-    status: "Inactive",
-    lastLogin: "2026-05-05 02:20 PM",
-  },
-];
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function UserManagementPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
 
-  const filteredUsers = usersData.filter((user) => {
+  const { data, isLoading } = useUsersQuery({ page, limit: 10, search });
+  const statusMutation = useUpdateUserStatusMutation();
+  const resetPasswordMutation = useResetPasswordMutation();
+
+  const handleEdit = (user: any) => {
+    setEditingUser(user);
+    setIsFormOpen(true);
+  };
+
+  const handleCreate = () => {
+    setEditingUser(null);
+    setIsFormOpen(true);
+  };
+
+  const handleToggleStatus = (user: any) => {
+    if (confirm(`Are you sure you want to ${user.status ? "deactivate" : "activate"} this user?`)) {
+      statusMutation.mutate({ id: user.id, status: !user.status });
+    }
+  };
+
+  const handleResetPassword = (user: any) => {
+    const newPassword = prompt("Enter new password (min 6 characters):");
+    if (newPassword && newPassword.length >= 6) {
+      resetPasswordMutation.mutate({ id: user.id, password: newPassword });
+      alert("Password reset request sent.");
+    } else if (newPassword) {
+      alert("Password too short.");
+    }
+  };
+
+  const getStatusBadge = (status: boolean) => {
     return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())
+      <Badge 
+        className={cn(
+          "border-none px-3 py-1 rounded-full font-bold",
+          status 
+            ? "bg-emerald-500 hover:bg-emerald-600 text-white" 
+            : "bg-rose-500 hover:bg-rose-600 text-white"
+        )}
+      >
+        <div className="flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {status ? "Active" : "Inactive"}
+        </div>
+      </Badge>
     );
-  });
+  };
 
   return (
-    <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
+    <div className="flex flex-col gap-3 w-full md:px-4">
       <PageHeader
         title="User Management"
-        description="Configure system access, roles, and administrative permissions."
+        description="Manage system users, roles, and access permissions"
       >
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogTrigger >
-            <div className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 h-9 px-4 py-2 cursor-pointer hover:shadow-xl transition-all duration-300">
-              <Plus className="h-4 w-4" />
-              Add User
-            </div>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-none shadow-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Register New User</DialogTitle>
-              <DialogDescription>
-                Fill in the details to create a new system user with specific roles and permissions.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <UserForm onSuccess={() => setIsAddModalOpen(false)} onCancel={() => setIsAddModalOpen(false)} />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          onClick={handleCreate}
+          className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          <Plus className="h-4 w-4" />
+          Add User
+        </Button>
       </PageHeader>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
@@ -133,117 +128,160 @@ export default function UserManagementPage() {
             <div className="relative flex-1 w-full max-md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, or role..."
+                placeholder="Search users by name or email..."
                 className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
               />
-            </div>
-            <div className="flex items-center gap-2">
-               <Button variant="outline" className="gap-2 h-11 rounded-lg">
-                 <Filter className="h-4 w-4" />
-                 All Roles
-               </Button>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30 border-b">
-                  <TableHead className="font-bold text-foreground">User</TableHead>
+                <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
+                  <TableHead className="font-bold text-foreground">User Details</TableHead>
                   <TableHead className="font-bold text-foreground">Role</TableHead>
-                  <TableHead className="font-bold text-foreground">Branch</TableHead>
                   <TableHead className="font-bold text-foreground">Status</TableHead>
                   <TableHead className="font-bold text-foreground">Last Login</TableHead>
+                  <TableHead className="font-bold text-foreground">Joined Date</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-primary/5 transition-colors group">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-                            {user.name.charAt(0)}
-                         </div>
-                         <div className="flex flex-col">
-                            <span className="font-bold text-foreground">{user.name}</span>
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                               <Mail className="h-3 w-3" />
-                               {user.email}
-                            </span>
-                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                       <div className="flex items-center gap-2">
-                          <ShieldCheck className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-semibold">{user.role}</span>
-                       </div>
-                    </TableCell>
-                    <TableCell>
-                       <div className="flex items-center gap-2 text-sm">
-                          <Building className="h-3.5 w-3.5 text-muted-foreground" />
-                          {user.branch}
-                       </div>
-                    </TableCell>
-                    <TableCell>
-                       <Badge 
-                         variant={user.status === "Active" ? "default" : "secondary"}
-                         className={cn(
-                           "font-bold",
-                           user.status === "Active" ? "bg-emerald-500 hover:bg-emerald-600" : "bg-slate-500"
-                         )}
-                       >
-                         {user.status}
-                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">Loading users...</TableCell>
+                  </TableRow>
+                ) : data?.users?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No users found.</TableCell>
+                  </TableRow>
+                ) : (
+                  data?.users?.map((user: any) => (
+                    <TableRow key={user.id} className="hover:bg-primary/5 transition-colors group">
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">{user.fullname}</span>
+                          <span className="text-xs text-muted-foreground font-mono">{user.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="font-bold capitalize border-primary/20 text-primary">
+                          {user.role?.toLowerCase().replace("_", " ")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(user.status)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock className="h-3.5 w-3.5" />
-                          {user.lastLogin}
-                       </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <DropdownMenu>
+                          {user.lastLogin ? format(new Date(user.lastLogin), "MMM dd, HH:mm") : "Never"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {format(new Date(user.createdAt), "yyyy-MM-dd")}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
                           <DropdownMenuTrigger >
-                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer">
+                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
                               <MoreVertical className="h-4 w-4" />
                             </div>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-card/95 backdrop-blur-md">
+                          <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md">
                             <DropdownMenuGroup>
-                              <DropdownMenuLabel>User Options</DropdownMenuLabel>
+                              <DropdownMenuLabel>User Actions</DropdownMenuLabel>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <Eye className="h-4 w-4 text-primary" />
-                              View Profile
+                            <DropdownMenuItem onClick={() => handleEdit(user)} className="gap-2 cursor-pointer">
+                              <UserPen className="w-4 h-4 text-primary" /> Edit User
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <Edit2 className="h-4 w-4 text-emerald-500" />
-                              Edit User
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <Lock className="h-4 w-4 text-amber-500" />
-                              Reset Password
+                            <DropdownMenuItem onClick={() => handleResetPassword(user)} className="gap-2 cursor-pointer">
+                              <KeyRound className="w-4 h-4 text-blue-500" /> Reset Password
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">
-                              <Trash2 className="h-4 w-4" />
-                              Deactivate
+                            <DropdownMenuItem 
+                              onClick={() => handleToggleStatus(user)} 
+                              className={cn(
+                                "gap-2 cursor-pointer",
+                                user.status ? "text-rose-500" : "text-emerald-500"
+                              )}
+                            >
+                              {user.status ? (
+                                <><UserMinus className="w-4 h-4" /> Deactivate User</>
+                              ) : (
+                                <><UserCheck className="w-4 h-4" /> Activate User</>
+                              )}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {data?.pagination && data.pagination.totalPages > 1 && (
+            <div className="p-4 border-t bg-muted/20">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      href="#" 
+                      onClick={(e) => { e.preventDefault(); if (page > 1) setPage(page - 1); }} 
+                      className={cn(page === 1 && "pointer-events-none opacity-50")}
+                    />
+                  </PaginationItem>
+                  
+                  {[...Array(data.pagination.totalPages)].map((_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink 
+                        href="#" 
+                        isActive={page === i + 1}
+                        onClick={(e) => { e.preventDefault(); setPage(i + 1); }}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                  <PaginationItem>
+                    <PaginationNext 
+                      href="#" 
+                      onClick={(e) => { e.preventDefault(); if (page < data.pagination.totalPages) setPage(page + 1); }}
+                      className={cn(page === data.pagination.totalPages && "pointer-events-none opacity-50")}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="sm:max-w-[700px] bg-card/95 backdrop-blur-lg border-none shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">{editingUser ? "Edit User Account" : "Create New User Account"}</DialogTitle>
+          </DialogHeader>
+          <UserForm 
+            initialData={editingUser} 
+            onSuccess={() => setIsFormOpen(false)} 
+            onCancel={() => setIsFormOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
