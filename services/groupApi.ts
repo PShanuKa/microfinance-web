@@ -34,12 +34,24 @@ const groupService = {
     const response = await api.delete(`/groups/${id}`);
     return response.data;
   },
+  getCollectionSheet: async (groupId: string, week: number) => {
+    const response = await api.get(`/groups/${groupId}/collection-sheet`, { params: { week } });
+    return response.data;
+  },
 };
 
 export const useGroupsQuery = (params: any = {}) => {
   return useQuery({
     queryKey: ["Groups", params],
     queryFn: () => groupService.getGroups(params),
+  });
+};
+
+export const useCollectionSheetQuery = (groupId: string, week: number) => {
+  return useQuery({
+    queryKey: ["CollectionSheet", groupId, week],
+    queryFn: () => groupService.getCollectionSheet(groupId, week),
+    enabled: !!groupId && !!week,
   });
 };
 
