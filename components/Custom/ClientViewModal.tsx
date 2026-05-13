@@ -6,8 +6,9 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, CreditCard, MapPin, Phone, User, Clock } from "lucide-react";
+import { Briefcase, CreditCard, MapPin, Phone, User, Clock, Users, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface ClientViewModalProps {
   client: any;
@@ -16,6 +17,7 @@ interface ClientViewModalProps {
 }
 
 export function ClientViewModal({ client, open, onOpenChange }: ClientViewModalProps) {
+  const router = useRouter();
   if (!client) return null;
 
   const getStatusColor = (status: string) => {
@@ -27,6 +29,9 @@ export function ClientViewModal({ client, open, onOpenChange }: ClientViewModalP
     }
   };
 
+  const activeGroupMember = client.groupMembers?.[0];
+  const activeGroup = activeGroupMember?.group;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-none shadow-2xl overflow-hidden p-0">
@@ -37,7 +42,7 @@ export function ClientViewModal({ client, open, onOpenChange }: ClientViewModalP
               </div>
            </div>
            <div className="absolute bottom-4 right-8">
-             <Badge 
+              <Badge 
                 className={cn(
                   "font-bold px-4 py-1.5 rounded-full text-sm shadow-md border-none text-white",
                   getStatusColor(client.status)
@@ -97,12 +102,47 @@ export function ClientViewModal({ client, open, onOpenChange }: ClientViewModalP
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold">Address</p>
-                  <p className="text-sm font-bold text-foreground">{client.address || "Not specified"}</p>
+                  <p className="text-sm font-bold text-foreground truncate max-w-[180px]">{client.address || "Not specified"}</p>
                 </div>
               </div>
             </div>
           </div>
           
+          {/* Group Info Section */}
+          <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <h3 className="text-sm font-bold">Assigned Group</h3>
+              </div>
+              {activeGroup && (
+                <Badge variant="outline" className="bg-background/50 font-bold text-[10px]">
+                  {activeGroup.branch}
+                </Badge>
+              )}
+            </div>
+
+            {activeGroup ? (
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-bold text-primary">{activeGroup.name}</p>
+                  <p className="text-[10px] text-muted-foreground">ID: {activeGroup.id}</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    onOpenChange(false);
+                    router.push(`/groups/${activeGroup.id}`);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+                >
+                  View Group <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">This client is not currently assigned to any group.</p>
+            )}
+          </div>
+
           <div className="pt-6 border-t flex justify-end">
              <button 
                onClick={() => onOpenChange(false)}
