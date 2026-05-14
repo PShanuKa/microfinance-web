@@ -25,7 +25,9 @@ import {
   CalendarDays, 
   CircleDollarSign,
   Info,
-  Crown
+  Crown,
+  FileText,
+  SendHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 export default function CreateLoanPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isDraft, setIsDraft] = useState(false);
 
   const { data: groupsData, isLoading: groupsLoading } = useGroupsQuery({ limit: 100 });
   const createMutation = useCreateLoanMutation({
@@ -65,7 +68,7 @@ export default function CreateLoanPage() {
   const selectedGroupId = watch("groupId");
   const selectedGroup = groupsData?.groups?.find((g: any) => g.id === selectedGroupId);
 
-  const onSubmit = (data: any) => {
+  const onFormSubmit = (data: any) => {
     setServerError(null);
     createMutation.mutate({
       ...data,
@@ -75,6 +78,7 @@ export default function CreateLoanPage() {
       leaderWeeklyAmount: Number(data.leaderWeeklyAmount),
       memberLentAmount: Number(data.memberLentAmount),
       memberWeeklyAmount: Number(data.memberWeeklyAmount),
+      status: isDraft ? "DRAFT" : "PENDING",
       createdBy: "system", // Should be from auth context
     });
   };
@@ -83,7 +87,7 @@ export default function CreateLoanPage() {
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
         title="Create New Loan"
-        description="Submit a new group loan application for review and approval"
+        description="Fill in the group loan details and submit for approval or save as draft"
       >
         <Button variant="outline" onClick={() => router.back()} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Back
@@ -93,7 +97,7 @@ export default function CreateLoanPage() {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left Column: Form */}
         <div className="flex-1">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
             {serverError && (
               <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium p-3 rounded-lg text-center animate-in fade-in slide-in-from-top-2">
                 {serverError}
@@ -134,7 +138,7 @@ export default function CreateLoanPage() {
                       <p className="text-sm font-bold">{selectedGroup.name}</p>
                       <p className="text-xs text-muted-foreground">{selectedGroup.branch} Branch | {selectedGroup._count?.members || 0} Members</p>
                     </div>
-                    <Badge variant="outline" className="bg-background/80 font-bold">
+                    <Badge variant="outline" className="bg-background/80 font-bold border-primary/20">
                       Collection: {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][selectedGroup.collectionDay - 1]}
                     </Badge>
                   </div>
@@ -228,16 +232,31 @@ export default function CreateLoanPage() {
               </Card>
             </div>
 
-            <div className="flex justify-end pt-4">
+            <div className="flex flex-col md:flex-row justify-end gap-3 pt-4">
+              <Button 
+                type="submit" 
+                variant="secondary"
+                size="lg" 
+                disabled={createMutation.isPending || !selectedGroupId}
+                onClick={() => setIsDraft(true)}
+                className="gap-2 px-8 shadow-md"
+              >
+                {createMutation.isPending && isDraft ? "Saving..." : (
+                  <>
+                    <FileText className="h-4 w-4" /> Save as Draft
+                  </>
+                )}
+              </Button>
               <Button 
                 type="submit" 
                 size="lg" 
                 disabled={createMutation.isPending || !selectedGroupId}
-                className="gap-2 w-full md:w-auto px-10 shadow-lg shadow-primary/20"
+                onClick={() => setIsDraft(false)}
+                className="gap-2 px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90"
               >
-                {createMutation.isPending ? "Creating..." : (
+                {createMutation.isPending && !isDraft ? "Submitting..." : (
                   <>
-                    <Save className="h-4 w-4" /> Submit Loan Application
+                    <SendHorizontal className="h-4 w-4" /> Submit for Approval
                   </>
                 )}
               </Button>
@@ -247,13 +266,14 @@ export default function CreateLoanPage() {
 
         {/* Right Column: Summary/Preview */}
         <div className="w-full lg:w-80">
-          <Card className="border-none shadow-xl bg-primary text-primary-foreground sticky top-24">
-            <CardHeader>
+          <Card className="border-none shadow-xl bg-primary text-primary-foreground sticky top-24 overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
+            <CardHeader className="relative">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
                 <CircleDollarSign className="w-5 h-5" /> Summary
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="relative space-y-4">
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="opacity-80">Group</span>
