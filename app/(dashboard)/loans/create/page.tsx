@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,20 +14,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PageHeader } from "@/components/Custom/PageHeader";
 import { useCreateLoanMutation } from "@/services/loanApi";
 import { useGroupsQuery } from "@/services/groupApi";
 import { 
   Save, 
   ArrowLeft, 
-  HandCoins, 
   Users, 
   CalendarDays, 
   CircleDollarSign,
-  Info,
   Crown,
   FileText,
-  SendHorizontal
+  SendHorizontal,
+  User,
+  Phone,
+  Calendar,
+  Wallet,
+  ArrowUpRight,
+  TrendingUp,
+  Receipt,
+  LayoutList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +81,23 @@ export default function CreateLoanPage() {
 
   const selectedGroupId = watch("groupId");
   const selectedGroup = groupsData?.groups?.find((g: any) => g.id === selectedGroupId);
+  const groupLeader = selectedGroup?.members?.find((m: any) => m.isLeader);
+
+  const totalWeeks = Number(watch("totalWeeks") || 0);
+  const leaderLent = Number(watch("leaderLentAmount") || 0);
+  const memberLent = Number(watch("memberLentAmount") || 0);
+  const leaderWeekly = Number(watch("leaderWeeklyAmount") || 0);
+  const memberWeekly = Number(watch("memberWeeklyAmount") || 0);
+  const totalMembers = selectedGroup?._count?.members || 0;
+
+  // Global Calculations
+  const totalLentAmount = selectedGroup 
+    ? leaderLent + (memberLent * (totalMembers - 1)) 
+    : 0;
+
+  const totalScheduledReceipts = selectedGroup
+    ? (leaderWeekly * totalWeeks) + (memberWeekly * totalWeeks * (totalMembers - 1))
+    : 0;
 
   const onFormSubmit = (data: any) => {
     setServerError(null);
@@ -79,12 +110,14 @@ export default function CreateLoanPage() {
       memberLentAmount: Number(data.memberLentAmount),
       memberWeeklyAmount: Number(data.memberWeeklyAmount),
       status: isDraft ? "DRAFT" : "PENDING",
-      createdBy: "system", // Should be from auth context
+      createdBy: "system",
     });
   };
 
+  const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
   return (
-    <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
+    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 max-w-7xl mx-auto">
       <PageHeader
         title="Create New Loan"
         description="Fill in the group loan details and submit for approval or save as draft"
@@ -94,224 +127,322 @@ export default function CreateLoanPage() {
         </Button>
       </PageHeader>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Column: Form */}
-        <div className="flex-1">
-          <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
-            {serverError && (
-              <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium p-3 rounded-lg text-center animate-in fade-in slide-in-from-top-2">
-                {serverError}
-              </div>
-            )}
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+        {serverError && (
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium p-3 rounded-lg text-center">
+            {serverError}
+          </div>
+        )}
 
-            <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" /> Group Selection
-                </CardTitle>
-                <CardDescription>Select the group applying for this loan</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-2">
-                  <Label>Select Group</Label>
-                  <Select
-                    value={selectedGroupId}
-                    onValueChange={(val) => setValue("groupId", val)}
-                  >
-                    <SelectTrigger className="bg-background/50 h-11">
-                      <SelectValue placeholder="Choose a group..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groupsData?.groups?.map((group: any) => (
-                        <SelectItem key={group.id} value={group.id}>
-                          {group.name} ({group.branch})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.groupId && <p className="text-xs text-destructive">Please select a group</p>}
-                </div>
-
-                {selectedGroup && (
-                  <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold">{selectedGroup.name}</p>
-                      <p className="text-xs text-muted-foreground">{selectedGroup.branch} Branch | {selectedGroup._count?.members || 0} Members</p>
-                    </div>
-                    <Badge variant="outline" className="bg-background/80 font-bold border-primary/20">
-                      Collection: {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][selectedGroup.collectionDay - 1]}
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <CalendarDays className="w-5 h-5 text-primary" /> Loan Parameters
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="totalWeeks">Duration (Weeks)</Label>
-                  <Input
-                    id="totalWeeks"
-                    type="number"
-                    className="bg-background/50 h-11"
-                    {...register("totalWeeks", { required: true, min: 1 })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="processingFee">Processing Fee (Rs.)</Label>
-                  <Input
-                    id="processingFee"
-                    type="number"
-                    className="bg-background/50 h-11"
-                    {...register("processingFee", { required: true, min: 0 })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <Crown className="w-5 h-5 text-amber-500" /> Leader Plan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="leaderLentAmount">Lent Amount (Rs.)</Label>
-                    <Input
-                      id="leaderLentAmount"
-                      type="number"
-                      className="bg-background/50 h-11"
-                      {...register("leaderLentAmount", { required: true })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="leaderWeeklyAmount">Weekly Payment (Rs.)</Label>
-                    <Input
-                      id="leaderWeeklyAmount"
-                      type="number"
-                      className="bg-background/50 h-11"
-                      {...register("leaderWeeklyAmount", { required: true })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-500" /> Member Plan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="memberLentAmount">Lent Amount (Rs.)</Label>
-                    <Input
-                      id="memberLentAmount"
-                      type="number"
-                      className="bg-background/50 h-11"
-                      {...register("memberLentAmount", { required: true })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="memberWeeklyAmount">Weekly Payment (Rs.)</Label>
-                    <Input
-                      id="memberWeeklyAmount"
-                      type="number"
-                      className="bg-background/50 h-11"
-                      {...register("memberWeeklyAmount", { required: true })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="flex flex-col md:flex-row justify-end gap-3 pt-4">
-              <Button 
-                type="submit" 
-                variant="secondary"
-                size="lg" 
-                disabled={createMutation.isPending || !selectedGroupId}
-                onClick={() => setIsDraft(true)}
-                className="gap-2 px-8 shadow-md"
-              >
-                {createMutation.isPending && isDraft ? "Saving..." : (
-                  <>
-                    <FileText className="h-4 w-4" /> Save as Draft
-                  </>
-                )}
-              </Button>
-              <Button 
-                type="submit" 
-                size="lg" 
-                disabled={createMutation.isPending || !selectedGroupId}
-                onClick={() => setIsDraft(false)}
-                className="gap-2 px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90"
-              >
-                {createMutation.isPending && !isDraft ? "Submitting..." : (
-                  <>
-                    <SendHorizontal className="h-4 w-4" /> Submit for Approval
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        {/* Right Column: Summary/Preview */}
-        <div className="w-full lg:w-80">
-          <Card className="border-none shadow-xl bg-primary text-primary-foreground sticky top-24 overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12"></div>
-            <CardHeader className="relative">
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <CircleDollarSign className="w-5 h-5" /> Summary
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+            <CardHeader className="bg-muted/10 border-b">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" /> Group Selection
               </CardTitle>
             </CardHeader>
-            <CardContent className="relative space-y-4">
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="opacity-80">Group</span>
-                  <span className="font-bold">{selectedGroup?.name || "Not selected"}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="opacity-80">Duration</span>
-                  <span className="font-bold">{watch("totalWeeks")} Weeks</span>
-                </div>
-                <div className="flex justify-between text-sm border-t border-white/20 pt-3">
-                  <span className="opacity-80">Total Members</span>
-                  <span className="font-bold">{selectedGroup?._count?.members || 0}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="opacity-80">Processing Fee</span>
-                  <span className="font-bold">Rs. {watch("processingFee")}</span>
-                </div>
+            <CardContent className="space-y-6 pt-6">
+              <div className="grid gap-2">
+                <Label>Select Group</Label>
+                <Select
+                  value={selectedGroupId}
+                  onValueChange={(val) => setValue("groupId", val)}
+                >
+                  <SelectTrigger className="bg-background/50 h-12 text-lg">
+                    <SelectValue placeholder="Choose a group..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groupsData?.groups?.map((group: any) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name} ({group.branch})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="pt-4 border-t border-white/20 space-y-4">
-                <div className="bg-white/10 p-3 rounded-lg space-y-1">
-                  <p className="text-[10px] uppercase font-bold opacity-70">Total Loan Amount</p>
-                  <p className="text-2xl font-bold">
-                    Rs. {(selectedGroup ? (
-                      Number(watch("leaderLentAmount")) + (Number(watch("memberLentAmount")) * (selectedGroup._count.members - 1))
-                    ) : 0).toLocaleString()}
-                  </p>
-                </div>
+              {selectedGroup && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
+                      <Crown className="w-4 h-4" /> Group Leader
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-base leading-tight">{groupLeader?.client?.fullname || "No Leader Assigned"}</span>
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Phone className="w-3 h-3" /> {groupLeader?.client?.phone || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-2 text-[10px] opacity-70 leading-tight">
-                  <Info className="w-3 h-3 flex-shrink-0" />
-                  <p>Instalments will be generated automatically for each member upon submission.</p>
+                  <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-amber-600 font-bold text-xs uppercase tracking-wider">
+                      <Calendar className="w-4 h-4" /> Collection Details
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
+                        <CalendarDays className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-base leading-tight text-amber-700">
+                          Every {DAYS[selectedGroup.collectionDay - 1]}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{selectedGroup.branch} Branch | {totalMembers} Members</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-muted/10 border-b">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-primary" /> Loan Parameters
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+              <div className="grid gap-2">
+                <Label htmlFor="totalWeeks">Duration (Weeks)</Label>
+                <Input
+                  id="totalWeeks"
+                  type="number"
+                  className="bg-background/50 h-11"
+                  {...register("totalWeeks", { required: true, min: 1 })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="processingFee">Processing Fee (Rs.)</Label>
+                <Input
+                  id="processingFee"
+                  type="number"
+                  className="bg-background/50 h-11"
+                  {...register("processingFee", { required: true, min: 0 })}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-amber-500/5 border-b border-amber-500/10">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Crown className="w-5 h-5 text-amber-500" /> Leader Plan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="leaderLentAmount">Lent Amount (Rs.)</Label>
+                  <Input
+                    id="leaderLentAmount"
+                    type="number"
+                    className="bg-background/50 h-11"
+                    {...register("leaderLentAmount", { required: true })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="leaderWeeklyAmount">Weekly Payment (Rs.)</Label>
+                  <Input
+                    id="leaderWeeklyAmount"
+                    type="number"
+                    className="bg-background/50 h-11"
+                    {...register("leaderWeeklyAmount", { required: true })}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-blue-500/5 border-b border-blue-500/10">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-500" /> Member Plan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="memberLentAmount">Lent Amount (Rs.)</Label>
+                  <Input
+                    id="memberLentAmount"
+                    type="number"
+                    className="bg-background/50 h-11"
+                    {...register("memberLentAmount", { required: true })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="memberWeeklyAmount">Weekly Payment (Rs.)</Label>
+                  <Input
+                    id="memberWeeklyAmount"
+                    type="number"
+                    className="bg-background/50 h-11"
+                    {...register("memberWeeklyAmount", { required: true })}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
-      </div>
+
+        {/* Live Financial Projections */}
+        <Card className="border-none shadow-2xl bg-slate-900 text-white overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+          <CardHeader className="border-b border-white/10">
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-primary-foreground" /> Loan Projection Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
+              <div className="p-6 flex flex-col gap-1">
+                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
+                    <ArrowUpRight className="w-3 h-3" /> Total Principal
+                 </span>
+                 <span className="text-2xl font-black text-white">
+                    Rs. {totalLentAmount.toLocaleString()}
+                 </span>
+              </div>
+              <div className="p-6 flex flex-col gap-1">
+                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
+                    <trending-up className="w-3 h-3 text-emerald-400" /> Paid Amount
+                 </span>
+                 <span className="text-2xl font-black text-emerald-400">
+                    Rs. 0
+                 </span>
+              </div>
+              <div className="p-6 flex flex-col gap-1">
+                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-primary-foreground" /> Balance Amount
+                 </span>
+                 <span className="text-2xl font-black text-primary-foreground">
+                    Rs. {totalScheduledReceipts.toLocaleString()}
+                 </span>
+              </div>
+              <div className="p-6 flex flex-col gap-1">
+                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
+                    <Receipt className="w-3 h-3 text-amber-400" /> Total Outstanding
+                 </span>
+                 <span className="text-2xl font-black text-amber-400">
+                    Rs. {totalLentAmount.toLocaleString()}
+                 </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Member-wise Instalment Preview Table */}
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+          <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <LayoutList className="w-5 h-5 text-primary" /> Loan Structure Preview
+              </CardTitle>
+              <CardDescription>Member-wise breakdown of the proposed loan structure</CardDescription>
+            </div>
+            {selectedGroup && (
+              <Badge variant="outline" className="font-bold bg-background/50">
+                {totalMembers} Profiles Linked
+              </Badge>
+            )}
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
+                    <TableHead className="font-bold text-foreground">Client ID</TableHead>
+                    <TableHead className="font-bold text-foreground">Name</TableHead>
+                    <TableHead className="font-bold text-foreground">Loan Number</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Principal</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Interest</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Loan Amount</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Balance</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Outstanding</TableHead>
+                    <TableHead className="font-bold text-foreground text-center">Arrears Count</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {!selectedGroup ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="h-32 text-center text-muted-foreground italic">
+                        Select a group to preview member instalments
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    selectedGroup?.members?.map((member: any) => {
+                      const principal = member.isLeader ? leaderLent : memberLent;
+                      const weekly = member.isLeader ? leaderWeekly : memberWeekly;
+                      const loanAmount = weekly * totalWeeks;
+                      const interest = loanAmount - principal;
+
+                      return (
+                        <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group">
+                          <TableCell className="font-mono text-xs">{member.client.clientNo}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-bold flex items-center gap-1">
+                                {member.client.fullname}
+                                {member.isLeader && <Crown className="w-3 h-3 text-amber-500" />}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground font-medium text-xs">L-XXXXXX</TableCell>
+                          <TableCell className="text-right font-bold">Rs. {principal.toLocaleString()}</TableCell>
+                          <TableCell className="text-right text-muted-foreground italic">Rs. {interest.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-black text-primary">Rs. {loanAmount.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-bold text-emerald-600">Rs. {loanAmount.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-bold text-slate-400">Rs. 0</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="font-black opacity-30">0</Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
+          <Button 
+            type="submit" 
+            variant="secondary"
+            size="lg" 
+            disabled={createMutation.isPending || !selectedGroupId}
+            onClick={() => setIsDraft(true)}
+            className="gap-2 px-8 shadow-md h-12"
+          >
+            {createMutation.isPending && isDraft ? "Saving..." : (
+              <>
+                <FileText className="h-4 w-4" /> Save as Draft
+              </>
+            )}
+          </Button>
+          <Button 
+            type="submit" 
+            size="lg" 
+            disabled={createMutation.isPending || !selectedGroupId}
+            onClick={() => setIsDraft(false)}
+            className="gap-2 px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 h-12"
+          >
+            {createMutation.isPending && !isDraft ? "Submitting..." : (
+              <>
+                <SendHorizontal className="h-4 w-4" /> Submit for Approval
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

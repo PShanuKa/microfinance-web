@@ -58,15 +58,15 @@ import {
 } from "@/components/ui/select";
 import { useClientsQuery } from "@/services/clientApi";
 import { ClientForm } from "@/components/Custom/ClientForm";
-import { ClientViewModal } from "@/components/Custom/ClientViewModal";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function ClientsPage() {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
 
   const { data, isLoading } = useClientsQuery({ page, limit: 10, search, status: statusFilter });
@@ -77,8 +77,7 @@ export default function ClientsPage() {
   };
 
   const handleView = (client: any) => {
-    setSelectedClient(client);
-    setIsViewOpen(true);
+    router.push(`/clients/${client.id}`);
   };
 
   const handleCreate = () => {
@@ -282,12 +281,6 @@ export default function ClientsPage() {
           />
         </DialogContent>
       </Dialog>
-
-      <ClientViewModal
-        client={selectedClient}
-        open={isViewOpen}
-        onOpenChange={setIsViewOpen}
-      />
     </div>
   );
 }

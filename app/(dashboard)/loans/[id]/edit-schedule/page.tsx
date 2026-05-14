@@ -14,6 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PageHeader } from "@/components/Custom/PageHeader";
 import { useLoanQuery, useUpdateLoanScheduleMutation } from "@/services/loanApi";
 import { useGroupsQuery } from "@/services/groupApi";
@@ -23,10 +31,19 @@ import {
   Users, 
   CalendarDays, 
   CircleDollarSign,
-  Info,
   Crown,
+  FileText,
+  User,
+  Phone,
+  Calendar,
+  Wallet,
+  ArrowUpRight,
+  TrendingUp,
+  Receipt,
+  LayoutList,
   AlertTriangle
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
 export default function EditLoanSchedulePage() {
@@ -38,7 +55,7 @@ export default function EditLoanSchedulePage() {
   const { data: loanData, isLoading: loanLoading } = useLoanQuery(id as string);
   const updateMutation = useUpdateLoanScheduleMutation({
     onSuccess: () => {
-      router.push("/loans");
+      router.push(`/loans/${id}`);
     },
     onError: (error: any) => {
       setServerError(error.response?.data?.error || "Failed to update loan schedule");
@@ -80,13 +97,30 @@ export default function EditLoanSchedulePage() {
 
   const selectedGroupId = watch("groupId");
   const selectedGroup = groupsData?.groups?.find((g: any) => g.id === selectedGroupId);
+  const groupLeader = selectedGroup?.members?.find((m: any) => m.isLeader);
 
-  const onSubmit = (data: any) => {
+  const totalWeeks = Number(watch("totalWeeks") || 0);
+  const leaderLent = Number(watch("leaderLentAmount") || 0);
+  const memberLent = Number(watch("memberLentAmount") || 0);
+  const leaderWeekly = Number(watch("leaderWeeklyAmount") || 0);
+  const memberWeekly = Number(watch("memberWeeklyAmount") || 0);
+  const totalMembers = selectedGroup?._count?.members || 0;
+
+  // Global Calculations
+  const totalLentAmount = selectedGroup 
+    ? leaderLent + (memberLent * (totalMembers - 1)) 
+    : 0;
+
+  const totalScheduledReceipts = selectedGroup
+    ? (leaderWeekly * totalWeeks) + (memberWeekly * totalWeeks * (totalMembers - 1))
+    : 0;
+
+  const onFormSubmit = (data: any) => {
     setServerError(null);
     updateMutation.mutate({
       id: id as string,
       data: {
-        groupId: data.groupId,
+        ...data,
         totalWeeks: Number(data.totalWeeks),
         processingFee: Number(data.processingFee),
         leaderLentAmount: Number(data.leaderLentAmount),
@@ -97,236 +131,326 @@ export default function EditLoanSchedulePage() {
     });
   };
 
-  if (loanLoading) return <div className="p-10 text-center text-muted-foreground font-medium">Loading loan details...</div>;
+  const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-  const watchWeeks = watch("totalWeeks");
-  const watchLeaderLent = watch("leaderLentAmount");
-  const watchMemberLent = watch("memberLentAmount");
-  const watchLeaderWeekly = watch("leaderWeeklyAmount");
-  const watchMemberWeekly = watch("memberWeeklyAmount");
-
-  const totalMembers = selectedGroup?._count?.members || 0;
-  const totalPrincipal = Number(watchLeaderLent) + (Number(watchMemberLent) * Math.max(0, totalMembers - 1));
-  const weeklyTotal = Number(watchLeaderWeekly) + (Number(watchMemberWeekly) * Math.max(0, totalMembers - 1));
+  if (loanLoading) return <div className="p-10 text-center font-bold animate-pulse">Loading loan details...</div>;
 
   return (
-    <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
+    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 max-w-7xl mx-auto">
       <PageHeader
-        title={`Edit Loan Application: ${loanData?.loan?.id}`}
-        description="Modify all loan parameters and regenerate instalments"
+        title={`Edit Loan Schedule: ${loanData?.loan?.loanNo}`}
+        description="Modify loan parameters and update the repayment structure"
       >
-        <Button variant="outline" onClick={() => router.back()} className="gap-2">
-          <ArrowLeft className="h-4 w-4" /> Back
+        <Button variant="outline" onClick={() => router.back()} className="gap-2 border-primary/20 hover:bg-primary/5">
+          <ArrowLeft className="h-4 w-4" /> Back to Details
         </Button>
       </PageHeader>
 
       <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex items-center gap-4 text-amber-700 animate-in fade-in slide-in-from-top-2">
         <AlertTriangle className="h-6 w-6 flex-shrink-0" />
         <div className="text-sm">
-          <p className="font-bold">Caution: Full Update</p>
-          <p className="opacity-90 font-medium">Changing the group or amounts will completely regenerate the repayment schedule for all members.</p>
+          <p className="font-bold uppercase tracking-tight">Warning: Schedule Regeneration</p>
+          <p className="opacity-90 font-medium leading-tight">Updating these parameters will completely delete and recreate all future instalments for this loan. This action cannot be undone.</p>
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Column: Form */}
-        <div className="flex-1">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {serverError && (
-              <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium p-3 rounded-lg text-center">
-                {serverError}
-              </div>
-            )}
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+        {serverError && (
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium p-3 rounded-lg text-center">
+            {serverError}
+          </div>
+        )}
 
-            <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" /> Group Selection
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-2">
-                  <Label>Change Group</Label>
-                  <Select
-                    value={selectedGroupId}
-                    onValueChange={(val) => setValue("groupId", val)}
-                  >
-                    <SelectTrigger className="bg-background/50 h-11">
-                      <SelectValue placeholder="Choose a group..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groupsData?.groups?.map((group: any) => (
-                        <SelectItem key={group.id} value={group.id}>
-                          {group.name} ({group.branch})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedGroup && (
-                  <div className="p-4 rounded-lg bg-primary/5 border border-primary/10 flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold">{selectedGroup.name}</p>
-                      <p className="text-xs text-muted-foreground">{selectedGroup.branch} Branch | {selectedGroup._count?.members || 0} Members</p>
-                    </div>
-                    <Badge variant="outline" className="bg-background/80 font-bold">
-                      Collection Day: {selectedGroup.collectionDay}
-                    </Badge>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <CalendarDays className="w-5 h-5 text-primary" /> Loan Parameters
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="totalWeeks">Duration (Weeks)</Label>
-                  <Input
-                    id="totalWeeks"
-                    type="number"
-                    className="bg-background/50 h-11"
-                    {...register("totalWeeks", { required: true, min: 1 })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="processingFee">Processing Fee (Rs.)</Label>
-                  <Input
-                    id="processingFee"
-                    type="number"
-                    className="bg-background/50 h-11"
-                    {...register("processingFee", { required: true, min: 0 })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <Crown className="w-5 h-5 text-amber-500" /> Leader Plan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="leaderLentAmount">Lent Amount (Rs.)</Label>
-                    <Input
-                      id="leaderLentAmount"
-                      type="number"
-                      className="bg-background/50 h-11"
-                      {...register("leaderLentAmount", { required: true })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="leaderWeeklyAmount">Weekly Payment (Rs.)</Label>
-                    <Input
-                      id="leaderWeeklyAmount"
-                      type="number"
-                      className="bg-background/50 h-11"
-                      {...register("leaderWeeklyAmount", { required: true })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-                <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-500" /> Member Plan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="memberLentAmount">Lent Amount (Rs.)</Label>
-                    <Input
-                      id="memberLentAmount"
-                      type="number"
-                      className="bg-background/50 h-11"
-                      {...register("memberLentAmount", { required: true })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="memberWeeklyAmount">Weekly Payment (Rs.)</Label>
-                    <Input
-                      id="memberWeeklyAmount"
-                      type="number"
-                      className="bg-background/50 h-11"
-                      {...register("memberWeeklyAmount", { required: true })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button 
-                type="submit" 
-                size="lg" 
-                disabled={updateMutation.isPending}
-                className="gap-2 w-full md:w-auto px-10 shadow-lg shadow-emerald-600/20 bg-emerald-600 hover:bg-emerald-700"
-              >
-                {updateMutation.isPending ? "Updating..." : (
-                  <>
-                    <Save className="h-4 w-4" /> Save All Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </div>
-
-        {/* Right Column: Summary/Preview */}
-        <div className="w-full lg:w-80">
-          <Card className="border-none shadow-xl bg-primary text-primary-foreground sticky top-24">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <CircleDollarSign className="w-5 h-5" /> Live Summary
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+            <CardHeader className="bg-muted/10 border-b">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" /> Group Selection
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="opacity-80">Group</span>
-                  <span className="font-bold text-right">{selectedGroup?.name || "..."}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="opacity-80">Duration</span>
-                  <span className="font-bold">{watchWeeks} Weeks</span>
-                </div>
-                <div className="flex justify-between text-sm border-t border-white/20 pt-3">
-                  <span className="opacity-80">Total Principal</span>
-                  <span className="font-bold">Rs. {totalPrincipal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="opacity-80">Weekly Total</span>
-                  <span className="font-bold">Rs. {weeklyTotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="opacity-80">Total Return</span>
-                  <span className="font-bold">Rs. {(weeklyTotal * Number(watchWeeks)).toLocaleString()}</span>
-                </div>
+            <CardContent className="space-y-6 pt-6">
+              <div className="grid gap-2">
+                <Label>Change Group</Label>
+                <Select
+                  value={selectedGroupId}
+                  onValueChange={(val) => setValue("groupId", val)}
+                >
+                  <SelectTrigger className="bg-background/50 h-12 text-lg font-bold">
+                    <SelectValue placeholder="Choose a group..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groupsData?.groups?.map((group: any) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name} ({group.branch})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="pt-4 border-t border-white/20 space-y-4">
-                <div className="bg-white/10 p-3 rounded-lg space-y-1">
-                  <p className="text-[10px] uppercase font-bold opacity-70">Processing Fee</p>
-                  <p className="text-xl font-bold">Rs. {Number(watch("processingFee")).toLocaleString()}</p>
+              {selectedGroup && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
+                      <Crown className="w-4 h-4" /> Group Leader
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-black text-base leading-tight">{groupLeader?.client?.fullname || "No Leader Assigned"}</span>
+                        <span className="text-xs text-muted-foreground font-bold flex items-center gap-1">
+                          <Phone className="w-3 h-3" /> {groupLeader?.client?.phone || "N/A"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/10 flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-amber-600 font-bold text-xs uppercase tracking-wider">
+                      <Calendar className="w-4 h-4" /> Collection Cycle
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                        <CalendarDays className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-black text-base leading-tight text-amber-700">
+                          Every {DAYS[selectedGroup.collectionDay - 1]}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-bold uppercase tracking-tighter">Automatic Weekly Cycle</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] opacity-70 leading-tight">
-                  <Info className="w-3 h-3 flex-shrink-0" />
-                  <p>All instalments will be recalculated and reset upon saving.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-muted/10 border-b">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-primary" /> Loan Parameters
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
+              <div className="grid gap-2">
+                <Label htmlFor="totalWeeks" className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Duration (Weeks)</Label>
+                <Input
+                  id="totalWeeks"
+                  type="number"
+                  className="bg-background/50 h-11 font-black text-lg"
+                  {...register("totalWeeks", { required: true, min: 1 })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="processingFee" className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Processing Fee (Rs.)</Label>
+                <Input
+                  id="processingFee"
+                  type="number"
+                  className="bg-background/50 h-11 font-black text-lg"
+                  {...register("processingFee", { required: true, min: 0 })}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-amber-500/5 border-b border-amber-500/10">
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-amber-600">
+                <Crown className="w-5 h-5" /> Leader Plan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="leaderLentAmount" className="font-bold text-[10px] uppercase text-muted-foreground">Lent Amount</Label>
+                  <Input
+                    id="leaderLentAmount"
+                    type="number"
+                    className="bg-background/50 h-11 font-bold"
+                    {...register("leaderLentAmount", { required: true })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="leaderWeeklyAmount" className="font-bold text-[10px] uppercase text-muted-foreground">Weekly Payment</Label>
+                  <Input
+                    id="leaderWeeklyAmount"
+                    type="number"
+                    className="bg-background/50 h-11 font-bold text-emerald-600"
+                    {...register("leaderWeeklyAmount", { required: true })}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+            <CardHeader className="bg-blue-500/5 border-b border-blue-500/10">
+              <CardTitle className="text-lg font-bold flex items-center gap-2 text-blue-600">
+                <Users className="w-5 h-5" /> Member Plan
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="memberLentAmount" className="font-bold text-[10px] uppercase text-muted-foreground">Lent Amount</Label>
+                  <Input
+                    id="memberLentAmount"
+                    type="number"
+                    className="bg-background/50 h-11 font-bold"
+                    {...register("memberLentAmount", { required: true })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="memberWeeklyAmount" className="font-bold text-[10px] uppercase text-muted-foreground">Weekly Payment</Label>
+                  <Input
+                    id="memberWeeklyAmount"
+                    type="number"
+                    className="bg-background/50 h-11 font-bold text-emerald-600"
+                    {...register("memberWeeklyAmount", { required: true })}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
-      </div>
+
+        {/* Live Financial Projections */}
+        <Card className="border-none shadow-2xl bg-slate-900 text-white overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full -mr-32 -mt-32 blur-3xl opacity-50"></div>
+          <CardHeader className="border-b border-white/10 bg-white/5">
+            <CardTitle className="text-lg font-bold flex items-center gap-2">
+              <Wallet className="w-5 h-5 text-primary-foreground" /> Updated Loan Projections
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
+              <div className="p-6 flex flex-col gap-1">
+                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
+                    <ArrowUpRight className="w-3 h-3" /> Total Principal
+                 </span>
+                 <span className="text-2xl font-black text-white">
+                    Rs. {totalLentAmount.toLocaleString()}
+                 </span>
+              </div>
+              <div className="p-6 flex flex-col gap-1">
+                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-emerald-400" /> Projected Receipts
+               </span>
+               <span className="text-2xl font-black text-emerald-400">
+                    Rs. {totalScheduledReceipts.toLocaleString()}
+                 </span>
+              </div>
+              <div className="p-6 flex flex-col gap-1">
+                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3 text-primary-foreground" /> Weekly Total
+                 </span>
+                 <span className="text-2xl font-black text-primary-foreground">
+                    Rs. {(selectedGroup ? (leaderWeekly + (memberWeekly * (totalMembers - 1))) : 0).toLocaleString()}
+                 </span>
+              </div>
+              <div className="p-6 flex flex-col gap-1">
+                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
+                    <Receipt className="w-3 h-3 text-amber-400" /> Total Outstanding
+                 </span>
+                 <span className="text-2xl font-black text-amber-400">
+                    Rs. {totalLentAmount.toLocaleString()}
+                 </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Member-wise Instalment Preview Table */}
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+          <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <LayoutList className="w-5 h-5 text-primary" /> New Loan Structure Preview
+              </CardTitle>
+              <CardDescription className="font-medium">How the loan will be restructured for all group members</CardDescription>
+            </div>
+            {selectedGroup && (
+              <Badge variant="outline" className="font-black bg-background/50 px-3 py-1">
+                {totalMembers} Profiles Linked
+              </Badge>
+            )}
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
+                    <TableHead className="font-bold text-foreground py-4">Client ID</TableHead>
+                    <TableHead className="font-bold text-foreground py-4">Name</TableHead>
+                    <TableHead className="font-bold text-foreground text-right py-4">Principal</TableHead>
+                    <TableHead className="font-bold text-foreground text-right py-4">Interest</TableHead>
+                    <TableHead className="font-bold text-foreground text-right py-4">Loan Amount</TableHead>
+                    <TableHead className="font-bold text-foreground text-right py-4 text-emerald-600">Weekly Payout</TableHead>
+                    <TableHead className="font-bold text-foreground text-center py-4">Arrears Reset</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {!selectedGroup ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">
+                        Select a group to preview new structure
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    selectedGroup.members.map((member: any) => {
+                      const principal = member.isLeader ? leaderLent : memberLent;
+                      const weekly = member.isLeader ? leaderWeekly : memberWeekly;
+                      const loanAmount = weekly * totalWeeks;
+                      const interest = loanAmount - principal;
+
+                      return (
+                        <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group border-b last:border-0">
+                          <TableCell className="font-mono text-xs font-bold text-slate-500">{member.client.clientNo}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-black flex items-center gap-1.5 text-slate-800 group-hover:text-primary transition-colors">
+                                {member.client.fullname}
+                                {member.isLeader && <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-bold text-slate-600">Rs. {principal.toLocaleString()}</TableCell>
+                          <TableCell className="text-right text-muted-foreground italic text-xs">Rs. {interest.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-black text-primary">Rs. {loanAmount.toLocaleString()}</TableCell>
+                          <TableCell className="text-right font-black text-emerald-600 bg-emerald-500/5">Rs. {weekly.toLocaleString()}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="font-black text-rose-500 border-rose-500/20">Full Reset</Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
+          <Button 
+            type="submit" 
+            size="lg" 
+            disabled={updateMutation.isPending || !selectedGroupId}
+            className="gap-2 px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 h-12 font-black"
+          >
+            {updateMutation.isPending ? "Restructuring..." : (
+              <>
+                <Save className="h-4 w-4" /> Save & Update All Schedules
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
