@@ -67,14 +67,11 @@ export default function ClientsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<any>(null);
 
   const { data, isLoading } = useClientsQuery({ page, limit: 10, search, status: statusFilter });
 
   const handleEdit = (client: any) => {
-    setSelectedClient(client);
-    setIsFormOpen(true);
+    router.push(`/clients/${client.id}/edit`);
   };
 
   const handleView = (client: any) => {
@@ -82,8 +79,7 @@ export default function ClientsPage() {
   };
 
   const handleCreate = () => {
-    setSelectedClient(null);
-    setIsFormOpen(true);
+    router.push("/clients/new");
   };
 
   const getStatusBadge = (status: string) => {
@@ -279,18 +275,7 @@ export default function ClientsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[700px] bg-card/95 backdrop-blur-lg border-none shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">{selectedClient ? "Edit Client Profile" : "Register New Client"}</DialogTitle>
-          </DialogHeader>
-          <ClientForm 
-            initialData={selectedClient} 
-            onSuccess={() => setIsFormOpen(false)} 
-            onCancel={() => setIsFormOpen(false)} 
-          />
-        </DialogContent>
-      </Dialog>
+    
     </div>
   );
 }

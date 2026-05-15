@@ -20,7 +20,11 @@ import {
   ArrowUpRight,
   Receipt,
   LayoutList,
-  Wallet
+  Wallet,
+  Download,
+  Eye,
+  FileText,
+  FileCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -126,7 +130,11 @@ export default function ClientProfilePage() {
           </div>
         </div>
         <div className="flex gap-2">
-           <Button variant="outline" className="gap-2 h-11 px-6 font-bold">
+           <Button 
+             variant="outline" 
+             className="gap-2 h-11 px-6 font-bold"
+             onClick={() => router.push(`/clients/${id}/edit`)}
+           >
              Edit Profile
            </Button>
         </div>
@@ -275,6 +283,10 @@ export default function ClientProfilePage() {
                     <HistoryIcon className="h-4 w-4" />
                     Payment History
                  </TabsTrigger>
+                 <TabsTrigger value="documents" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6 font-bold rounded-lg transition-all h-full">
+                    <FileCheck className="h-4 w-4" />
+                    Verification Documents
+                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="loans" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -365,6 +377,57 @@ export default function ClientProfilePage() {
                     </div>
                  </Card>
               </TabsContent>
+
+              <TabsContent value="documents" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     {client.documents?.map((doc: any) => (
+                        <Card key={doc.id} className="border shadow-sm hover:shadow-md transition-shadow bg-white/50 overflow-hidden group">
+                           <CardContent className="p-4 flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-4 overflow-hidden">
+                                 <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                                    <FileText className="w-6 h-6 text-slate-400 group-hover:text-primary transition-colors" />
+                                 </div>
+                                 <div className="flex flex-col overflow-hidden">
+                                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{doc.type.replace("_", " ")}</span>
+                                    <span className="text-sm font-bold text-slate-800 truncate" title={doc.attachment.fileName}>{doc.attachment.fileName}</span>
+                                 </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                 <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="rounded-full hover:bg-primary/10 text-primary"
+                                    onClick={() => window.open(doc.attachment.fileUrl, "_blank")}
+                                 >
+                                    <Eye className="w-4 h-4" />
+                                 </Button>
+                                 <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="rounded-full hover:bg-emerald-50 text-emerald-600"
+                                    onClick={() => {
+                                       const link = document.createElement("a");
+                                       link.href = doc.attachment.fileUrl;
+                                       link.download = doc.attachment.fileName;
+                                       document.body.appendChild(link);
+                                       link.click();
+                                       document.body.removeChild(link);
+                                    }}
+                                 >
+                                    <Download className="w-4 h-4" />
+                                 </Button>
+                              </div>
+                           </CardContent>
+                        </Card>
+                     ))}
+                     {client.documents?.length === 0 && (
+                        <div className="col-span-full py-20 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center opacity-40">
+                           <FileText className="w-12 h-12 mb-4" />
+                           <p className="text-sm font-black uppercase tracking-widest text-center">No documents found <br/> for this client</p>
+                        </div>
+                     )}
+                  </div>
+               </TabsContent>
            </Tabs>
         </div>
       </div>
