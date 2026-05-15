@@ -41,15 +41,23 @@ import {
   TrendingUp,
   Receipt,
   LayoutList,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck,
+  CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { LoanGuarantorsModal } from "@/components/Custom/LoanGuarantorsModal";
 
 export default function EditLoanSchedulePage() {
   const router = useRouter();
   const { id } = useParams();
   const [serverError, setServerError] = useState<string | null>(null);
+  
+  // Guarantor State
+  const [memberGuarantors, setMemberGuarantors] = useState<Record<string, any[]>>({});
+  const [isGuarantorModalOpen, setIsGuarantorModalOpen] = useState(false);
+  const [activeMember, setActiveMember] = useState<any>(null);
 
   const { data: groupsData } = useGroupsQuery({ limit: 100 });
   const { data: loanData, isLoading: loanLoading } = useLoanQuery(id as string);
@@ -92,6 +100,16 @@ export default function EditLoanSchedulePage() {
         memberLentAmount: Number(loanData.loan.memberLentAmount),
         memberWeeklyAmount: Number(loanData.loan.memberWeeklyAmount),
       });
+
+      // Load existing guarantors
+      const existingGuarantors: Record<string, any[]> = {};
+      loanData.loan.guarantors.forEach((g: any) => {
+        if (!existingGuarantors[g.clientId]) {
+          existingGuarantors[g.clientId] = [];
+        }
+        existingGuarantors[g.clientId].push(g);
+      });
+      setMemberGuarantors(existingGuarantors);
     }
   }, [loanData, reset]);
 
@@ -117,6 +135,13 @@ export default function EditLoanSchedulePage() {
 
   const onFormSubmit = (data: any) => {
     setServerError(null);
+
+    // Prepare guarantor payload
+    const guarantorPayload = Object.entries(memberGuarantors).map(([clientId, guarantors]) => ({
+      clientId,
+      guarantors: guarantors.map(({ id, ...rest }) => rest) // Remove IDs for clean creation
+    }));
+
     updateMutation.mutate({
       id: id as string,
       data: {
@@ -127,8 +152,28 @@ export default function EditLoanSchedulePage() {
         leaderWeeklyAmount: Number(data.leaderWeeklyAmount),
         memberLentAmount: Number(data.memberLentAmount),
         memberWeeklyAmount: Number(data.memberWeeklyAmount),
+        memberGuarantors: guarantorPayload,
       }
     });
+  };
+
+  const openGuarantorManager = (member: any) => {
+    setActiveMember(member);
+    setIsGuarantorModalOpen(true);
+  };
+
+  const handleSaveGuarantors = (guarantors: any[]) => {
+    if (activeMember) {
+      setMemberGuarantors(prev => ({
+        ...prev,
+        [activeMember.clientId]: guarantors
+      }));
+    }
+  };
+
+  const isMemberGuarantorComplete = (clientId: string) => {
+    const gs = memberGuarantors[clientId];
+    return gs && gs.length === 2 && gs.every(g => g.fullname && g.nic && g.phone && g.address);
   };
 
   const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -150,7 +195,7 @@ export default function EditLoanSchedulePage() {
         <AlertTriangle className="h-6 w-6 flex-shrink-0" />
         <div className="text-sm">
           <p className="font-bold uppercase tracking-tight">Warning: Schedule Regeneration</p>
-          <p className="opacity-90 font-medium leading-tight">Updating these parameters will completely delete and recreate all future instalments for this loan. This action cannot be undone.</p>
+          <p className="opacity-90 font-medium leading-tight">Updating these parameters will completely delete and recreate all future instalments and guarantor data for this loan. This action cannot be undone.</p>
         </div>
       </div>
 
@@ -164,7 +209,7 @@ export default function EditLoanSchedulePage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
             <CardHeader className="bg-muted/10 border-b">
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-800">
                 <Users className="w-5 h-5 text-primary" /> Group Selection
               </CardTitle>
             </CardHeader>
@@ -230,7 +275,7 @@ export default function EditLoanSchedulePage() {
 
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
             <CardHeader className="bg-muted/10 border-b">
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-800">
                 <CalendarDays className="w-5 h-5 text-primary" /> Loan Parameters
               </CardTitle>
             </CardHeader>
@@ -319,12 +364,86 @@ export default function EditLoanSchedulePage() {
           </Card>
         </div>
 
-        {/* Live Financial Projections */}
+        {/* Member-wise Preview & Guarantors */}
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+          <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-800">
+                <LayoutList className="w-5 h-5 text-primary" /> Structure & Guarantors Review
+              </CardTitle>
+              <CardDescription className="font-medium">Update member-wise details and guarantors</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
+                    <TableHead className="font-bold text-foreground">Member</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Lent (Rs.)</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Weekly (Rs.)</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Total (Rs.)</TableHead>
+                    <TableHead className="font-bold text-foreground text-center">Guarantors</TableHead>
+                    <TableHead className="text-right font-bold text-foreground">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedGroup?.members?.map((member: any) => {
+                    const principal = member.isLeader ? leaderLent : memberLent;
+                    const weekly = member.isLeader ? leaderWeekly : memberWeekly;
+                    const loanAmount = weekly * totalWeeks;
+                    const isComplete = isMemberGuarantorComplete(member.clientId);
+
+                    return (
+                      <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group border-b last:border-0">
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-black text-slate-800 flex items-center gap-1.5">
+                              {member.client.fullname}
+                              {member.isLeader && <Crown className="w-3.5 h-3.5 text-amber-500" />}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">{member.client.clientNo}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-slate-600">Rs. {principal.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-bold text-slate-600">Rs. {weekly.toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-black text-primary">Rs. {loanAmount.toLocaleString()}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={cn(
+                            "font-black text-[9px] uppercase tracking-wider py-1 px-3 rounded-full border-none",
+                            isComplete ? "bg-emerald-500 text-white" : "bg-rose-500/10 text-rose-600 animate-pulse"
+                          )}>
+                            {isComplete ? (
+                              <div className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Complete</div>
+                            ) : "Required"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="sm" 
+                            className="gap-2 font-bold text-primary hover:bg-primary/5"
+                            onClick={() => openGuarantorManager(member)}
+                          >
+                            <ShieldCheck className="w-4 h-4" /> Manage
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Global Financial Projections */}
         <Card className="border-none shadow-2xl bg-slate-900 text-white overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full -mr-32 -mt-32 blur-3xl opacity-50"></div>
           <CardHeader className="border-b border-white/10 bg-white/5">
             <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Wallet className="w-5 h-5 text-primary-foreground" /> Updated Loan Projections
+              <Wallet className="w-5 h-5 text-primary-foreground" /> Global Projection Update
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -347,10 +466,10 @@ export default function EditLoanSchedulePage() {
               </div>
               <div className="p-6 flex flex-col gap-1">
                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3 text-primary-foreground" /> Weekly Total
+                    <TrendingUp className="w-3 h-3 text-primary-foreground" /> Balance Amount
                  </span>
                  <span className="text-2xl font-black text-primary-foreground">
-                    Rs. {(selectedGroup ? (leaderWeekly + (memberWeekly * (totalMembers - 1))) : 0).toLocaleString()}
+                    Rs. {totalScheduledReceipts.toLocaleString()}
                  </span>
               </div>
               <div className="p-6 flex flex-col gap-1">
@@ -361,77 +480,6 @@ export default function EditLoanSchedulePage() {
                     Rs. {totalLentAmount.toLocaleString()}
                  </span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Member-wise Instalment Preview Table */}
-        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
-          <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
-                <LayoutList className="w-5 h-5 text-primary" /> New Loan Structure Preview
-              </CardTitle>
-              <CardDescription className="font-medium">How the loan will be restructured for all group members</CardDescription>
-            </div>
-            {selectedGroup && (
-              <Badge variant="outline" className="font-black bg-background/50 px-3 py-1">
-                {totalMembers} Profiles Linked
-              </Badge>
-            )}
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-                    <TableHead className="font-bold text-foreground py-4">Client ID</TableHead>
-                    <TableHead className="font-bold text-foreground py-4">Name</TableHead>
-                    <TableHead className="font-bold text-foreground text-right py-4">Principal</TableHead>
-                    <TableHead className="font-bold text-foreground text-right py-4">Interest</TableHead>
-                    <TableHead className="font-bold text-foreground text-right py-4">Loan Amount</TableHead>
-                    <TableHead className="font-bold text-foreground text-right py-4 text-emerald-600">Weekly Payout</TableHead>
-                    <TableHead className="font-bold text-foreground text-center py-4">Arrears Reset</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {!selectedGroup ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-32 text-center text-muted-foreground italic">
-                        Select a group to preview new structure
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    selectedGroup.members.map((member: any) => {
-                      const principal = member.isLeader ? leaderLent : memberLent;
-                      const weekly = member.isLeader ? leaderWeekly : memberWeekly;
-                      const loanAmount = weekly * totalWeeks;
-                      const interest = loanAmount - principal;
-
-                      return (
-                        <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group border-b last:border-0">
-                          <TableCell className="font-mono text-xs font-bold text-slate-500">{member.client.clientNo}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-black flex items-center gap-1.5 text-slate-800 group-hover:text-primary transition-colors">
-                                {member.client.fullname}
-                                {member.isLeader && <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-slate-600">Rs. {principal.toLocaleString()}</TableCell>
-                          <TableCell className="text-right text-muted-foreground italic text-xs">Rs. {interest.toLocaleString()}</TableCell>
-                          <TableCell className="text-right font-black text-primary">Rs. {loanAmount.toLocaleString()}</TableCell>
-                          <TableCell className="text-right font-black text-emerald-600 bg-emerald-500/5">Rs. {weekly.toLocaleString()}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline" className="font-black text-rose-500 border-rose-500/20">Full Reset</Badge>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
             </div>
           </CardContent>
         </Card>
@@ -451,6 +499,15 @@ export default function EditLoanSchedulePage() {
           </Button>
         </div>
       </form>
+
+      {/* Guarantor Modal */}
+      <LoanGuarantorsModal
+        open={isGuarantorModalOpen}
+        onOpenChange={setIsGuarantorModalOpen}
+        member={activeMember}
+        initialGuarantors={activeMember ? memberGuarantors[activeMember.clientId] || [] : []}
+        onSave={handleSaveGuarantors}
+      />
     </div>
   );
 }

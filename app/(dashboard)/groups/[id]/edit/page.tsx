@@ -45,7 +45,6 @@ import {
   UserPlus, 
   Trash2, 
   Crown, 
-  Eye, 
   Search,
   ArrowLeft,
   Save,
@@ -53,7 +52,6 @@ import {
   Edit2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MemberDetailsModal } from "@/components/Custom/MemberDetailsModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -80,8 +78,6 @@ export default function EditGroupPage() {
   const router = useRouter();
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState("");
-  const [selectedMember, setSelectedMember] = useState<any>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   
   // Delete Dialog State
@@ -160,11 +156,6 @@ export default function EditGroupPage() {
 
   const handleDeleteGroup = () => {
     deleteMutation.mutate(id as string);
-  };
-
-  const handleViewMember = (member: any) => {
-    setSelectedMember(member);
-    setIsDetailsOpen(true);
   };
 
   if (groupLoading) return <div className="p-10 text-center">Loading group data...</div>;
@@ -293,14 +284,13 @@ export default function EditGroupPage() {
                   <TableHead className="font-bold text-foreground">Member</TableHead>
                   <TableHead className="font-bold text-foreground">NIC</TableHead>
                   <TableHead className="font-bold text-foreground text-center">Leader Status</TableHead>
-                  <TableHead className="font-bold text-foreground text-center">Guarantors</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {group?.members?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground italic">
+                    <TableCell colSpan={4} className="h-32 text-center text-muted-foreground italic">
                       No members added yet. Click "Add Member" to start.
                     </TableCell>
                   </TableRow>
@@ -337,19 +327,8 @@ export default function EditGroupPage() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className={cn(
-                          "rounded-full px-3 font-bold",
-                          member.guarantors?.length === 2 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-rose-500/10 text-rose-600 border-rose-500/20"
-                        )}>
-                          {member.guarantors?.length || 0} / 2
-                        </Badge>
-                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleViewMember(member)}>
-                            <Eye className="w-4 h-4 text-primary" />
-                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleRemoveMember(member.id)}>
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
@@ -406,12 +385,6 @@ export default function EditGroupPage() {
           </div>
         </DialogContent>
       </Dialog>
-
-      <MemberDetailsModal 
-        member={selectedMember}
-        open={isDetailsOpen}
-        onOpenChange={setIsDetailsOpen}
-      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
