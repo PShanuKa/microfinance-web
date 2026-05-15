@@ -54,7 +54,12 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
   useEffect(() => {
     if (initialData) {
       reset({
-        ...initialData,
+        fullname: initialData.fullname || "",
+        nic: initialData.nic || "",
+        phone: initialData.phone || "",
+        job: initialData.job || "",
+        address: initialData.address || "",
+        status: initialData.status || "ACTIVE",
         profileImageId: initialData.profileImageId || "",
       });
       if (initialData.profileImage?.fileUrl) {

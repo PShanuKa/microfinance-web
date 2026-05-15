@@ -35,7 +35,8 @@ import {
   Phone,
   Briefcase,
   Clock,
-  Filter
+  Filter,
+  User2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -176,9 +177,18 @@ export default function ClientsPage() {
                   data?.clients?.map((client: any) => (
                     <TableRow key={client.id} className="hover:bg-primary/5 transition-colors group">
                       <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">{client.fullname}</span>
-                          <span className="text-xs text-muted-foreground font-mono">{client.clientNo}</span>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-muted flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-primary/20 transition-colors">
+                            {client.profileImage?.fileUrl ? (
+                              <img src={client.profileImage.fileUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <User2 className="w-5 h-5 text-slate-400" />
+                            )}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-foreground group-hover:text-primary transition-colors">{client.fullname}</span>
+                            <span className="text-xs text-muted-foreground font-mono">{client.clientNo}</span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>

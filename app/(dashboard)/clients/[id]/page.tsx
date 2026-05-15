@@ -89,18 +89,40 @@ export default function ClientProfilePage() {
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-primary/10 transition-colors h-12 w-12 border">
+        <div className="flex items-center gap-6">
+          <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-primary/10 transition-colors h-12 w-12 border shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-             <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-3xl font-black tracking-tighter text-slate-900">{client.fullname}</h1>
-                {getStatusBadge(client.status)}
+          
+          <div className="flex items-center gap-5">
+             {/* Profile Image Display */}
+             <div className="relative shrink-0">
+                <div className="w-24 h-24 rounded-[2rem] border-4 border-white shadow-2xl overflow-hidden bg-muted flex items-center justify-center ring-1 ring-slate-200">
+                   {client.profileImage?.fileUrl ? (
+                      <img 
+                        src={client.profileImage.fileUrl} 
+                        alt={client.fullname} 
+                        className="w-full h-full object-cover"
+                      />
+                   ) : (
+                      <User className="w-10 h-10 text-slate-300" />
+                   )}
+                </div>
+                <div className={cn(
+                   "absolute bottom-1 right-1 w-6 h-6 rounded-full border-4 border-white shadow-lg",
+                   client.status === "ACTIVE" ? "bg-emerald-500" : "bg-slate-400"
+                )}></div>
              </div>
-             <p className="text-sm text-muted-foreground font-semibold flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-primary" /> Member ID: {client.clientNo} <span className="opacity-40">|</span> <CreditCard className="w-4 h-4" /> NIC: {client.nic}
-             </p>
+
+             <div>
+                <div className="flex items-center gap-3 mb-1">
+                   <h1 className="text-3xl font-black tracking-tighter text-slate-900">{client.fullname}</h1>
+                   {getStatusBadge(client.status)}
+                </div>
+                <p className="text-sm text-muted-foreground font-semibold flex items-center gap-2">
+                   <ShieldCheck className="w-4 h-4 text-primary" /> Member ID: {client.clientNo} <span className="opacity-40">|</span> <CreditCard className="w-4 h-4" /> NIC: {client.nic}
+                </p>
+             </div>
           </div>
         </div>
         <div className="flex gap-2">
