@@ -34,7 +34,6 @@ import {
   CircleDollarSign,
   Crown,
   FileText,
-  SendHorizontal,
   User,
   Phone,
   Calendar,
@@ -43,15 +42,13 @@ import {
   TrendingUp,
   Receipt,
   LayoutList,
-  ShieldCheck,
-  CheckCircle2,
   AlertCircle,
   HelpCircle,
   Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { LoanGuarantorsModal } from "@/components/Custom/LoanGuarantorsModal";
+
 import {
   Tooltip,
   TooltipContent,
@@ -62,20 +59,14 @@ import {
 export default function CreateLoanPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [isDraft, setIsDraft] = useState(false);
-  
-  // Guarantor State
-  const [memberGuarantors, setMemberGuarantors] = useState<Record<string, any[]>>({});
-  const [isGuarantorModalOpen, setIsGuarantorModalOpen] = useState(false);
-  const [activeMember, setActiveMember] = useState<any>(null);
 
   const { data: groupsData, isLoading: groupsLoading } = useGroupsQuery({ limit: 100 });
   const { data: settingsData } = useSettingsQuery();
   const settings = settingsData?.settings;
 
   const createMutation = useCreateLoanMutation({
-    onSuccess: () => {
-      router.push("/loans");
+    onSuccess: (data) => {
+      router.push(`/loans/${data.loan.id}`);
     },
     onError: (error: any) => {
       setServerError(error.response?.data?.error || "Failed to create loan application");
@@ -130,19 +121,6 @@ export default function CreateLoanPage() {
 
   const onFormSubmit = (data: any) => {
     setServerError(null);
-    
-    // Check if all members have guarantors
-    if (!isDraft && selectedGroup) {
-      const missingGuarantors = selectedGroup.members.some((m: any) => {
-        const gs = memberGuarantors[m.clientId];
-        return !gs || gs.length < 2 || gs.some(g => !g.fullname || !g.nic || !g.phone || !g.address);
-      });
-
-      if (missingGuarantors) {
-        setServerError("Please complete guarantor details for all group members before submitting.");
-        return;
-      }
-    }
 
     // Validate duration against settings
     if (settings) {
@@ -152,12 +130,6 @@ export default function CreateLoanPage() {
        }
     }
 
-    // Prepare guarantor payload
-    const guarantorPayload = Object.entries(memberGuarantors).map(([clientId, guarantors]) => ({
-      clientId,
-      guarantors
-    }));
-
     createMutation.mutate({
       ...data,
       totalWeeks: Number(data.totalWeeks),
@@ -166,30 +138,11 @@ export default function CreateLoanPage() {
       leaderWeeklyAmount: Number(data.leaderWeeklyAmount),
       memberLentAmount: Number(data.memberLentAmount),
       memberWeeklyAmount: Number(data.memberWeeklyAmount),
-      memberGuarantors: guarantorPayload,
-      status: isDraft ? "DRAFT" : "PENDING",
+      status: "DRAFT",
       createdBy: "system",
     });
   };
 
-  const openGuarantorManager = (member: any) => {
-    setActiveMember(member);
-    setIsGuarantorModalOpen(true);
-  };
-
-  const handleSaveGuarantors = (guarantors: any[]) => {
-    if (activeMember) {
-      setMemberGuarantors(prev => ({
-        ...prev,
-        [activeMember.clientId]: guarantors
-      }));
-    }
-  };
-
-  const isMemberGuarantorComplete = (clientId: string) => {
-    const gs = memberGuarantors[clientId];
-    return gs && gs.length === 2 && gs.every(g => g.fullname && g.nic && g.phone && g.address);
-  };
 
   const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -424,15 +377,13 @@ export default function CreateLoanPage() {
                     <TableHead className="font-bold text-foreground text-right py-4">Lent (Rs.)</TableHead>
                     <TableHead className="font-bold text-foreground text-right py-4">Weekly (Rs.)</TableHead>
                     <TableHead className="font-bold text-foreground text-right py-4">Total (Rs.)</TableHead>
-                    <TableHead className="font-bold text-foreground text-center py-4">Guarantors</TableHead>
-                    <TableHead className="text-right font-bold text-foreground py-4">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {!selectedGroup ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic font-semibold">
-                        Select a group to manage member details and guarantors
+                      <TableCell colSpan={4} className="h-32 text-center text-muted-foreground italic font-semibold">
+                        Select a group to review member-wise loan breakdown
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -440,7 +391,6 @@ export default function CreateLoanPage() {
                       const principal = member.isLeader ? leaderLent : memberLent;
                       const weekly = member.isLeader ? leaderWeekly : memberWeekly;
                       const loanAmount = weekly * totalWeeks;
-                      const isComplete = isMemberGuarantorComplete(member.clientId);
 
                       return (
                         <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group border-b last:border-0">
@@ -456,28 +406,6 @@ export default function CreateLoanPage() {
                           <TableCell className="text-right font-bold text-slate-600">Rs. {principal.toLocaleString()}</TableCell>
                           <TableCell className="text-right font-bold text-slate-600">Rs. {weekly.toLocaleString()}</TableCell>
                           <TableCell className="text-right font-black text-primary">Rs. {loanAmount.toLocaleString()}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge className={cn(
-                              "font-black text-[9px] uppercase tracking-wider py-1 px-3 rounded-full border-none",
-                              isComplete ? "bg-emerald-500 text-white" : "bg-rose-500/10 text-rose-600 animate-pulse"
-                            )}>
-                              {isComplete ? (
-                                <div className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Complete</div>
-                              ) : "Pending"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              type="button" 
-                              variant={isComplete ? "ghost" : "default"} 
-                              size="sm" 
-                              className={cn("gap-2 font-bold", !isComplete && "shadow-lg shadow-primary/20")}
-                              onClick={() => openGuarantorManager(member)}
-                            >
-                              <ShieldCheck className="w-4 h-4" /> 
-                              {isComplete ? "Edit Details" : "Add Guarantors"}
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       );
                     })
@@ -547,42 +475,19 @@ export default function CreateLoanPage() {
         <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t">
           <Button 
             type="submit" 
-            variant="outline"
             size="lg" 
             disabled={createMutation.isPending || !selectedGroupId}
-            onClick={() => setIsDraft(true)}
-            className="gap-2 px-8 h-14 font-black text-slate-700 border-2 hover:bg-slate-50 transition-all"
+            className="gap-2 px-10 h-14 font-black shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90 text-lg transition-all"
           >
-            {createMutation.isPending && isDraft ? "Saving..." : (
+            {createMutation.isPending ? "Saving..." : (
               <>
                 <FileText className="h-5 w-5" /> Save as Draft
-              </>
-            )}
-          </Button>
-          <Button 
-            type="submit" 
-            size="lg" 
-            disabled={createMutation.isPending || !selectedGroupId}
-            onClick={() => setIsDraft(false)}
-            className="gap-2 px-12 h-14 font-black shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90 text-lg transition-all"
-          >
-            {createMutation.isPending && !isDraft ? "Submitting..." : (
-              <>
-                <SendHorizontal className="h-5 w-5" /> SUBMIT FOR APPROVAL
               </>
             )}
           </Button>
         </div>
       </form>
 
-      {/* Guarantor Modal */}
-      <LoanGuarantorsModal
-        open={isGuarantorModalOpen}
-        onOpenChange={setIsGuarantorModalOpen}
-        member={activeMember}
-        initialGuarantors={activeMember ? memberGuarantors[activeMember.clientId] || [] : []}
-        onSave={handleSaveGuarantors}
-      />
     </div>
   );
 }

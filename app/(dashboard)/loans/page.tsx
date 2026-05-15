@@ -1,4 +1,5 @@
 "use client";
+import { MapPin } from "lucide-react";
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,9 @@ import {
   XCircle, 
   Eye,
   Trash2,
-  Edit2Icon
+  Edit2Icon,
+  Crown,
+  Phone
 } from "lucide-react";
 import {
   Table,
@@ -143,11 +146,13 @@ export default function LoansPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-                  <TableHead className="w-[200px] font-bold text-foreground">Group & Branch</TableHead>
+                  <TableHead className="w-[120px] font-bold text-foreground">Loan ID</TableHead>
+                  <TableHead className="w-[180px] font-bold text-foreground">Group & Branch</TableHead>
+                  <TableHead className="font-bold text-foreground">Group Leader</TableHead>
                   <TableHead className="font-bold text-foreground text-right">Lent (L/M)</TableHead>
                   <TableHead className="font-bold text-foreground text-right">Weekly (L/M)</TableHead>
                   <TableHead className="font-bold text-foreground text-right">Proc. Fee</TableHead>
-                  <TableHead className="font-bold text-foreground">Duration</TableHead>
+                  <TableHead className="font-bold text-foreground text-center">Duration</TableHead>
                   <TableHead className="font-bold text-foreground">Status</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                 </TableRow>
@@ -166,9 +171,37 @@ export default function LoansPage() {
                     <TableRow key={loan.id} className="hover:bg-primary/5 transition-colors group">
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">{loan.group?.name}</span>
-                          <span className="text-xs text-muted-foreground">{loan.group?.branch}</span>
+                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">{loan.loanNo}</span>
+                          <span className="text-[10px] font-mono text-muted-foreground uppercase">{loan.id.substring(0, 8)}...</span>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">{loan.group?.name}</span>
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-2.5 w-2.5" />
+                            {loan.group?.branch}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const leaderMember = loan.group?.members?.[0];
+                          const leader = leaderMember?.client;
+                          if (!leader) return <span className="text-xs text-muted-foreground italic">No Leader</span>;
+                          return (
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold flex items-center gap-1">
+                                <Crown className="h-3 w-3 text-amber-500" />
+                                {leader.fullname}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Phone className="h-2.5 w-2.5" />
+                                {leader.phone}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex flex-col items-end">
@@ -187,8 +220,8 @@ export default function LoansPage() {
                           Rs. {Number(loan.processingFee).toLocaleString()}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-3.5 w-3.5" />
                           {loan.totalWeeks} Weeks
                         </div>

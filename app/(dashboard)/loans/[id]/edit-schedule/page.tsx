@@ -409,24 +409,23 @@ export default function EditLoanSchedulePage() {
                         <TableCell className="text-right font-bold text-slate-600">Rs. {weekly.toLocaleString()}</TableCell>
                         <TableCell className="text-right font-black text-primary">Rs. {loanAmount.toLocaleString()}</TableCell>
                         <TableCell className="text-center">
-                          <Badge className={cn(
-                            "font-black text-[9px] uppercase tracking-wider py-1 px-3 rounded-full border-none",
-                            isComplete ? "bg-emerald-500 text-white" : "bg-rose-500/10 text-rose-600 animate-pulse"
+                          <span className={cn(
+                            "font-black text-xs px-3 py-1 rounded-full",
+                            (memberGuarantors[member.clientId]?.length || 0) > 0 ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"
                           )}>
-                            {isComplete ? (
-                              <div className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Complete</div>
-                            ) : "Required"}
-                          </Badge>
+                            {memberGuarantors[member.clientId]?.length || 0}
+                          </span>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button 
                             type="button" 
-                            variant="ghost" 
+                            variant={(memberGuarantors[member.clientId]?.length || 0) > 0 ? "ghost" : "outline"} 
                             size="sm" 
                             className="gap-2 font-bold text-primary hover:bg-primary/5"
                             onClick={() => openGuarantorManager(member)}
                           >
-                            <ShieldCheck className="w-4 h-4" /> Manage
+                            <ShieldCheck className="w-4 h-4" />
+                            {(memberGuarantors[member.clientId]?.length || 0) > 0 ? "Manage" : "Add Guarantors"}
                           </Button>
                         </TableCell>
                       </TableRow>

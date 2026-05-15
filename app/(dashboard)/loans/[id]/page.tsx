@@ -45,9 +45,6 @@ import { cn } from "@/lib/utils";
 import { useLoanQuery, useApproveLoanMutation, useRejectLoanMutation } from "@/services/loanApi";
 import { format } from "date-fns";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 
@@ -375,7 +372,7 @@ export default function LoanViewPage() {
                               onClick={() => setSelectedGuarantors(member.guarantors)}
                             >
                               <ShieldCheck className="w-4 h-4" /> 
-                              View ({member.guarantors.length})
+                              {member.guarantors.length} Guarantors
                             </Button>
                           </TableCell>
                           <TableCell className="text-center">
@@ -481,46 +478,8 @@ export default function LoanViewPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Guarantor Details Dialog */}
-      <Dialog open={!!selectedGuarantors} onOpenChange={(open) => !open && setSelectedGuarantors(null)}>
-        <DialogContent className="sm:max-w-[600px] bg-card/95 backdrop-blur-xl border-none shadow-2xl p-0 overflow-hidden">
-          <DialogHeader className="p-6 bg-primary/5 border-b">
-             <DialogTitle className="flex items-center gap-2 text-xl font-black">
-                <ShieldCheck className="w-6 h-6 text-emerald-500" /> Member Guarantors
-             </DialogTitle>
-          </DialogHeader>
-          <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
-             {selectedGuarantors?.map((g: any, idx: number) => (
-                <div key={idx} className="p-5 rounded-2xl border bg-muted/20 space-y-4 shadow-inner relative">
-                   <Badge variant="secondary" className="absolute top-4 right-4 font-black text-[10px] uppercase">Guarantor {idx + 1}</Badge>
-                   <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 rounded-full bg-background border flex items-center justify-center">
-                            <User className="w-5 h-5 text-slate-400" />
-                         </div>
-                         <div className="flex flex-col">
-                            <span className="font-black text-slate-800">{g.fullname}</span>
-                            <span className="text-[10px] font-bold text-muted-foreground tracking-widest">{g.nic}</span>
-                         </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                         <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                            <Phone className="w-3.5 h-3.5 text-primary" /> {g.phone}
-                         </div>
-                         <div className="flex items-start gap-2 text-xs font-bold text-slate-600 sm:col-span-2">
-                            <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" /> 
-                            <span className="leading-relaxed">{g.address}</span>
-                         </div>
-                      </div>
-                   </div>
-                </div>
-             ))}
-          </div>
-          <div className="p-4 border-t bg-muted/20 flex justify-end">
-             <Button onClick={() => setSelectedGuarantors(null)} className="font-black px-8">Close Details</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Guarantor View Dialog (read-only) */}
+  
     </div>
   );
 }
