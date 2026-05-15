@@ -26,6 +26,14 @@ const loanService = {
     const response = await api.put(`/loans/${id}/schedule`, data);
     return response.data;
   },
+  updateGuarantors: async ({ id, data }: { id: string; data: any }) => {
+    const response = await api.put(`/loans/${id}/guarantors`, data);
+    return response.data;
+  },
+  deleteGuarantor: async ({ id, clientId, index }: { id: string; clientId: string; index: number }) => {
+    const response = await api.delete(`/loans/${id}/guarantors/${clientId}/${index}`);
+    return response.data;
+  },
 };
 
 export const useLoansQuery = (params: any = {}) => {
@@ -84,6 +92,30 @@ export const useUpdateLoanScheduleMutation = (options = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.updateLoanSchedule,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["Loans"] });
+    },
+    ...options,
+  });
+};
+
+export const useUpdateGuarantorsMutation = (options = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: loanService.updateGuarantors,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["Loans"] });
+    },
+    ...options,
+  });
+};
+
+export const useDeleteGuarantorMutation = (options = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: loanService.deleteGuarantor,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["Loans"] });

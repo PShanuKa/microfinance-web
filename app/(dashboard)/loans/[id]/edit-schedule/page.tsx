@@ -5,6 +5,13 @@ import { useForm } from "react-hook-form";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,7 +30,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/Custom/PageHeader";
-import { useLoanQuery, useUpdateLoanScheduleMutation } from "@/services/loanApi";
+import { useLoanQuery, useUpdateLoanScheduleMutation, useUpdateGuarantorsMutation, useDeleteGuarantorMutation } from "@/services/loanApi";
 import { useGroupsQuery } from "@/services/groupApi";
 import { 
   Save, 
@@ -42,8 +49,14 @@ import {
   Receipt,
   LayoutList,
   AlertTriangle,
+
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown,
+  Trash2,
+  Edit,
+  Plus,
+  MoreVertical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +71,7 @@ export default function EditLoanSchedulePage() {
   const [memberGuarantors, setMemberGuarantors] = useState<Record<string, any[]>>({});
   const [isGuarantorModalOpen, setIsGuarantorModalOpen] = useState(false);
   const [activeMember, setActiveMember] = useState<any>(null);
+  const [activeGuarantorIndex, setActiveGuarantorIndex] = useState<number>(0);
 
   const { data: groupsData } = useGroupsQuery({ limit: 100 });
   const { data: loanData, isLoading: loanLoading } = useLoanQuery(id as string);
@@ -68,6 +82,21 @@ export default function EditLoanSchedulePage() {
     onError: (error: any) => {
       setServerError(error.response?.data?.error || "Failed to update loan schedule");
     },
+  });
+
+  const updateGuarantorsMutation = useUpdateGuarantorsMutation({
+    onSuccess: () => {
+      setIsGuarantorModalOpen(false);
+    },
+    onError: (error: any) => {
+      setServerError(error.response?.data?.error || "Failed to update guarantors");
+    }
+  });
+
+  const deleteGuarantorMutation = useDeleteGuarantorMutation({
+    onError: (error: any) => {
+      setServerError(error.response?.data?.error || "Failed to delete guarantor");
+    }
   });
 
   const {
@@ -136,12 +165,6 @@ export default function EditLoanSchedulePage() {
   const onFormSubmit = (data: any) => {
     setServerError(null);
 
-    // Prepare guarantor payload
-    const guarantorPayload = Object.entries(memberGuarantors).map(([clientId, guarantors]) => ({
-      clientId,
-      guarantors: guarantors.map(({ id, ...rest }) => rest) // Remove IDs for clean creation
-    }));
-
     updateMutation.mutate({
       id: id as string,
       data: {
@@ -152,22 +175,48 @@ export default function EditLoanSchedulePage() {
         leaderWeeklyAmount: Number(data.leaderWeeklyAmount),
         memberLentAmount: Number(data.memberLentAmount),
         memberWeeklyAmount: Number(data.memberWeeklyAmount),
-        memberGuarantors: guarantorPayload,
       }
     });
   };
 
-  const openGuarantorManager = (member: any) => {
+  const openGuarantorManager = (member: any, index: number) => {
     setActiveMember(member);
+    setActiveGuarantorIndex(index);
     setIsGuarantorModalOpen(true);
   };
 
-  const handleSaveGuarantors = (guarantors: any[]) => {
-    if (activeMember) {
-      setMemberGuarantors(prev => ({
-        ...prev,
-        [activeMember.clientId]: guarantors
-      }));
+  const handleSaveGuarantors = (guarantor: any) => {
+    if (!activeMember || !loanData?.loan) return;
+
+    // Prepare payload for single guarantor update
+    const docs = guarantor.documents?.map((doc: any) => ({
+      attachmentId: doc.attachmentId,
+      type: doc.type
+    })) || [];
+    
+    updateGuarantorsMutation.mutate({
+      id: id as string,
+      data: {
+        clientId: activeMember.clientId,
+        index: activeGuarantorIndex,
+        guarantor: {
+          fullname: guarantor.fullname,
+          nic: guarantor.nic,
+          phone: guarantor.phone,
+          address: guarantor.address,
+          documents: docs
+        }
+      }
+    });
+  };
+
+  const handleDeleteGuarantor = (clientId: string, index: number) => {
+    if (window.confirm(`Are you sure you want to remove Guarantor ${index + 1}?`)) {
+      deleteGuarantorMutation.mutate({
+        id: id as string,
+        clientId,
+        index
+      });
     }
   };
 
@@ -392,7 +441,6 @@ export default function EditLoanSchedulePage() {
                     const principal = member.isLeader ? leaderLent : memberLent;
                     const weekly = member.isLeader ? leaderWeekly : memberWeekly;
                     const loanAmount = weekly * totalWeeks;
-                    const isComplete = isMemberGuarantorComplete(member.clientId);
 
                     return (
                       <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group border-b last:border-0">
@@ -417,16 +465,55 @@ export default function EditLoanSchedulePage() {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            type="button" 
-                            variant={(memberGuarantors[member.clientId]?.length || 0) > 0 ? "ghost" : "outline"} 
-                            size="sm" 
-                            className="gap-2 font-bold text-primary hover:bg-primary/5"
-                            onClick={() => openGuarantorManager(member)}
-                          >
-                            <ShieldCheck className="w-4 h-4" />
-                            {(memberGuarantors[member.clientId]?.length || 0) > 0 ? "Manage" : "Add Guarantors"}
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
+                                <MoreVertical className="h-4 w-4" />
+                              </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-64 p-2 rounded-xl shadow-xl border-slate-200 bg-card/95 backdrop-blur-md">
+                               <div className="px-2 py-1.5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Guarantor Slots</div>
+                               
+                               {[0, 1].map((idx) => {
+                                 const guarantor = memberGuarantors[member.clientId]?.find((g: any) => g.index === idx);
+                                 return (
+                                   <React.Fragment key={idx}>
+                                     {idx > 0 && <DropdownMenuSeparator className="my-1" />}
+                                     <div className="px-2 py-1 text-[10px] font-bold text-primary/60 uppercase tracking-tighter">Slot {idx + 1}</div>
+                                     {guarantor ? (
+                                       <>
+                                         <DropdownMenuItem 
+                                            className="rounded-lg font-bold py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary gap-2"
+                                            onClick={() => openGuarantorManager(member, idx)}
+                                         >
+                                            <Edit className="w-4 h-4 text-slate-400" />
+                                            <div className="flex flex-col">
+                                               <span className="text-xs">Edit Guarantor {idx + 1}</span>
+                                               <span className="text-[9px] text-muted-foreground line-clamp-1">{guarantor.fullname}</span>
+                                            </div>
+                                         </DropdownMenuItem>
+                                         <DropdownMenuItem 
+                                            className="rounded-lg font-bold py-2.5 cursor-pointer text-rose-500 focus:bg-rose-50 focus:text-rose-600 gap-2"
+                                            onClick={() => handleDeleteGuarantor(member.clientId, idx)}
+                                         >
+                                            <Trash2 className="w-4 h-4" />
+                                            <span className="text-xs">Delete Guarantor {idx + 1}</span>
+                                         </DropdownMenuItem>
+                                       </>
+                                     ) : (
+                                       <DropdownMenuItem 
+                                          className="rounded-lg font-bold py-2.5 cursor-pointer focus:bg-primary/5 focus:text-primary gap-2"
+                                          onClick={() => openGuarantorManager(member, idx)}
+                                       >
+                                          <Plus className="w-4 h-4 text-slate-400" />
+                                          <span className="text-xs text-slate-600">Add Guarantor {idx + 1}</span>
+                                       </DropdownMenuItem>
+                                     )}
+                                   </React.Fragment>
+                                 );
+                               })}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     );
@@ -500,12 +587,14 @@ export default function EditLoanSchedulePage() {
       </form>
 
       {/* Guarantor Modal */}
-      <LoanGuarantorsModal
+      <LoanGuarantorsModal 
         open={isGuarantorModalOpen}
         onOpenChange={setIsGuarantorModalOpen}
         member={activeMember}
-        initialGuarantors={activeMember ? memberGuarantors[activeMember.clientId] || [] : []}
+        index={activeGuarantorIndex}
+        initialGuarantor={activeMember ? memberGuarantors[activeMember.clientId]?.find((g: any) => g.index === activeGuarantorIndex) || null : null}
         onSave={handleSaveGuarantors}
+        isSaving={updateGuarantorsMutation.isPending}
       />
     </div>
   );
