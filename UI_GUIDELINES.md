@@ -85,3 +85,78 @@ Always use the `Pagination` component from `@/components/ui/pagination` instead 
 
 ---
 *Note: Always use Tailwind utility classes defined in the global design system. Avoid ad-hoc inline styles.*
+## 7. User Management Architecture
+The user management system is built using a combination of Shadcn primitives and custom form logic to provide a secure and intuitive experience.
+
+### Core Components Used:
+- **Navigation & Layout**: `PageHeader` (custom) with `Plus` action button.
+- **Modals**: `Dialog`, `DialogContent`, `DialogHeader`, and `DialogTitle` for both creation and editing states.
+- **Form Logic**: `react-hook-form` integrated with `Input`, `Label`, and `Select` components for robust validation and state management.
+- **Data Display**: `Table` components with a `group` hover effect for row-level highlighting.
+- **Interactive Elements**:
+  - `DropdownMenu` for row actions (Edit, Reset Password, Deactivate).
+  - `Badge` for status and role visualization using a curated color palette (Emerald for Active, Rose for Inactive).
+  - `Lucide-React` icons for all actions to enhance cognitive recognition.
+
+### Core Shadcn Components Used:
+To maintain consistent design and accessibility, the `UserForm` strictly utilizes the following **Shadcn UI** primitives:
+
+- **`Button`**: Used for the "Cancel" and "Create/Update" actions. Styled with variants like `outline` for secondary actions.
+- **`Input`**: Standardized for Full Name and Email fields, supporting type-specific validation (e.g., `type="email"`).
+- **`Label`**: Used to provide semantic, accessible descriptions for every form input.
+- **`Select`**: A complex set of primitives (`SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`) used for Role and Status selection, ensuring a consistent custom-styled dropdown experience across all browsers.
+
+### Component Props: `UserForm`
+The `UserForm` component is designed for high reusability between creation and update flows. It accepts the following props:
+
+- **`initialData`**: 
+  - *Type*: `any` or `UserObject`.
+  - *Purpose*: When provided, the form populates with existing data and switches to "Update" mode. If null, it initializes as a "Create" form with default values.
+- **`onSuccess`**: 
+  - *Type*: `() => void`.
+  - *Purpose*: A callback executed after the server successfully saves the data. This is typically used to close the parent dialog and trigger a data refetch.
+- **`onCancel`**: 
+  - *Type*: `() => void`.
+  - *Purpose*: A callback executed when the "Cancel" button is clicked. It ensures the parent dialog state is reset without any side effects.
+
+### Implementation Example:
+```tsx
+<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+  <DialogContent className="sm:max-w-[700px] bg-card/95 backdrop-blur-lg border-none shadow-2xl">
+    <DialogHeader>
+      <DialogTitle className="text-2xl font-bold">
+        {editingUser ? "Edit User Account" : "Create New User Account"}
+      </DialogTitle>
+    </DialogHeader>
+    <UserForm 
+      initialData={editingUser} 
+      onSuccess={() => setIsFormOpen(false)} 
+      onCancel={() => setIsFormOpen(false)} 
+    />
+  </DialogContent>
+</Dialog>
+```
+## 8. Destructive Actions (Confirmation)
+- **Component**: Always use `AlertDialog` from `@/components/ui/alert-dialog` instead of `window.confirm`.
+- **Styles**:
+  - **Content**: `bg-card/95 backdrop-blur-xl border-none shadow-2xl rounded-3xl`.
+  - **Header**: Use `font-black uppercase tracking-tighter` for the title.
+  - **Description**: Explicitly state that the action is permanent and mention what data will be lost (e.g., "associated documents").
+- **Buttons**:
+  - **Cancel**: Standard `AlertDialogCancel` with `rounded-xl` and `font-bold`.
+  - **Action**: Use `bg-rose-500 hover:bg-rose-600 text-white` for the primary destructive action, with `shadow-lg shadow-rose-200`.
+- **States**: Show a "Deleting..." state if the mutation is pending.
+
+
+<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="sm:max-w-[700px] bg-card/95 backdrop-blur-lg border-none shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">{editingUser ? "Edit User Account" : "Create New User Account"}</DialogTitle>
+          </DialogHeader>
+          <UserForm 
+            initialData={editingUser} 
+            onSuccess={() => setIsFormOpen(false)} 
+            onCancel={() => setIsFormOpen(false)} 
+          />
+        </DialogContent>
+      </Dialog>

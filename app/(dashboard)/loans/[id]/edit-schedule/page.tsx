@@ -5,13 +5,17 @@ import { useForm } from "react-hook-form";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+ 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -61,6 +65,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { LoanGuarantorsModal } from "@/components/Custom/LoanGuarantorsModal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function EditLoanSchedulePage() {
   const router = useRouter();
@@ -72,6 +77,7 @@ export default function EditLoanSchedulePage() {
   const [isGuarantorModalOpen, setIsGuarantorModalOpen] = useState(false);
   const [activeMember, setActiveMember] = useState<any>(null);
   const [activeGuarantorIndex, setActiveGuarantorIndex] = useState<number>(0);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ clientId: string, index: number } | null>(null);
 
   const { data: groupsData } = useGroupsQuery({ limit: 100 });
   const { data: loanData, isLoading: loanLoading } = useLoanQuery(id as string);
@@ -94,6 +100,9 @@ export default function EditLoanSchedulePage() {
   });
 
   const deleteGuarantorMutation = useDeleteGuarantorMutation({
+    onSuccess: () => {
+      setDeleteConfirm(null);
+    },
     onError: (error: any) => {
       setServerError(error.response?.data?.error || "Failed to delete guarantor");
     }
@@ -211,13 +220,16 @@ export default function EditLoanSchedulePage() {
   };
 
   const handleDeleteGuarantor = (clientId: string, index: number) => {
-    if (window.confirm(`Are you sure you want to remove Guarantor ${index + 1}?`)) {
-      deleteGuarantorMutation.mutate({
-        id: id as string,
-        clientId,
-        index
-      });
-    }
+    setDeleteConfirm({ clientId, index });
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirm) return;
+    deleteGuarantorMutation.mutate({
+      id: id as string,
+      clientId: deleteConfirm.clientId,
+      index: deleteConfirm.index
+    });
   };
 
   const isMemberGuarantorComplete = (clientId: string) => {
@@ -596,6 +608,26 @@ export default function EditLoanSchedulePage() {
         onSave={handleSaveGuarantors}
         isSaving={updateGuarantorsMutation.isPending}
       />
+
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black text-slate-800 tracking-tighter uppercase">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 font-bold">
+              Are you sure you want to remove this guarantor? This action cannot be undone and all associated documents will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3 mt-6">
+            <AlertDialogCancel className="rounded-xl border-slate-200 font-bold px-6 h-12">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-black px-8 h-12 shadow-lg shadow-rose-200 transition-all"
+            >
+              {deleteGuarantorMutation.isPending ? "Deleting..." : "Yes, Delete Record"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

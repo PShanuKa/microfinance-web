@@ -142,110 +142,94 @@ export function LoanGuarantorsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] bg-card/95 backdrop-blur-xl border-none shadow-2xl overflow-hidden p-0">
-        <div className="bg-primary/5 p-6 border-b">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center border-2 border-background shadow-sm">
-              <User className="w-8 h-8 text-primary" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold tracking-tight">{member.client?.fullname}</h3>
-                <Badge variant="secondary" className="font-black text-xs uppercase px-4 py-1.5 rounded-full bg-slate-900 text-white">Guarantor {index + 1}</Badge>
+      <DialogContent className="sm:max-w-[800px] bg-card/95 backdrop-blur-lg border-none shadow-2xl overflow-hidden p-0">
+        <DialogHeader className="p-8 border-b bg-muted/20">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <DialogTitle className="text-2xl font-bold tracking-tight">
+                {guarantor.fullname || "Add New Guarantor"}
+              </DialogTitle>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                <User className="w-3.5 h-3.5" />
+                <span>Verification for {member.client?.fullname}</span>
+                <Badge variant="outline" className="text-[10px] uppercase font-bold py-0 h-4">{member.client?.clientNo}</Badge>
               </div>
-              <p className="text-sm text-muted-foreground font-semibold flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="font-mono text-[10px]">{member.client?.clientNo}</Badge>
-                <span>{member.client?.nic}</span>
-              </p>
             </div>
+            <Badge variant="secondary" className="font-black text-[10px] uppercase px-4 py-2 rounded-full bg-slate-900 text-white tracking-widest border-none">
+              Slot {index + 1}
+            </Badge>
           </div>
-        </div>
+        </DialogHeader>
 
         <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto">
-          <div className="relative p-8 rounded-3xl border bg-muted/20 space-y-8 shadow-inner border-slate-200/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <h4 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Identity Details</h4>
-              </div>
-              {isComplete && (
-                 <Badge className="bg-emerald-500 text-white gap-1.5 py-1.5 px-4 rounded-full text-[10px] font-black uppercase tracking-widest border-none">
-                   <CheckCircle2 className="w-3.5 h-3.5" /> Ready to Save
-                 </Badge>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Personal Details */}
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-black text-slate-500 tracking-widest ml-1">Full Name</Label>
-                  <div className="relative group">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <Input 
-                      className="pl-12 h-12 bg-white border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 transition-all font-bold" 
-                      value={guarantor.fullname} 
-                      onChange={(e) => handleFieldChange("fullname", e.target.value)}
-                      placeholder="Sunil Perera"
-                    />
-                  </div>
+          <div className="grid gap-6">
+            <div className="grid gap-4">
+              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4 text-primary" /> Identity Details
+              </h4>
+              
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="fullname">Full Name</Label>
+                  <Input 
+                    id="fullname"
+                    placeholder="Enter guarantor's full name" 
+                    value={guarantor.fullname} 
+                    onChange={(e) => handleFieldChange("fullname", e.target.value)}
+                    className="h-11"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] uppercase font-black text-slate-500 tracking-widest ml-1">NIC Number</Label>
-                    <div className="relative group">
-                      <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                      <Input 
-                        className="pl-12 h-12 bg-white border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 transition-all font-bold" 
-                        value={guarantor.nic} 
-                        onChange={(e) => handleFieldChange("nic", e.target.value)}
-                        placeholder="123456789V"
-                      />
-                    </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="nic">NIC Number</Label>
+                    <Input 
+                      id="nic"
+                      placeholder="e.g. 123456789V" 
+                      value={guarantor.nic} 
+                      onChange={(e) => handleFieldChange("nic", e.target.value)}
+                      className="h-11"
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] uppercase font-black text-slate-500 tracking-widest ml-1">Phone Number</Label>
-                    <div className="relative group">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                      <Input 
-                        className="pl-12 h-12 bg-white border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 transition-all font-bold" 
-                        value={guarantor.phone} 
-                        onChange={(e) => handleFieldChange("phone", e.target.value)}
-                        placeholder="07XXXXXXXX"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[10px] uppercase font-black text-slate-500 tracking-widest ml-1">Residential Address</Label>
-                  <div className="relative group">
-                    <MapPin className="absolute left-4 top-4 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
-                    <Textarea 
-                      className="pl-12 min-h-[100px] bg-white border-slate-200 rounded-xl focus:ring-4 focus:ring-primary/10 transition-all font-bold resize-none" 
-                      value={guarantor.address} 
-                      onChange={(e) => handleFieldChange("address", e.target.value)}
-                      placeholder="Enter full home address..."
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input 
+                      id="phone"
+                      placeholder="e.g. 07XXXXXXXX" 
+                      value={guarantor.phone} 
+                      onChange={(e) => handleFieldChange("phone", e.target.value)}
+                      className="h-11"
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* Document Uploads */}
-              <div className="space-y-4">
-                <Label className="text-[10px] uppercase font-black text-slate-500 tracking-widest ml-1">Verification Documents</Label>
-                
-                {/* Profile Image - Circular Upload */}
-                <div className="flex items-center gap-6 p-4 bg-white border rounded-2xl border-slate-200 shadow-sm mb-4">
-                   <div className="relative group">
-                      <div className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary">
+                <div className="grid gap-2">
+                  <Label htmlFor="address">Residential Address</Label>
+                  <Textarea 
+                    id="address"
+                    placeholder="Enter full home address..." 
+                    value={guarantor.address} 
+                    onChange={(e) => handleFieldChange("address", e.target.value)}
+                    className="min-h-[100px] resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
+                <FileText className="w-4 h-4 text-primary" /> Verification Documents
+              </h4>
+              
+              <div className="grid gap-4 p-6 rounded-2xl border bg-muted/10">
+                {/* Profile Image Row */}
+                <div className="flex items-center gap-6 p-4 bg-white border rounded-xl shadow-sm">
+                   <div className="relative group shrink-0">
+                      <div className="w-16 h-16 rounded-full bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary">
                          {getDocByType("PROFILE_IMAGE") ? (
                            <img src={getDocByType("PROFILE_IMAGE")?.fileUrl} className="w-full h-full object-cover" alt="Guarantor" />
                          ) : (
-                           <Camera className="w-8 h-8 text-slate-400 group-hover:text-primary" />
+                           <Camera className="w-6 h-6 text-slate-400 group-hover:text-primary" />
                          )}
                       </div>
                       <label className="absolute inset-0 cursor-pointer">
@@ -258,13 +242,13 @@ export function LoanGuarantorsModal({
                       </label>
                       {uploadingType === "PROFILE_IMAGE" && (
                         <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-full">
-                           <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                           <Loader2 className="w-5 h-5 animate-spin text-primary" />
                         </div>
                       )}
                    </div>
                    <div className="flex-1">
-                      <h5 className="text-sm font-black text-slate-800">Profile Photo</h5>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Clear face photo required</p>
+                      <h5 className="text-xs font-bold text-slate-800">Profile Photo</h5>
+                      <p className="text-[10px] text-muted-foreground uppercase font-semibold">Clear face photo required</p>
                    </div>
                    {getDocByType("PROFILE_IMAGE") && (
                      <Button 
@@ -286,8 +270,8 @@ export function LoanGuarantorsModal({
                     return (
                       <div key={type.id} className="relative">
                         <label className={cn(
-                          "flex flex-col items-center justify-center gap-2 p-3 rounded-2xl border-2 border-dashed transition-all cursor-pointer h-[100px]",
-                          doc ? "bg-emerald-50 border-emerald-200" : "bg-slate-50 border-slate-200 hover:border-primary hover:bg-primary/5"
+                          "flex flex-col items-center justify-center gap-2 p-3 rounded-xl border transition-all cursor-pointer h-24",
+                          doc ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-200 hover:border-primary hover:bg-primary/5"
                         )}>
                           <input 
                             type="file" 
@@ -295,16 +279,16 @@ export function LoanGuarantorsModal({
                             onChange={(e) => e.target.files?.[0] && handleFileUpload(type.id, e.target.files[0])}
                           />
                           {isUploading ? (
-                            <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
                           ) : doc ? (
                             <>
-                              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                              <span className="text-[9px] font-black uppercase text-emerald-700 tracking-tighter text-center line-clamp-1">{type.label} Uploaded</span>
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                              <span className="text-[9px] font-bold uppercase text-emerald-700 tracking-tighter text-center line-clamp-1">{type.label} Uploaded</span>
                             </>
                           ) : (
                             <>
-                              <type.icon className="w-5 h-5 text-slate-400" />
-                              <span className="text-[9px] font-black uppercase text-slate-500 tracking-tighter">{type.label}</span>
+                              <type.icon className="w-4 h-4 text-slate-400" />
+                              <span className="text-[9px] font-bold uppercase text-slate-500 tracking-tighter">{type.label}</span>
                             </>
                           )}
                         </label>
@@ -314,9 +298,9 @@ export function LoanGuarantorsModal({
                                 e.preventDefault();
                                 removeDocument(guarantor.documents.findIndex(d => d.type === type.id));
                               }}
-                              className="absolute -top-2 -right-2 bg-white border shadow-md rounded-full p-1 text-rose-500 hover:text-rose-600 transition-colors"
+                              className="absolute -top-1 -right-1 bg-white border shadow-sm rounded-full p-1 text-rose-500 hover:text-rose-600 transition-colors"
                            >
-                             <X className="w-3 h-3" />
+                             <X className="w-2.5 h-2.5" />
                            </button>
                         )}
                       </div>
@@ -328,26 +312,26 @@ export function LoanGuarantorsModal({
           </div>
         </div>
 
-        <div className="p-8 border-t bg-slate-50/50 flex justify-end gap-4">
+        <div className="p-8 border-t bg-muted/10 flex justify-end gap-3">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)} 
-            className="px-8 h-12 font-bold rounded-xl border-slate-200 hover:bg-white transition-all"
+            className="px-6 h-11 font-bold rounded-lg border-slate-200 hover:bg-white transition-all"
             disabled={isSaving}
           >
             Cancel
           </Button>
           <Button 
             onClick={handleSave} 
-            className="px-12 h-12 font-black shadow-xl shadow-primary/30 rounded-xl transition-all bg-slate-900 hover:bg-slate-800"
+            className="px-8 h-11 font-bold shadow-lg transition-all"
             disabled={isSaving}
           >
             {isSaving ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" /> 
-                Saving Data...
+                Saving...
               </>
-            ) : `Confirm & Save Guarantor ${index + 1}`}
+            ) : initialGuarantor ? "Update Guarantor" : "Save Guarantor"}
           </Button>
         </div>
       </DialogContent>
