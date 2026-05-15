@@ -270,7 +270,7 @@ export default function LoanViewPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 ">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button
@@ -675,24 +675,24 @@ export default function LoanViewPage() {
             <CardContent className="p-0">
               <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                 <Table className="relative">
-                  <TableHeader className="sticky top-0 z-10 bg-slate-50 shadow-sm">
-                    <TableRow className="border-b">
-                      <TableHead className="font-black text-[10px] uppercase text-slate-500 py-4 px-6 w-16">
+                  <TableHeader >
+                    <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
+                      <TableHead className="font-bold text-foreground">
                         Week
                       </TableHead>
-                      <TableHead className="font-black text-[10px] uppercase text-slate-500 py-4">
+                      <TableHead className="font-bold text-foreground">
                         Client
                       </TableHead>
-                      <TableHead className="font-black text-[10px] uppercase text-slate-500 py-4">
+                      <TableHead className="font-bold text-foreground">
                         Due Date
                       </TableHead>
-                      <TableHead className="font-black text-[10px] uppercase text-slate-500 py-4 text-right">
+                      <TableHead className="font-bold text-foreground">
                         Target
                       </TableHead>
-                      <TableHead className="font-black text-[10px] uppercase text-slate-500 py-4 text-right">
+                      <TableHead className="font-bold text-foreground">
                         Collected
                       </TableHead>
-                      <TableHead className="font-black text-[10px] uppercase text-slate-500 py-4 text-center">
+                      <TableHead className="text-center font-bold text-foreground">
                         Status
                       </TableHead>
                     </TableRow>
@@ -706,27 +706,34 @@ export default function LoanViewPage() {
                           inst.status === "PAID" ? "bg-emerald-500/[0.02]" : "",
                         )}
                       >
-                        <TableCell className="py-4 px-6 font-black text-slate-400">
+                        <TableCell className="text-sm font-semibold text-slate-600">
                           #{inst.weekNumber}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-bold text-slate-800">
+                            <span className="font-bold text-foreground group-hover:text-primary transition-colors">
                               {inst.client?.fullname}
                             </span>
-                            <span className="text-[10px] font-mono text-muted-foreground">
+                            <span className="text-xs text-muted-foreground font-mono">
                               {inst.client?.clientNo}
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-sm font-semibold text-slate-600">
+                        <TableCell >
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+
                           {format(new Date(inst.dueDate), "PPP")}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-right font-black text-primary">
+                        <TableCell >
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
                           Rs. {Number(inst.dueAmount).toLocaleString()}
+                          </div>
                         </TableCell>
-                        <TableCell className="text-right font-black text-emerald-600">
+                        <TableCell >
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
                           Rs. {Number(inst.paidAmount).toLocaleString()}
+                          </div>
                         </TableCell>
                         <TableCell className="text-center py-4">
                           <Badge

@@ -91,7 +91,7 @@ export default function ClientProfilePage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 ">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-full hover:bg-primary/10 transition-colors h-12 w-12 border shrink-0">

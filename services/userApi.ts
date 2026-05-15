@@ -32,25 +32,27 @@ export const useUsersQuery = (params: any = {}, options = {}) => {
   });
 };
 
-export const useCreateUserMutation = (options = {}) => {
+export const useCreateUserMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: userService.createUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Users"] });
-    },
     ...options,
+    onSuccess: (...args: any[]) => {
+      queryClient.invalidateQueries({ queryKey: ["Users"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };
 
-export const useUpdateUserMutation = (options = {}) => {
+export const useUpdateUserMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: userService.updateUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Users"] });
-    },
     ...options,
+    onSuccess: (...args: any[]) => {
+      queryClient.invalidateQueries({ queryKey: ["Users"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };
 
@@ -61,13 +63,14 @@ export const useResetPasswordMutation = (options = {}) => {
   });
 };
 
-export const useUpdateUserStatusMutation = (options = {}) => {
+export const useUpdateUserStatusMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: userService.updateStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Users"] });
-    },
     ...options,
+    onSuccess: (...args: any[]) => {
+      queryClient.invalidateQueries({ queryKey: ["Users"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };

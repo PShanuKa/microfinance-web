@@ -65,74 +65,80 @@ export const useLoanInstalmentsQuery = (id: string, options = {}) => {
   });
 };
 
-export const useCreateLoanMutation = (options = {}) => {
+export const useCreateLoanMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.createLoan,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Loans"] });
-      queryClient.invalidateQueries({ queryKey: ["Groups"] }); // Invalidate groups as they might have a new active loan
-    },
     ...options,
+    onSuccess: (...args: any[]) => {
+      queryClient.invalidateQueries({ queryKey: ["Loans"] });
+      queryClient.invalidateQueries({ queryKey: ["Groups"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };
 
-export const useApproveLoanMutation = (options = {}) => {
+export const useApproveLoanMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.approveLoan,
-    onSuccess: (_, variables) => {
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["Loans"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
-    ...options,
   });
 };
 
-export const useRejectLoanMutation = (options = {}) => {
+export const useRejectLoanMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.rejectLoan,
-    onSuccess: (_, variables) => {
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["Loans"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
-    ...options,
   });
 };
 
-export const useUpdateLoanScheduleMutation = (options = {}) => {
+export const useUpdateLoanScheduleMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.updateLoanSchedule,
-    onSuccess: (_, variables) => {
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["Loans"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
-    ...options,
   });
 };
 
-export const useUpdateGuarantorsMutation = (options = {}) => {
+export const useUpdateGuarantorsMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.updateGuarantors,
-    onSuccess: (_, variables) => {
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["Loans"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
-    ...options,
   });
 };
 
-export const useDeleteGuarantorMutation = (options = {}) => {
+export const useDeleteGuarantorMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.deleteGuarantor,
-    onSuccess: (_, variables) => {
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["Loans"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
-    ...options,
   });
 };

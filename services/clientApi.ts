@@ -18,6 +18,10 @@ const clientService = {
     const response = await api.put(`/clients/${id}`, data);
     return response.data;
   },
+  deleteClient: async (id: string) => {
+    const response = await api.delete(`/clients/${id}`);
+    return response.data;
+  },
 };
 
 export const useClientsQuery = (params: any = {}, options = {}) => {
@@ -37,24 +41,40 @@ export const useClientQuery = (id: string, options = {}) => {
   });
 };
 
-export const useCreateClientMutation = (options = {}) => {
+export const useCreateClientMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: clientService.createClient,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Clients"] });
-    },
     ...options,
+    onSuccess: (...args: any[]) => {
+      queryClient.invalidateQueries({ queryKey: ["Clients"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };
 
-export const useUpdateClientMutation = (options = {}) => {
+export const useUpdateClientMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: clientService.updateClient,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Clients"] });
-    },
     ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
+      queryClient.invalidateQueries({ queryKey: ["Client", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["Clients"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+
+export const useDeleteClientMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: clientService.deleteClient,
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
+      queryClient.invalidateQueries({ queryKey: ["Client", variables] });
+      queryClient.invalidateQueries({ queryKey: ["Clients"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
   });
 };

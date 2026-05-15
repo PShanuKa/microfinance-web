@@ -36,7 +36,8 @@ import {
   Briefcase,
   Clock,
   Filter,
-  User2
+  User2,
+  Trash2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -57,7 +58,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useClientsQuery } from "@/services/clientApi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useClientsQuery, useDeleteClientMutation } from "@/services/clientApi";
 import { ClientForm } from "@/components/Custom/ClientForm";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -67,8 +78,18 @@ export default function ClientsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const { data, isLoading } = useClientsQuery({ page, limit: 10, search, status: statusFilter });
+  const deleteMutation = useDeleteClientMutation({
+    onSuccess: () => {
+      setDeleteConfirmId(null);
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.error || "Failed to delete client. They might have active loans or group associations.");
+      setDeleteConfirmId(null);
+    }
+  });
 
   const handleEdit = (client: any) => {
     router.push(`/clients/${client.id}/edit`);
@@ -80,6 +101,12 @@ export default function ClientsPage() {
 
   const handleCreate = () => {
     router.push("/clients/new");
+  };
+
+  const handleDelete = () => {
+    if (deleteConfirmId) {
+      deleteMutation.mutate(deleteConfirmId);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -226,6 +253,13 @@ export default function ClientsPage() {
                             <DropdownMenuItem onClick={() => handleEdit(client)} className="gap-2 cursor-pointer">
                               <UserPen className="w-4 h-4 text-blue-500" /> Edit Client
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => setDeleteConfirmId(client.id)} 
+                              className="gap-2 cursor-pointer text-rose-500 focus:text-rose-500 focus:bg-rose-500/10"
+                            >
+                              <Trash2 className="w-4 h-4" /> Delete Client
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -275,7 +309,27 @@ export default function ClientsPage() {
         </CardContent>
       </Card>
 
-    
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black text-slate-800 tracking-tighter uppercase">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 font-bold">
+              Are you sure you want to delete this client? This action cannot be undone if the client has no active associations.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3 mt-6">
+            <AlertDialogCancel className="rounded-xl border-slate-200 font-bold px-6 h-12">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-black px-8 h-12 shadow-lg shadow-rose-200 transition-all"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Yes, Delete Client"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

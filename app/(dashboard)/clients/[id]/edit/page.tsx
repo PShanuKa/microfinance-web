@@ -32,7 +32,7 @@ export default function EditClientPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 max-w-5xl mx-auto">
+    <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <div className="flex items-center gap-4">
         <Button 
           variant="ghost" 

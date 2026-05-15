@@ -64,65 +64,75 @@ export const useGroupQuery = (id: string, options = {}) => {
   });
 };
 
-export const useCreateGroupMutation = (options = {}) => {
+export const useCreateGroupMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: groupService.createGroup,
     ...options,
+    onSuccess: (...args: any[]) => {
+      queryClient.invalidateQueries({ queryKey: ["Groups"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };
 
-export const useUpdateGroupMutation = (options = {}) => {
+export const useUpdateGroupMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: groupService.updateGroup,
-    onSuccess: (_, variables) => {
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Group", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["Groups"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
-    ...options,
   });
 };
 
-export const useAddMemberMutation = (options = {}) => {
+export const useAddMemberMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: groupService.addMember,
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["Group", variables.groupId] });
-    },
     ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
+      queryClient.invalidateQueries({ queryKey: ["Group", variables.groupId] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
   });
 };
 
-export const useUpdateMemberMutation = (options = {}) => {
+export const useUpdateMemberMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: groupService.updateMember,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["Group", data.member.groupId] });
-    },
     ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
+      queryClient.invalidateQueries({ queryKey: ["Group", data.member.groupId] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
   });
 };
 
-export const useRemoveMemberMutation = (options = {}) => {
+export const useRemoveMemberMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: groupService.removeMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Group"] });
-    },
     ...options,
+    onSuccess: (...args: any[]) => {
+      queryClient.invalidateQueries({ queryKey: ["Group"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };
 
-export const useDeleteGroupMutation = (options = {}) => {
+export const useDeleteGroupMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: groupService.deleteGroup,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Groups"] });
-    },
     ...options,
+    onSuccess: (...args: any[]) => {
+      queryClient.invalidateQueries({ queryKey: ["Groups"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };
