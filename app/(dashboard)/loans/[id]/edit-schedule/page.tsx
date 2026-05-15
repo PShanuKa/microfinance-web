@@ -34,7 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/Custom/PageHeader";
-import { useLoanQuery, useUpdateLoanScheduleMutation, useUpdateGuarantorsMutation, useDeleteGuarantorMutation } from "@/services/loanApi";
+import { useLoanQuery, useLoanInstalmentsQuery, useUpdateLoanScheduleMutation, useUpdateGuarantorsMutation, useDeleteGuarantorMutation } from "@/services/loanApi";
 import { useGroupsQuery } from "@/services/groupApi";
 import { 
   Save, 
@@ -81,6 +81,7 @@ export default function EditLoanSchedulePage() {
 
   const { data: groupsData } = useGroupsQuery({ limit: 100 });
   const { data: loanData, isLoading: loanLoading } = useLoanQuery(id as string);
+  const { data: instalmentsData, isLoading: instalmentsLoading } = useLoanInstalmentsQuery(id as string);
   const updateMutation = useUpdateLoanScheduleMutation({
     onSuccess: () => {
       router.push(`/loans/${id}`);

@@ -10,6 +10,10 @@ const loanService = {
     const response = await api.get(`/loans/${id}`);
     return response.data;
   },
+  getLoanInstalments: async (id: string) => {
+    const response = await api.get(`/loans/${id}/instalments`);
+    return response.data;
+  },
   createLoan: async (data: any) => {
     const response = await api.post("/loans", data);
     return response.data;
@@ -47,6 +51,15 @@ export const useLoanQuery = (id: string, options = {}) => {
   return useQuery({
     queryKey: ["Loan", id],
     queryFn: () => loanService.getLoan(id),
+    enabled: !!id,
+    ...options,
+  });
+};
+
+export const useLoanInstalmentsQuery = (id: string, options = {}) => {
+  return useQuery({
+    queryKey: ["Loan", id, "Instalments"],
+    queryFn: () => loanService.getLoanInstalments(id),
     enabled: !!id,
     ...options,
   });
