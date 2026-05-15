@@ -25,6 +25,7 @@ import {
 import { PageHeader } from "@/components/Custom/PageHeader";
 import { useCreateLoanMutation } from "@/services/loanApi";
 import { useGroupsQuery } from "@/services/groupApi";
+import { useSettingsQuery } from "@/services/settingsApi";
 import { 
   Save, 
   ArrowLeft, 
@@ -44,11 +45,19 @@ import {
   LayoutList,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  HelpCircle,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { LoanGuarantorsModal } from "@/components/Custom/LoanGuarantorsModal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function CreateLoanPage() {
   const router = useRouter();
@@ -61,6 +70,9 @@ export default function CreateLoanPage() {
   const [activeMember, setActiveMember] = useState<any>(null);
 
   const { data: groupsData, isLoading: groupsLoading } = useGroupsQuery({ limit: 100 });
+  const { data: settingsData } = useSettingsQuery();
+  const settings = settingsData?.settings;
+
   const createMutation = useCreateLoanMutation({
     onSuccess: () => {
       router.push("/loans");
@@ -75,11 +87,12 @@ export default function CreateLoanPage() {
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
       groupId: "",
-      totalWeeks: 12,
+      totalWeeks: 50,
       processingFee: 500,
       leaderLentAmount: 25000,
       leaderWeeklyAmount: 2200,
@@ -87,6 +100,13 @@ export default function CreateLoanPage() {
       memberWeeklyAmount: 1800,
     },
   });
+
+  // Set default weeks from settings when loaded
+  useEffect(() => {
+    if (settings) {
+      setValue("totalWeeks", settings.defaultLoanWeeks);
+    }
+  }, [settings, setValue]);
 
   const selectedGroupId = watch("groupId");
   const selectedGroup = groupsData?.groups?.find((g: any) => g.id === selectedGroupId);
@@ -122,6 +142,14 @@ export default function CreateLoanPage() {
         setServerError("Please complete guarantor details for all group members before submitting.");
         return;
       }
+    }
+
+    // Validate duration against settings
+    if (settings) {
+       if (totalWeeks < settings.minLoanWeeks || totalWeeks > settings.maxLoanWeeks) {
+          setServerError(`Loan duration must be between ${settings.minLoanWeeks} and ${settings.maxLoanWeeks} weeks.`);
+          return;
+       }
     }
 
     // Prepare guarantor payload
@@ -171,14 +199,14 @@ export default function CreateLoanPage() {
         title="Create New Loan"
         description="Fill in the group loan details and submit for approval or save as draft"
       >
-        <Button variant="outline" onClick={() => router.back()} className="gap-2">
+        <Button variant="outline" onClick={() => router.back()} className="gap-2 border-primary/20 hover:bg-primary/5">
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
       </PageHeader>
 
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
         {serverError && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm font-black p-4 rounded-xl text-center flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 duration-300">
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm font-black p-4 rounded-xl text-center flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 duration-300 shadow-lg shadow-rose-500/5">
             <AlertCircle className="w-5 h-5" /> {serverError}
           </div>
         )}
@@ -258,13 +286,37 @@ export default function CreateLoanPage() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
               <div className="grid gap-2">
-                <Label htmlFor="totalWeeks" className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Duration (Weeks)</Label>
-                <Input
-                  id="totalWeeks"
-                  type="number"
-                  className="bg-background/50 h-12 text-lg font-black"
-                  {...register("totalWeeks", { required: true, min: 1 })}
-                />
+                <Label htmlFor="totalWeeks" className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                   Duration (Weeks)
+                   {settings && (
+                      <TooltipProvider>
+                         <Tooltip>
+                            <TooltipTrigger type="button">
+                               <HelpCircle className="h-3 w-3" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                               <p className="text-xs font-bold">Policy Limit: {settings.minLoanWeeks} - {settings.maxLoanWeeks} Weeks</p>
+                            </TooltipContent>
+                         </Tooltip>
+                      </TooltipProvider>
+                   )}
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="totalWeeks"
+                    type="number"
+                    className={cn(
+                       "bg-background/50 h-12 text-lg font-black pr-10",
+                       settings && (totalWeeks < settings.minLoanWeeks || totalWeeks > settings.maxLoanWeeks) ? "border-rose-500 focus-visible:ring-rose-500" : ""
+                    )}
+                    {...register("totalWeeks", { required: true, min: 1 })}
+                  />
+                  {settings && (
+                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <Badge variant="outline" className="text-[10px] font-black h-5 px-1 bg-muted/50">{settings.minLoanWeeks}-{settings.maxLoanWeeks}</Badge>
+                     </div>
+                  )}
+                </div>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="processingFee" className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Processing Fee (Rs.)</Label>
@@ -275,6 +327,13 @@ export default function CreateLoanPage() {
                   {...register("processingFee", { required: true, min: 0 })}
                 />
               </div>
+              
+              {settings && (totalWeeks < settings.minLoanWeeks || totalWeeks > settings.maxLoanWeeks) && (
+                 <div className="col-span-2 flex items-center gap-2 text-rose-500 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    Invalid duration based on system policy
+                 </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -302,7 +361,7 @@ export default function CreateLoanPage() {
                   <Input
                     id="leaderWeeklyAmount"
                     type="number"
-                    className="bg-background/50 h-11 font-black"
+                    className="bg-background/50 h-11 font-black text-emerald-600"
                     {...register("leaderWeeklyAmount", { required: true })}
                   />
                 </div>
@@ -332,7 +391,7 @@ export default function CreateLoanPage() {
                   <Input
                     id="memberWeeklyAmount"
                     type="number"
-                    className="bg-background/50 h-11 font-black"
+                    className="bg-background/50 h-11 font-black text-emerald-600"
                     {...register("memberWeeklyAmount", { required: true })}
                   />
                 </div>
@@ -348,7 +407,7 @@ export default function CreateLoanPage() {
               <CardTitle className="text-xl font-bold flex items-center gap-2 text-slate-800">
                 <LayoutList className="w-5 h-5 text-primary" /> Member Restructuring & Guarantors
               </CardTitle>
-              <CardDescription>Assign guarantors and review member-wise loan details</CardDescription>
+              <CardDescription className="font-medium">Assign guarantors and review member-wise loan details</CardDescription>
             </div>
             {selectedGroup && (
               <Badge variant="outline" className="font-black bg-background/50 px-4 py-1.5 rounded-full border-primary/20 text-primary uppercase text-[10px] tracking-widest">
@@ -361,12 +420,12 @@ export default function CreateLoanPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-                    <TableHead className="font-bold text-foreground">Member</TableHead>
-                    <TableHead className="font-bold text-foreground text-right">Lent (Rs.)</TableHead>
-                    <TableHead className="font-bold text-foreground text-right">Weekly (Rs.)</TableHead>
-                    <TableHead className="font-bold text-foreground text-right">Total (Rs.)</TableHead>
-                    <TableHead className="font-bold text-foreground text-center">Guarantors</TableHead>
-                    <TableHead className="text-right font-bold text-foreground">Action</TableHead>
+                    <TableHead className="font-bold text-foreground py-4">Member</TableHead>
+                    <TableHead className="font-bold text-foreground text-right py-4">Lent (Rs.)</TableHead>
+                    <TableHead className="font-bold text-foreground text-right py-4">Weekly (Rs.)</TableHead>
+                    <TableHead className="font-bold text-foreground text-right py-4">Total (Rs.)</TableHead>
+                    <TableHead className="font-bold text-foreground text-center py-4">Guarantors</TableHead>
+                    <TableHead className="text-right font-bold text-foreground py-4">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -384,10 +443,10 @@ export default function CreateLoanPage() {
                       const isComplete = isMemberGuarantorComplete(member.clientId);
 
                       return (
-                        <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group">
+                        <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group border-b last:border-0">
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="font-black text-slate-800 flex items-center gap-1.5">
+                              <span className="font-black text-slate-800 flex items-center gap-1.5 group-hover:text-primary transition-colors">
                                 {member.client.fullname}
                                 {member.isLeader && <Crown className="w-3.5 h-3.5 text-amber-500" />}
                               </span>
@@ -410,13 +469,13 @@ export default function CreateLoanPage() {
                           <TableCell className="text-right">
                             <Button 
                               type="button" 
-                              variant={isComplete ? "outline" : "default"} 
+                              variant={isComplete ? "ghost" : "default"} 
                               size="sm" 
                               className={cn("gap-2 font-bold", !isComplete && "shadow-lg shadow-primary/20")}
                               onClick={() => openGuarantorManager(member)}
                             >
                               <ShieldCheck className="w-4 h-4" /> 
-                              {isComplete ? "Edit Guarantors" : "Add Guarantors"}
+                              {isComplete ? "Edit Details" : "Add Guarantors"}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -432,40 +491,40 @@ export default function CreateLoanPage() {
         {/* Global Stats Projection */}
         <Card className="border-none shadow-2xl bg-slate-900 text-white overflow-hidden relative">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full -mr-32 -mt-32 blur-[100px] opacity-50"></div>
-          <CardHeader className="border-b border-white/10 relative z-10">
+          <CardHeader className="border-b border-white/10 relative z-10 bg-white/5">
             <CardTitle className="text-lg font-black flex items-center gap-2">
               <Wallet className="w-5 h-5 text-primary" /> GLOBAL FINANCIAL PROJECTION
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0 relative z-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
-              <div className="p-6 flex flex-col gap-1">
+              <div className="p-6 flex flex-col gap-1 hover:bg-white/5 transition-colors">
                  <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest flex items-center gap-1.5">
-                    Total Principal
+                    <ArrowUpRight className="w-3 h-3" /> Total Principal
                  </span>
                  <span className="text-3xl font-black text-white">
                     Rs. {totalLentAmount.toLocaleString()}
                  </span>
               </div>
-              <div className="p-6 flex flex-col gap-1">
+              <div className="p-6 flex flex-col gap-1 hover:bg-white/5 transition-colors">
                  <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest flex items-center gap-1.5">
-                    Expected Receipts
+                    <TrendingUp className="w-3 h-3 text-emerald-400" /> Expected Receipts
                  </span>
                  <span className="text-3xl font-black text-emerald-400">
                     Rs. {totalScheduledReceipts.toLocaleString()}
                  </span>
               </div>
-              <div className="p-6 flex flex-col gap-1">
+              <div className="p-6 flex flex-col gap-1 hover:bg-white/5 transition-colors">
                  <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest flex items-center gap-1.5">
-                    Projected Margin
+                    <TrendingUp className="w-3 h-3 text-primary" /> Projected Margin
                  </span>
                  <span className="text-3xl font-black text-primary">
                     Rs. {(totalScheduledReceipts - totalLentAmount).toLocaleString()}
                  </span>
               </div>
-              <div className="p-6 flex flex-col gap-1 bg-primary/5">
+              <div className="p-6 flex flex-col gap-1 bg-primary/10 border-l sm:border-l-0">
                  <span className="text-[10px] uppercase font-black text-white tracking-widest flex items-center gap-1.5">
-                    Processing Income
+                    <Receipt className="w-3 h-3 text-amber-400" /> Processing Income
                  </span>
                  <span className="text-3xl font-black text-amber-400">
                     Rs. {(Number(watch("processingFee") || 0) * totalMembers).toLocaleString()}
@@ -475,14 +534,24 @@ export default function CreateLoanPage() {
           </CardContent>
         </Card>
 
-        <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6">
+        {settings && (
+           <div className="bg-primary/5 border border-primary/10 p-4 rounded-xl flex items-center gap-3">
+              <Info className="w-5 h-5 text-primary shrink-0" />
+              <div className="text-xs text-muted-foreground font-medium">
+                 System Policy: Maximum <strong>{settings.maxActiveLoansGroup}</strong> active loan(s) allowed per group. 
+                 Duration must be <strong>{settings.minLoanWeeks} to {settings.maxLoanWeeks} weeks</strong>.
+              </div>
+           </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t">
           <Button 
             type="submit" 
             variant="outline"
             size="lg" 
             disabled={createMutation.isPending || !selectedGroupId}
             onClick={() => setIsDraft(true)}
-            className="gap-2 px-8 h-14 font-black text-slate-700 border-2"
+            className="gap-2 px-8 h-14 font-black text-slate-700 border-2 hover:bg-slate-50 transition-all"
           >
             {createMutation.isPending && isDraft ? "Saving..." : (
               <>
@@ -495,7 +564,7 @@ export default function CreateLoanPage() {
             size="lg" 
             disabled={createMutation.isPending || !selectedGroupId}
             onClick={() => setIsDraft(false)}
-            className="gap-2 px-12 h-14 font-black shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90 text-lg"
+            className="gap-2 px-12 h-14 font-black shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90 text-lg transition-all"
           >
             {createMutation.isPending && !isDraft ? "Submitting..." : (
               <>
