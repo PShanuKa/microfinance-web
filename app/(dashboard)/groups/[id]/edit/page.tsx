@@ -112,6 +112,7 @@ export default function EditGroupPage() {
       branch: "",
       collectionDay: 1,
       officerId: "",
+      location: "",
     },
   });
 
@@ -122,6 +123,7 @@ export default function EditGroupPage() {
         branch: groupData.group.branch,
         collectionDay: groupData.group.collectionDay,
         officerId: groupData.group.officerId,
+        location: groupData.group.location || "",
       });
     }
   }, [groupData, reset]);
@@ -166,7 +168,7 @@ export default function EditGroupPage() {
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
         title={`Manage Group: ${group?.name}`}
-        description={`Branch: ${group?.branch} | Collection Day: ${DAYS[(group?.collectionDay || 1) - 1].name}`}
+        description={`Branch: ${group?.branch} | Location: ${group?.location || "N/A"} | Collection Day: ${DAYS[(group?.collectionDay || 1) - 1].name}`}
       >
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push("/groups")} className="gap-2">
@@ -215,6 +217,15 @@ export default function EditGroupPage() {
                     id="branch"
                     {...register("branch", { required: "Branch is required" })}
                     className={cn("bg-background/50", errors.branch && "border-destructive")}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="location">Location / Area</Label>
+                  <Input
+                    id="location"
+                    {...register("location", { required: "Location is required" })}
+                    className={cn("bg-background/50", errors.location && "border-destructive")}
                   />
                 </div>
 

@@ -118,6 +118,17 @@ export default function CreateGroupPage() {
                   {errors.branch && <p className="text-xs text-destructive">{errors.branch.message as string}</p>}
                 </div>
 
+                <div className="grid gap-2">
+                  <Label htmlFor="location">Location / Area</Label>
+                  <Input
+                    id="location"
+                    placeholder="e.g. Kaduwela, Malabe"
+                    {...register("location", { required: "Location is required" })}
+                    className={errors.location ? "border-destructive" : ""}
+                  />
+                  {errors.location && <p className="text-xs text-destructive">{errors.location.message as string}</p>}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Collection Day</Label>

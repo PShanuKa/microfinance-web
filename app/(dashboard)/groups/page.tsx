@@ -14,7 +14,10 @@ import {
   Eye,
   Trash2,
   Settings2,
-  UserCheck
+  UserCheck,
+  User,
+  Crown,
+  Phone
 } from "lucide-react";
 import {
   Table,
@@ -148,10 +151,11 @@ export default function GroupsPage() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-                  <TableHead className="w-[300px] font-bold text-foreground">Group Name & ID</TableHead>
+                  <TableHead className="w-[200px] font-bold text-foreground">Group Name</TableHead>
                   <TableHead className="font-bold text-foreground">Branch</TableHead>
-                  <TableHead className="font-bold text-foreground">Collection Day</TableHead>
-                  <TableHead className="font-bold text-foreground">Members</TableHead>
+                  <TableHead className="font-bold text-foreground">Officer</TableHead>
+                  <TableHead className="font-bold text-foreground">Leader</TableHead>
+                  <TableHead className="font-bold text-foreground text-center">Members</TableHead>
                   <TableHead className="font-bold text-foreground">Status</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                 </TableRow>
@@ -175,18 +179,42 @@ export default function GroupsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                          {group.branch}
+                        <div className="flex flex-col text-sm">
+                          <div className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                            {group.branch}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1">
+                            <Calendar className="h-3 w-3" />
+                            {DAYS[group.collectionDay - 1]}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                          {DAYS[group.collectionDay - 1]}
+                        <div className="flex items-center gap-1.5 text-sm font-medium">
+                          <User className="h-3.5 w-3.5 text-primary/60" />
+                          {group.officer?.fullname || "N/A"}
                         </div>
                       </TableCell>
                       <TableCell>
+                        {(() => {
+                          const leader = group.members?.find((m: any) => m.isLeader);
+                          if (!leader) return <span className="text-xs text-muted-foreground italic">No Leader</span>;
+                          return (
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold flex items-center gap-1">
+                                <Crown className="h-3 w-3 text-amber-500" />
+                                {leader.client?.fullname}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                <Phone className="h-2.5 w-2.5" />
+                                {leader.client?.phone}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Badge variant="secondary" className="gap-1 px-2.5 py-0.5 rounded-full font-bold">
                           <Users className="h-3 w-3" />
                           {group._count?.members || 0}

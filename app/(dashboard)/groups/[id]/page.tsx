@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  TrendingUp
+  TrendingUp,
+  MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -101,6 +102,13 @@ export default function ViewGroupPage() {
                   </p>
                 </div>
                 <div className="space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase">Location / Area</p>
+                  <p className="text-sm font-bold flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary/60" />
+                    {group.location || "Not specified"}
+                  </p>
+                </div>
+                <div className="space-y-1">
                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Collection Officer</p>
                   <p className="text-sm font-bold flex items-center gap-2">
                     <User className="h-4 w-4 text-primary/60" />
@@ -117,7 +125,7 @@ export default function ViewGroupPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-xl bg-primary text-primary-foreground">
+          {/* <Card className="border-none shadow-xl bg-primary text-primary-foreground">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] uppercase font-bold opacity-70">Total Members</p>
@@ -127,7 +135,7 @@ export default function ViewGroupPage() {
                  <Users className="w-6 h-6" />
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Members & Loans */}
@@ -144,15 +152,21 @@ export default function ViewGroupPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/20 border-none">
                     <TableHead className="font-bold text-foreground">Name</TableHead>
+                    <TableHead className="font-bold text-foreground">Contact</TableHead>
                     <TableHead className="font-bold text-foreground">NIC</TableHead>
                     <TableHead className="font-bold text-foreground">Role</TableHead>
-                    <TableHead className="font-bold text-foreground text-center">Guarantors</TableHead>
+             
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {group.members?.map((member: any) => (
-                    <TableRow key={member.id} className="hover:bg-primary/5 transition-colors border-muted/50">
+                    <TableRow 
+                      key={member.id} 
+                      className="hover:bg-primary/5 transition-colors border-muted/50 cursor-pointer"
+                      onClick={() => router.push(`/clients/${member.clientId}`)}
+                    >
                       <TableCell className="font-bold">{member.client?.fullname}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{member.client?.phone}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{member.client?.nic}</TableCell>
                       <TableCell>
                         {member.isLeader ? (
@@ -163,12 +177,7 @@ export default function ViewGroupPage() {
                           <Badge variant="outline" className="text-[10px] font-bold">MEMBER</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center items-center gap-1">
-                          <ShieldCheck className={cn("w-4 h-4", member.guarantors?.length >= 2 ? "text-emerald-500" : "text-rose-500")} />
-                          <span className="text-xs font-bold">{member.guarantors?.length || 0}/2</span>
-                        </div>
-                      </TableCell>
+                    
                     </TableRow>
                   ))}
                   {group.members?.length === 0 && (
