@@ -18,6 +18,14 @@ const collectionService = {
     const response = await api.get(`/collections/${id}`);
     return response.data;
   },
+  approveCollection: async (id: string) => {
+    const response = await api.post(`/collections/${id}/approve`);
+    return response.data;
+  },
+  rejectCollection: async (id: string) => {
+    const response = await api.post(`/collections/${id}/reject`);
+    return response.data;
+  },
 };
 
 export const useDailyRegistryQuery = (params: any = {}, options = {}) => {
@@ -55,5 +63,33 @@ export const useCreateCollectionMutation = (options: any = {}) => {
       queryClient.invalidateQueries({ queryKey: ["Collections"] });
       if (options.onSuccess) options.onSuccess(data, variables, context);
     },
+  });
+};
+
+export const useApproveCollectionMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => collectionService.approveCollection(id),
+    onSuccess: (data, id, ...args) => {
+      queryClient.invalidateQueries({ queryKey: ["Collection", id] });
+      queryClient.invalidateQueries({ queryKey: ["Collections"] });
+      queryClient.invalidateQueries({ queryKey: ["DailyRegistry"] });
+      if (options.onSuccess) options.onSuccess(data, id, ...args);
+    },
+    ...options,
+  });
+};
+
+export const useRejectCollectionMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => collectionService.rejectCollection(id),
+    onSuccess: (data, id, ...args) => {
+      queryClient.invalidateQueries({ queryKey: ["Collection", id] });
+      queryClient.invalidateQueries({ queryKey: ["Collections"] });
+      queryClient.invalidateQueries({ queryKey: ["DailyRegistry"] });
+      if (options.onSuccess) options.onSuccess(data, id, ...args);
+    },
+    ...options,
   });
 };

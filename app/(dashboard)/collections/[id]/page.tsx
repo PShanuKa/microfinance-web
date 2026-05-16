@@ -2,10 +2,11 @@
 
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useCollectionQuery } from "@/services/collectionApi";
+import { useCollectionQuery, useApproveCollectionMutation, useRejectCollectionMutation } from "@/services/collectionApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+// import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -26,6 +27,9 @@ import {
   MapPin,
   Phone,
   Wallet,
+  Check,
+  X,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +40,11 @@ export default function CollectionDetailPage() {
 
   const { data, isLoading } = useCollectionQuery(collectionId);
   const collection = data?.collection;
+
+  const approveMutation = useApproveCollectionMutation();
+
+  const rejectMutation = useRejectCollectionMutation();
+
 
   if (isLoading) {
     return (
@@ -75,16 +84,40 @@ export default function CollectionDetailPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
-      <div className="flex items-center gap-4">
-        <Button onClick={() => router.back()} variant="ghost" size="icon" className="rounded-full">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h2 className="text-2xl font-black text-foreground tracking-tight">Collection Details</h2>
-          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-            ID: {collection.id}
-          </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button onClick={() => router.back()} variant="ghost" size="icon" className="rounded-full">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h2 className="text-2xl font-black text-foreground tracking-tight">Collection Details</h2>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
+              ID: {collection.id}
+            </p>
+          </div>
         </div>
+
+        {collection.status === "SUBMITTED" && (
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold"
+              disabled={rejectMutation.isPending || approveMutation.isPending}
+              onClick={() => rejectMutation.mutate(collectionId)}
+            >
+              {rejectMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <X className="h-4 w-4 mr-2" />}
+              Reject Collection
+            </Button>
+            <Button 
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20"
+              disabled={approveMutation.isPending || rejectMutation.isPending}
+              onClick={() => approveMutation.mutate(collectionId)}
+            >
+              {approveMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+              Approve & Update Balances
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
