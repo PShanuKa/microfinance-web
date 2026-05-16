@@ -167,12 +167,18 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
 
   const handleApiError = (error: any) => {
     const response = error.response?.data;
+    
+    // Always show the top-level error message if it exists
+    if (response?.error) {
+      setServerError(response.error);
+    }
+
     if (response?.fields) {
       Object.keys(response.fields).forEach((field: any) => {
         setError(field as any, { type: "manual", message: response.fields[field] });
       });
-    } else {
-      setServerError(response?.error || "An error occurred. Please try again.");
+    } else if (!response?.error) {
+      setServerError("An error occurred. Please try again.");
     }
   };
 
@@ -272,6 +278,7 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
                 {...register("nic")}
                 className={errors.nic ? "border-destructive" : ""}
               />
+              {errors.nic && <p className="text-xs text-destructive">{errors.nic.message}</p>}
             </div>
 
             <div className="grid gap-2">
@@ -282,6 +289,7 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
                 {...register("phone")}
                 className={errors.phone ? "border-destructive" : ""}
               />
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
             </div>
 
             <div className="grid gap-2 md:col-span-2">
@@ -432,6 +440,11 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
             </div>
           )}
         </div>
+        {serverError && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium p-4 rounded-xl text-center animate-in fade-in slide-in-from-top-2">
+          {serverError}
+        </div>
+      )}
       </section>
 
       <div className="flex justify-end gap-3 pt-10 border-t-2">
