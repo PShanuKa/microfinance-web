@@ -31,11 +31,7 @@ export default function DashboardLayout({
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (isError) {
-      router.push("/login");
-    }
-  }, [isError, router]);
+  
 
   useEffect(() => {
     const handleResize = () => {
