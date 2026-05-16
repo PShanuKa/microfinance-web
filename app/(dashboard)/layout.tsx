@@ -61,7 +61,7 @@ export default function DashboardLayout({
       <div 
         className={`${
           sideBarOpen ? 'md:w-[15%] min-w-[250px] w-full translate-x-0' : 'w-0 -translate-x-full'
-        } transition-all ease-in-out  duration-300 overflow-hidden border-r absolute md:relative`}
+        } transition-all ease-in-out  duration-300 overflow-hidden border-r absolute md:relative z-10`}
       >
         <Sidebar />
       </div>
