@@ -85,7 +85,7 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [openItem, setOpenItem] = useState<string | null>();
+  const [openItem, setOpenItem] = useState<string[]>([]);
 
   const { data, isLoading } = useClientsQuery({
     page,
@@ -180,16 +180,20 @@ export default function ClientsPage() {
             <div
               className="flex items-center gap-3 w-full md:w-auto"
               onClick={() =>
-                setOpenItem((prev) => (prev === "item-1" ? null : "item-1"))
+                setOpenItem((prev) => (prev.includes("item-1") ? [] : ["item-1"]))
               }
             >
               filters
             </div>
           </div>
 
-          <Accordion type="single" collapsible value="item-1">
-            <AccordionItem value="item-1">
-              <AccordionTrigger>Is it accessible?</AccordionTrigger>
+          <Accordion
+            value={openItem}
+            onValueChange={setOpenItem}
+            className="w-full border-none"
+          >
+            <AccordionItem value="item-1" className="border-none">
+        
               <AccordionContent>
                 <div className="flex flex-col md:flex-row items-center  py-4 border-b bg-muted/20 gap-4">
                   <div className="flex items-center gap-3 w-full md:w-auto">
