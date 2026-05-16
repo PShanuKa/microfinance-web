@@ -30,13 +30,6 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/Custom/PageHeader";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -57,7 +50,8 @@ export default function CollectionRegistryPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   
-  const { data, isLoading } = useDailyRegistryQuery();
+  // Using the test date 2026-06-07 as per your requirement
+  const { data, isLoading } = useDailyRegistryQuery({ date: "2026-06-07" });
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -310,7 +304,7 @@ export default function CollectionRegistryPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                            <DropdownMenuTrigger >
                               <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
                                 <MoreVertical className="h-4 w-4" />
                               </div>
@@ -323,13 +317,26 @@ export default function CollectionRegistryPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() =>
-                                  router.push(`/collections/${col.id}`)
+                                  router.push(`/collection-registry/${col.id}?date=2026-06-07`)
                                 }
                                 className="gap-2 cursor-pointer"
                               >
                                 <FileText className="h-4 w-4 text-primary" /> View
-                                Breakdown
+                                Registry
                               </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => router.push(`/groups/${col.groupId}`)}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <Users className="h-4 w-4 text-emerald-500" /> View Group
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => router.push(`/loans/${col.loanId}`)}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <Wallet className="h-4 w-4 text-blue-500" /> View Loan
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem className="gap-2 cursor-pointer">
                                 <ClipboardList className="h-4 w-4 text-blue-500" />{" "}
                                 Add Notes
