@@ -1,45 +1,70 @@
-"use client";
+"use client"
 
+import { useCreateCollectionMutation, useDailyRegistryQuery } from "@/services/collectionApi";
+import { Input } from "@/components/ui/input";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import { useDailyRegistryQuery } from "@/services/collectionApi";
-import { PageHeader } from "@/components/Custom/PageHeader";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Users,
-  MapPin,
-  Phone,
-  Wallet,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  ArrowLeft,
-  Banknote,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { ArrowLeft, Banknote, CheckCircle2, MapPin, Phone, Plus, Receipt, Users, Wallet } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+// import { toast } from "sonner"; 
 
 export default function RegistryDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
   const loanId = params.loanId as string;
-  const date = searchParams.get("date") || "2026-06-07"; // Defaulting to the test date if not provided
+  const date = searchParams.get("date") || "2026-06-07";
+
+  const [isRecording, setIsRecording] = React.useState(false);
+  const [collectedAmounts, setCollectedAmounts] = React.useState<Record<string, string>>({});
 
   const { data, isLoading } = useDailyRegistryQuery({ loanId, date });
+  const createCollection = useCreateCollectionMutation({
+   
+  });
 
   const registryInfo = data?.registry?.[0];
   const instalments = data?.instalments || [];
+
+  // Initialize collected amounts when entering recording mode
+  React.useEffect(() => {
+    if (isRecording && instalments.length > 0) {
+      const initial: Record<string, string> = {};
+      instalments.forEach((inst: any) => {
+        initial[inst.id] = inst.dueAmount.toString();
+      });
+      setCollectedAmounts(initial);
+    }
+  }, [isRecording, instalments]);
+
+  const handleAmountChange = (id: string, val: string) => {
+    setCollectedAmounts(prev => ({ ...prev, [id]: val }));
+  };
+
+  const handleSaveCollection = () => {
+    const breakdown = instalments.map((inst: any) => ({
+      instalmentId: inst.id,
+      amount: parseFloat(collectedAmounts[inst.id] || "0"),
+      memberName: inst.memberName
+    }));
+
+    const payload = {
+      groupId: registryInfo.groupId,
+      loanId: registryInfo.loanId,
+      date: new Date(date).toISOString(),
+      instalmentNumber: registryInfo.instalmentNo,
+      collectorId: "SYSTEM", 
+      breakdownData: breakdown
+    };
+
+    createCollection.mutate(payload);
+  };
+
+  const totalCollectedNow = Object.values(collectedAmounts).reduce((sum, val) => sum + parseFloat(val || "0"), 0);
 
   if (isLoading) {
     return (
@@ -66,15 +91,39 @@ export default function RegistryDetailPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
-      <div className="flex items-center gap-4 mb-2">
-        <Button onClick={() => router.back()} variant="ghost" size="icon" className="rounded-full">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h2 className="text-2xl font-black text-foreground tracking-tight">Registry Details</h2>
-          <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
-            Collection Date: {date}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button onClick={() => router.back()} variant="ghost" size="icon" className="rounded-full">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h2 className="text-2xl font-black text-foreground tracking-tight">Registry Details</h2>
+            <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
+              Collection Date: {date}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {isRecording ? (
+            <>
+              <Button variant="outline" onClick={() => setIsRecording(false)} className="font-bold">Cancel</Button>
+              <Button 
+                onClick={handleSaveCollection} 
+                className="bg-emerald-600 hover:bg-emerald-700 font-bold gap-2 text-white"
+                disabled={createCollection.isPending}
+              >
+                {createCollection.isPending ? "Saving..." : <><CheckCircle2 className="h-4 w-4" /> Save Collection</>}
+              </Button>
+            </>
+          ) : (
+            <Button 
+              onClick={() => setIsRecording(true)} 
+              className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300 font-bold"
+            >
+              <Plus className="h-4 w-4" />
+              New Collection
+            </Button>
+          )}
         </div>
       </div>
 
@@ -140,30 +189,38 @@ export default function RegistryDetailPage() {
 
         {/* Collection Status Card */}
         <Card className={cn(
-          "border-none shadow-xl relative overflow-hidden group",
-          registryInfo.status === "Verified" ? "bg-emerald-600 text-white" : "bg-amber-600 text-white"
+          "border-none shadow-xl relative overflow-hidden group text-white",
+          registryInfo.status === "Verified" ? "bg-emerald-600" : "bg-amber-600"
         )}>
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-            <CheckCircle2 className="h-16 w-16" />
+            <Banknote className="h-16 w-16" />
           </div>
           <CardContent className="p-6">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-4">Collection Progress</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-4">
+              {isRecording ? "Recording Progress" : "Collection Progress"}
+            </h3>
             <div className="flex flex-col gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase opacity-60">Collected Amount</p>
-                <p className="text-2xl font-black mt-1">Rs. {registryInfo.collected.toLocaleString()}</p>
+                <p className="text-[10px] font-black uppercase opacity-60">
+                  {isRecording ? "New Collected Total" : "Collected Amount"}
+                </p>
+                <p className="text-2xl font-black mt-1">
+                  Rs. {(isRecording ? totalCollectedNow : registryInfo.collected).toLocaleString()}
+                </p>
               </div>
               <div className="flex items-center gap-3">
                  <div className="h-1.5 flex-1 bg-white/20 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-white transition-all duration-1000" 
-                      style={{ width: `${(registryInfo.collected / registryInfo.expected) * 100}%` }}
+                      style={{ width: `${((isRecording ? totalCollectedNow : registryInfo.collected) / registryInfo.expected) * 100}%` }}
                     />
                  </div>
-                 <span className="text-xs font-black">{Math.round((registryInfo.collected / registryInfo.expected) * 100)}%</span>
+                 <span className="text-xs font-black">
+                   {Math.round(((isRecording ? totalCollectedNow : registryInfo.collected) / registryInfo.expected) * 100)}%
+                 </span>
               </div>
               <Badge className="w-fit bg-white/20 border-none text-[10px] font-black uppercase">
-                Status: {registryInfo.status}
+                Status: {isRecording ? "In Progress" : registryInfo.status}
               </Badge>
             </div>
           </CardContent>
@@ -174,7 +231,7 @@ export default function RegistryDetailPage() {
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
           <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
-            <Banknote className="h-4 w-4 text-primary" />
+            <Receipt className="h-4 w-4 text-primary" />
             Member-wise Breakdown
           </h3>
           <Badge variant="outline" className="font-bold">{instalments.length} Members</Badge>
@@ -186,7 +243,9 @@ export default function RegistryDetailPage() {
                 <TableHead className="font-bold text-foreground">Member Details</TableHead>
                 <TableHead className="font-bold text-foreground text-center">Week</TableHead>
                 <TableHead className="font-bold text-foreground text-right">Due Amount</TableHead>
-                <TableHead className="font-bold text-foreground text-right">Paid Amount</TableHead>
+                <TableHead className="font-bold text-foreground text-right">
+                  {isRecording ? "Record Collection" : "Paid Amount"}
+                </TableHead>
                 <TableHead className="font-bold text-foreground text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -201,7 +260,21 @@ export default function RegistryDetailPage() {
                   </TableCell>
                   <TableCell className="text-center font-bold text-slate-500">#{inst.weekNumber}</TableCell>
                   <TableCell className="text-right font-black text-slate-700">Rs. {inst.dueAmount.toLocaleString()}</TableCell>
-                  <TableCell className="text-right font-black text-emerald-600">Rs. {inst.paidAmount.toLocaleString()}</TableCell>
+                  <TableCell className="text-right font-black text-emerald-600 w-48">
+                    {isRecording ? (
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="text-xs text-muted-foreground opacity-50">Rs.</span>
+                        <Input
+                          type="number"
+                          className="h-8 w-28 text-right font-black"
+                          value={collectedAmounts[inst.id] || ""}
+                          onChange={(e) => handleAmountChange(inst.id, e.target.value)}
+                        />
+                      </div>
+                    ) : (
+                      `Rs. ${inst.paidAmount.toLocaleString()}`
+                    )}
+                  </TableCell>
                   <TableCell className="text-center">
                     <Badge className={cn(
                       "font-bold text-[10px] uppercase px-2 py-0.5 border-none text-white",

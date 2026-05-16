@@ -52,57 +52,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const collectionsData = [
-  {
-    id: "COL-001",
-    groupNo: "G-001",
-    groupName: "Sunlight Group",
-    location: "Galle",
-    center: "Center 01",
-    leader: "Saman Perera",
-    phone: "0712345678",
-    members: 12,
-    instalmentNo: 10,
-    expected: 15000,
-    arrears: 3750,
-    collected: 18750,
-    status: "Verified",
-  },
-  {
-    id: "COL-002",
-    groupNo: "G-004",
-    groupName: "Prosperity Circle",
-    location: "Matara",
-    center: "Center 05",
-    leader: "Kamal Siri",
-    phone: "0771234567",
-    members: 15,
-    instalmentNo: 12,
-    expected: 25000,
-    arrears: 5000,
-    collected: 25000,
-    status: "Verified",
-  },
-  {
-    id: "COL-003",
-    groupNo: "G-009",
-    groupName: "Helping Hands",
-    location: "Hikkaduwa",
-    center: "Center 02",
-    leader: "Dilini Perera",
-    phone: "0751234567",
-    members: 8,
-    instalmentNo: 5,
-    expected: 10000,
-    arrears: 0,
-    collected: 7500,
-    status: "Pending",
-  },
-];
+import { useCollectionsQuery } from "@/services/collectionApi";
 
 export default function CollectionsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  const { data, isLoading } = useCollectionsQuery();
+  const collections = data?.collections || [];
+
+  const filteredData = collections.filter((col: any) => 
+    col.groupName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    col.groupNo?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -280,100 +242,118 @@ export default function CollectionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {collectionsData.map((col) => {
-                  const totalDue = col.expected + col.arrears;
-                  return (
-                    <TableRow
-                      key={col.id}
-                      className="hover:bg-primary/5 transition-colors group"
-                    >
-                      <TableCell className="font-bold text-foreground group-hover:text-primary transition-colors">
-                        <div className="flex flex-col">
-                          <span>{col.groupNo}</span>
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                            {col.groupName}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col text-sm">
-                          <span className="font-medium">{col.location}</span>
-                          <span className="text-[10px] text-muted-foreground uppercase">
-                            {col.center}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col text-sm">
-                          <span className="font-medium">{col.leader}</span>
-                          <span className="text-[10px] text-primary font-bold uppercase">
-                            {col.phone}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="font-bold text-xs">
-                          {col.members}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-slate-600">
-                        #{col.instalmentNo}
-                      </TableCell>
-                      <TableCell className="text-right font-medium text-slate-600">
-                        Rs. {col.expected}
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-rose-500">
-                        {col.arrears > 0 ? `Rs. ${col.arrears}` : "0"}
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-slate-900">
-                        Rs. {totalDue}
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-emerald-600">
-                        Rs. {col.collected}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {getStatusBadge(col.status)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger>
-                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
-                              <MoreVertical className="h-4 w-4" />
-                            </div>
-                          </DropdownMenuTrigger>
-                         <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md">
-                         <DropdownMenuGroup>
-                                                       <DropdownMenuLabel>Collection Actions</DropdownMenuLabel>
-                                                     </DropdownMenuGroup>
-                          
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() =>
-                                router.push(`/collections/${col.id}`)
-                              }
-                              className="gap-2 cursor-pointer"
-                            >
-                              <FileText className="h-4 w-4 text-primary" /> View
-                              Breakdown
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <ClipboardList className="h-4 w-4 text-blue-500" />{" "}
-                              Add Notes
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <FileUp className="h-4 w-4 text-amber-500" />{" "}
-                              Attach Docs
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 cursor-pointer">
-                              <ArrowUpRight className="h-4 w-4 text-emerald-500" />{" "}
-                              Verify Deposit
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={11} className="h-32 text-center text-muted-foreground font-medium italic">
+                      Loading collections...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredData.length === 0 ? (
+                   <TableRow>
+                    <TableCell colSpan={11} className="h-32 text-center text-muted-foreground font-medium italic">
+                      No collections found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredData.map((col: any) => {
+                    const expected = Number(col.expected || 0);
+                    const arrears = Number(col.arrears || 0);
+                    const collected = Number(col.amountCollected || 0);
+                    const totalDue = expected + arrears;
+                    
+                    return (
+                      <TableRow
+                        key={col.id}
+                        className="hover:bg-primary/5 transition-colors group"
+                      >
+                        <TableCell className="font-bold text-foreground group-hover:text-primary transition-colors">
+                          <div className="flex flex-col">
+                            <span>{col.groupNo || col.group?.groupNo}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                              {col.groupName || col.group?.name}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col text-sm">
+                            <span className="font-medium">{col.location || col.group?.location}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase">
+                              {col.center || col.group?.center}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col text-sm">
+                            <span className="font-medium">{col.leader || col.group?.leaderName}</span>
+                            <span className="text-[10px] text-primary font-bold uppercase">
+                              {col.phone || col.group?.phone}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="font-bold text-xs">
+                            {col.members || col.group?.memberCount || 0}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center font-bold text-slate-600">
+                          #{col.instalmentNumber}
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-slate-600">
+                          Rs. {expected.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-rose-500">
+                          {arrears > 0 ? `Rs. ${arrears.toLocaleString()}` : "0"}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-slate-900">
+                          Rs. {totalDue.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-emerald-600">
+                          Rs. {collected.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {getStatusBadge(col.status || "Pending")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
+                                <MoreVertical className="h-4 w-4" />
+                              </div>
+                            </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md">
+                           <DropdownMenuGroup>
+                                <DropdownMenuLabel>Collection Actions</DropdownMenuLabel>
+                              </DropdownMenuGroup>
+                            
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  router.push(`/collections/${col.id}`)
+                                }
+                                className="gap-2 cursor-pointer"
+                              >
+                                <FileText className="h-4 w-4 text-primary" /> View
+                                Breakdown
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="gap-2 cursor-pointer">
+                                <ClipboardList className="h-4 w-4 text-blue-500" />{" "}
+                                Add Notes
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="gap-2 cursor-pointer">
+                                <FileUp className="h-4 w-4 text-amber-500" />{" "}
+                                Attach Docs
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="gap-2 cursor-pointer">
+                                <ArrowUpRight className="h-4 w-4 text-emerald-500" />{" "}
+                                Verify Deposit
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
