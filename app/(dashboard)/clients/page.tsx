@@ -51,6 +51,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -77,21 +78,45 @@ import {
 import { useClientsQuery, useDeleteClientMutation } from "@/services/clientApi";
 import { ClientForm } from "@/components/Custom/ClientForm";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 export default function ClientsPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  
+  // URL synced filters
+  const statusFilter = searchParams.get("status") || "All";
+  const startDate = searchParams.get("startDate") || "";
+  const endDate = searchParams.get("endDate") || "";
+
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [openItem, setOpenItem] = useState<string[]>([]);
+
+  // Function to update URL params
+  const updateFilters = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== "All") {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`${pathname}?${params.toString()}`);
+    setPage(1);
+  };
 
   const { data, isLoading } = useClientsQuery({
     page,
     limit: 10,
     search,
     status: statusFilter,
+    startDate,
+    endDate,
   });
   const deleteMutation = useDeleteClientMutation({
     onSuccess: () => {
@@ -146,6 +171,24 @@ export default function ClientsPage() {
     );
   };
 
+  const highlightText = (text: string, term: string) => {
+    if (!term || !text) return text;
+    const parts = text.toString().split(new RegExp(`(${term})`, "gi"));
+    return (
+      <span>
+        {parts.map((part, i) =>
+          part.toLowerCase() === term.toLowerCase() ? (
+            <mark key={i} className="bg-primary/20 text-primary font-black rounded-sm px-0.5">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </span>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-3 w-full md:px-4">
       <PageHeader
@@ -193,18 +236,15 @@ export default function ClientsPage() {
             className="w-full border-none"
           >
             <AccordionItem value="item-1" className="border-none">
-        
-              <AccordionContent>
-                <div className="flex flex-col md:flex-row items-center  py-4 border-b bg-muted/20 gap-4">
-                  <div className="flex items-center gap-3 w-full md:w-auto">
+              <AccordionContent className="px-4 py-4 border-b bg-muted/20">
+                <div className="flex flex-col md:flex-row items-end gap-4">
+                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                    <Label className="text-xs text-muted-foreground ml-1">Status</Label>
                     <Select
                       value={statusFilter}
-                      onValueChange={(val) => {
-                        setStatusFilter(val || "ALL");
-                        setPage(1);
-                      }}
+                      onValueChange={(val) => updateFilters({ status: val || "All" })}
                     >
-                      <SelectTrigger className="w-full md:w-[180px] h-11 bg-background/50">
+                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
                         <div className="flex items-center gap-2">
                           <Filter className="h-4 w-4 text-muted-foreground" />
                           <SelectValue placeholder="Filter Status" />
@@ -218,28 +258,39 @@ export default function ClientsPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center gap-3 w-full md:w-auto">
-                    <Select
-                      value={statusFilter}
-                      onValueChange={(val) => {
-                        setStatusFilter(val || "ALL");
-                        setPage(1);
-                      }}
-                    >
-                      <SelectTrigger className="w-full md:w-[180px] h-11 bg-background/50">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Filter Status" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Statuses</SelectItem>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="INACTIVE">Inactive</SelectItem>
-                        <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
-                      </SelectContent>
-                    </Select>
+
+                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                    <Label className="text-xs text-muted-foreground ml-1">Start Date</Label>
+                    <Input
+                      type="date"
+                      placeholder="Start Date"
+                      value={startDate}
+                      onChange={(e) => updateFilters({ startDate: e.target.value })}
+                      className="w-full md:w-[180px] h-10 bg-background/50"
+                    />
                   </div>
+
+                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                    <Label className="text-xs text-muted-foreground ml-1">End Date</Label>
+                    <Input
+                      type="date"
+                      placeholder="End Date"
+                      value={endDate}
+                      onChange={(e) => updateFilters({ endDate: e.target.value })}
+                      className="w-full md:w-[180px] h-10 bg-background/50"
+                    />
+                  </div>
+                  
+                  {(startDate || endDate) && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => updateFilters({ startDate: "", endDate: "" })}
+                      className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
+                    >
+                      Clear Dates
+                    </Button>
+                  )}
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -309,10 +360,10 @@ export default function ClientsPage() {
                           </div>
                           <div className="flex flex-col">
                             <span className="font-bold text-foreground group-hover:text-primary transition-colors">
-                              {client.fullname}
+                              {highlightText(client.fullname, search)}
                             </span>
                             <span className="text-xs text-muted-foreground font-mono">
-                              {client.clientNo}
+                              {highlightText(client.clientNo, search)}
                             </span>
                           </div>
                         </div>
@@ -320,13 +371,13 @@ export default function ClientsPage() {
                       <TableCell>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
                           <CreditCard className="h-3.5 w-3.5" />
-                          {client.nic}
+                          {highlightText(client.nic, search)}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Phone className="h-3.5 w-3.5" />
-                          {client.phone}
+                          {highlightText(client.phone, search)}
                         </div>
                       </TableCell>
                       <TableCell>
