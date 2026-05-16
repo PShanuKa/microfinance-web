@@ -173,12 +173,12 @@ export default function CreateLoanPage() {
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <div className="grid gap-2">
-                <Label>Select Group</Label>
+                <Label htmlFor="groupId">Select Group</Label>
                 <Select
                   value={selectedGroupId}
                   onValueChange={(val) => setValue("groupId", val)}
                 >
-                  <SelectTrigger className="bg-background/50 h-12 text-lg font-bold">
+                  <SelectTrigger id="groupId">
                     <SelectValue placeholder="Choose a group..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -239,29 +239,14 @@ export default function CreateLoanPage() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
               <div className="grid gap-2">
-                <Label htmlFor="totalWeeks" className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Label htmlFor="totalWeeks">
                    Duration (Weeks)
-                   {settings && (
-                      <TooltipProvider>
-                         <Tooltip>
-                            <TooltipTrigger type="button">
-                               <HelpCircle className="h-3 w-3" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                               <p className="text-xs font-bold">Policy Limit: {settings.minLoanWeeks} - {settings.maxLoanWeeks} Weeks</p>
-                            </TooltipContent>
-                         </Tooltip>
-                      </TooltipProvider>
-                   )}
                 </Label>
                 <div className="relative">
                   <Input
                     id="totalWeeks"
                     type="number"
-                    className={cn(
-                       "bg-background/50 h-12 text-lg font-black pr-10",
-                       settings && (totalWeeks < settings.minLoanWeeks || totalWeeks > settings.maxLoanWeeks) ? "border-rose-500 focus-visible:ring-rose-500" : ""
-                    )}
+                    className={settings && (totalWeeks < settings.minLoanWeeks || totalWeeks > settings.maxLoanWeeks) ? "border-rose-500" : ""}
                     {...register("totalWeeks", { required: true, min: 1 })}
                   />
                   {settings && (
@@ -272,11 +257,10 @@ export default function CreateLoanPage() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="processingFee" className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Processing Fee (Rs.)</Label>
+                <Label htmlFor="processingFee">Processing Fee (Rs.)</Label>
                 <Input
                   id="processingFee"
                   type="number"
-                  className="bg-background/50 h-12 text-lg font-black"
                   {...register("processingFee", { required: true, min: 0 })}
                 />
               </div>
@@ -301,20 +285,18 @@ export default function CreateLoanPage() {
             <CardContent className="space-y-4 pt-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="leaderLentAmount" className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Lent Amount (Rs.)</Label>
+                  <Label htmlFor="leaderLentAmount">Lent Amount (Rs.)</Label>
                   <Input
                     id="leaderLentAmount"
                     type="number"
-                    className="bg-background/50 h-11 font-black"
                     {...register("leaderLentAmount", { required: true })}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="leaderWeeklyAmount" className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Weekly Payment (Rs.)</Label>
+                  <Label htmlFor="leaderWeeklyAmount">Weekly Payment (Rs.)</Label>
                   <Input
                     id="leaderWeeklyAmount"
                     type="number"
-                    className="bg-background/50 h-11 font-black text-emerald-600"
                     {...register("leaderWeeklyAmount", { required: true })}
                   />
                 </div>
@@ -331,20 +313,18 @@ export default function CreateLoanPage() {
             <CardContent className="space-y-4 pt-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="memberLentAmount" className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Lent Amount (Rs.)</Label>
+                  <Label htmlFor="memberLentAmount">Lent Amount (Rs.)</Label>
                   <Input
                     id="memberLentAmount"
                     type="number"
-                    className="bg-background/50 h-11 font-black"
                     {...register("memberLentAmount", { required: true })}
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="memberWeeklyAmount" className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Weekly Payment (Rs.)</Label>
+                  <Label htmlFor="memberWeeklyAmount">Weekly Payment (Rs.)</Label>
                   <Input
                     id="memberWeeklyAmount"
                     type="number"
-                    className="bg-background/50 h-11 font-black text-emerald-600"
                     {...register("memberWeeklyAmount", { required: true })}
                   />
                 </div>

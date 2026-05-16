@@ -252,49 +252,53 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
           </div>
 
           {/* Text Inputs */}
-          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2 md:col-span-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Full Name</Label>
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-2 md:col-span-2">
+              <Label htmlFor="fullname">Full Name</Label>
               <Input
+                id="fullname"
                 placeholder="Enter complete legal name"
                 {...register("fullname")}
-                className={cn("h-12 font-bold", errors.fullname ? "border-destructive" : "bg-muted/20")}
+                className={errors.fullname ? "border-destructive" : ""}
               />
-              {errors.fullname && <p className="text-xs text-destructive font-medium">{errors.fullname.message}</p>}
+              {errors.fullname && <p className="text-xs text-destructive">{errors.fullname.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">NIC Number</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="nic">NIC Number</Label>
               <Input
+                id="nic"
                 placeholder="National ID Number"
                 {...register("nic")}
-                className={cn("h-12 font-bold", errors.nic ? "border-destructive" : "bg-muted/20")}
+                className={errors.nic ? "border-destructive" : ""}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Phone Number</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="phone">Phone Number</Label>
               <Input
+                id="phone"
                 placeholder="07XXXXXXXX"
                 {...register("phone")}
-                className={cn("h-12 font-bold", errors.phone ? "border-destructive" : "bg-muted/20")}
+                className={errors.phone ? "border-destructive" : ""}
               />
             </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Job / Occupation</Label>
+            <div className="grid gap-2 md:col-span-2">
+              <Label htmlFor="job">Job / Occupation</Label>
               <Input
+                id="job"
                 placeholder="Current employment"
                 {...register("job")}
-                className="h-12 font-bold bg-muted/20"
               />
             </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Address</Label>
+            <div className="grid gap-2 md:col-span-2">
+              <Label htmlFor="address">Address</Label>
               <Textarea
+                id="address"
                 placeholder="Residential address"
-                className="min-h-[100px] font-bold bg-muted/20"
+                className="min-h-[100px]"
                 {...register("address")}
               />
             </div>
