@@ -14,6 +14,10 @@ const collectionService = {
     const response = await api.post("/collections", data);
     return response.data;
   },
+  getCollectionById: async (id: string) => {
+    const response = await api.get(`/collections/${id}`);
+    return response.data;
+  },
 };
 
 export const useDailyRegistryQuery = (params: any = {}, options = {}) => {
@@ -28,6 +32,15 @@ export const useCollectionsQuery = (params: any = {}, options = {}) => {
   return useQuery({
     queryKey: ["Collections", params],
     queryFn: () => collectionService.getCollections(params),
+    ...options,
+  });
+};
+
+export const useCollectionQuery = (id: string, options = {}) => {
+  return useQuery({
+    queryKey: ["Collection", id],
+    queryFn: () => collectionService.getCollectionById(id),
+    enabled: !!id,
     ...options,
   });
 };

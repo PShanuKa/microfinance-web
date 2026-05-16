@@ -333,7 +333,7 @@ export default function CollectionsPage() {
                                 className="gap-2 cursor-pointer"
                               >
                                 <FileText className="h-4 w-4 text-primary" /> View
-                                Breakdown
+                                Details
                               </DropdownMenuItem>
                               <DropdownMenuItem className="gap-2 cursor-pointer">
                                 <ClipboardList className="h-4 w-4 text-blue-500" />{" "}
