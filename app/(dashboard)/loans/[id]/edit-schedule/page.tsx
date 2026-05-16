@@ -34,8 +34,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/Custom/PageHeader";
+import { useGroupQuery, useGroupsQuery } from "@/services/groupApi";
 import { useLoanQuery, useLoanInstalmentsQuery, useUpdateLoanScheduleMutation, useUpdateGuarantorsMutation, useDeleteGuarantorMutation } from "@/services/loanApi";
-import { useGroupsQuery } from "@/services/groupApi";
 import { 
   Save, 
   ArrowLeft, 
@@ -82,6 +82,31 @@ export default function EditLoanSchedulePage() {
   const { data: groupsData } = useGroupsQuery({ limit: 100 });
   const { data: loanData, isLoading: loanLoading } = useLoanQuery(id as string);
   const { data: instalmentsData, isLoading: instalmentsLoading } = useLoanInstalmentsQuery(id as string);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    setError,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      groupId: "",
+      totalWeeks: 0,
+      processingFee: 0,
+      leaderLentAmount: 0,
+      leaderWeeklyAmount: 0,
+      memberLentAmount: 0,
+      memberWeeklyAmount: 0,
+    },
+  });
+
+  const selectedGroupId = watch("groupId");
+  const { data: selectedGroupData } = useGroupQuery(selectedGroupId, { enabled: !!selectedGroupId });
+  const selectedGroup = selectedGroupData?.group;
+
   const updateMutation = useUpdateLoanScheduleMutation({
     onSuccess: () => {
       router.push(`/loans/${id}`);
@@ -109,25 +134,6 @@ export default function EditLoanSchedulePage() {
     }
   });
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors },
-  } = useForm({
-    defaultValues: {
-      groupId: "",
-      totalWeeks: 0,
-      processingFee: 0,
-      leaderLentAmount: 0,
-      leaderWeeklyAmount: 0,
-      memberLentAmount: 0,
-      memberWeeklyAmount: 0,
-    },
-  });
-
   useEffect(() => {
     if (loanData?.loan) {
       reset({
@@ -152,8 +158,6 @@ export default function EditLoanSchedulePage() {
     }
   }, [loanData, reset]);
 
-  const selectedGroupId = watch("groupId");
-  const selectedGroup = groupsData?.groups?.find((g: any) => g.id === selectedGroupId);
   const groupLeader = selectedGroup?.members?.find((m: any) => m.isLeader);
 
   const totalWeeks = Number(watch("totalWeeks") || 0);
@@ -161,7 +165,7 @@ export default function EditLoanSchedulePage() {
   const memberLent = Number(watch("memberLentAmount") || 0);
   const leaderWeekly = Number(watch("leaderWeeklyAmount") || 0);
   const memberWeekly = Number(watch("memberWeeklyAmount") || 0);
-  const totalMembers = selectedGroup?._count?.members || 0;
+  const totalMembers = selectedGroup?.members?.length || 0;
 
   // Global Calculations
   const totalLentAmount = selectedGroup 

@@ -49,7 +49,8 @@ import {
   ArrowLeft,
   Save,
   Settings2,
-  Edit2
+  Edit2,
+  Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -78,6 +79,9 @@ export default function EditGroupPage() {
   const router = useRouter();
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState("");
+  const [serverError, setServerError] = useState<string | null>(null);
+  
+  // Delete Dialog State
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   
   // Delete Dialog State
@@ -87,8 +91,25 @@ export default function EditGroupPage() {
   const { data: clientsData } = useClientsQuery({ search: clientSearch, limit: 5 });
   const { data: userData } = useUsersQuery({ role: "LOAN_OFFICER", limit: 100 });
 
+  const handleApiError = (error: any) => {
+    const response = error.response?.data;
+    
+    if (response?.error) {
+      setServerError(response.error);
+    }
+
+    if (response?.fields) {
+      Object.keys(response.fields).forEach((field: any) => {
+        setError(field as any, { type: "manual", message: response.fields[field] });
+      });
+    } else if (!response?.error) {
+      setServerError("An error occurred. Please try again.");
+    }
+  };
+
   const updateGroupMutation = useUpdateGroupMutation({
-    onSuccess: () => setIsEditingInfo(false)
+    onSuccess: () => setIsEditingInfo(false),
+    onError: (error: any) => handleApiError(error),
   });
   const addMemberMutation = useAddMemberMutation();
   const updateMemberMutation = useUpdateMemberMutation();
@@ -104,6 +125,7 @@ export default function EditGroupPage() {
     handleSubmit,
     setValue,
     watch,
+    setError,
     reset,
     formState: { errors },
   } = useForm({
@@ -132,6 +154,7 @@ export default function EditGroupPage() {
   const selectedOfficer = watch("officerId");
 
   const onUpdateGroup = (data: any) => {
+    setServerError(null);
     updateGroupMutation.mutate({
       id: id as string,
       ...data,
@@ -201,42 +224,53 @@ export default function EditGroupPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onUpdateGroup)} className="space-y-6">
+              {serverError && (
+                <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium p-3 rounded-lg text-center">
+                  {serverError}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="grid gap-2">
                   <Label htmlFor="name">Group Name</Label>
                   <Input
                     id="name"
-                    {...register("name", { required: "Group name is required" })}
+                    {...register("name")}
                     className={cn("bg-background/50", errors.name && "border-destructive")}
                   />
+                  {errors.name && <p className="text-xs text-destructive">{errors.name.message as string}</p>}
                 </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="branch">Branch</Label>
                   <Input
                     id="branch"
-                    {...register("branch", { required: "Branch is required" })}
+                    {...register("branch")}
                     className={cn("bg-background/50", errors.branch && "border-destructive")}
                   />
+                  {errors.branch && <p className="text-xs text-destructive">{errors.branch.message as string}</p>}
                 </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="location">Location / Area</Label>
                   <Input
                     id="location"
-                    {...register("location", { required: "Location is required" })}
+                    {...register("location")}
                     className={cn("bg-background/50", errors.location && "border-destructive")}
                   />
+                  {errors.location && <p className="text-xs text-destructive">{errors.location.message as string}</p>}
                 </div>
 
                 <div className="grid gap-2">
                   <Label>Collection Day</Label>
                   <Select
-                    value={selectedDay.toString()}
-                    onValueChange={(val) => setValue("collectionDay", Number(val || 1))}
+                    value={selectedDay?.toString()}
+                    onValueChange={(val) => setValue("collectionDay", Number(val))}
                   >
-                    <SelectTrigger className="bg-background/50">
-                      <SelectValue placeholder="Select day" />
+                    <SelectTrigger className={cn("bg-background/50", errors.collectionDay && "border-destructive")}>
+                      <SelectValue>
+                        {DAYS.find(d => d.id === Number(selectedDay))?.name || "Select day"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {DAYS.map((day) => (
@@ -246,6 +280,7 @@ export default function EditGroupPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.collectionDay && <p className="text-xs text-destructive">{errors.collectionDay.message as string}</p>}
                 </div>
 
                 <div className="grid gap-2">
@@ -254,8 +289,10 @@ export default function EditGroupPage() {
                     value={selectedOfficer}
                     onValueChange={(val) => setValue("officerId", val || "")}
                   >
-                    <SelectTrigger className="bg-background/50">
-                      <SelectValue placeholder="Select officer" />
+                    <SelectTrigger className={cn("bg-background/50", errors.officerId && "border-destructive")}>
+                      <SelectValue>
+                        {userData?.users?.find((u: any) => u.id === selectedOfficer)?.fullname || "Select officer"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {userData?.users?.map((user: any) => (
@@ -265,6 +302,7 @@ export default function EditGroupPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.officerId && <p className="text-xs text-destructive">{errors.officerId.message as string}</p>}
                 </div>
               </div>
 
@@ -371,24 +409,34 @@ export default function EditGroupPage() {
               />
             </div>
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-              {clientsData?.clients?.map((client: any) => (
-                <div 
-                  key={client.id} 
-                  className="flex items-center justify-between p-3 rounded-lg border bg-background/50 hover:bg-primary/5 transition-colors"
-                >
-                  <div className="flex flex-col">
-                    <span className="font-bold">{client.fullname}</span>
-                    <span className="text-xs text-muted-foreground">{client.nic}</span>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleAddMember(client.id)}
-                    disabled={addMemberMutation.isPending}
+              {clientsData?.clients?.map((client: any) => {
+                const isAlreadyMember = group?.members?.some((m: any) => m.clientId === client.id);
+                return (
+                  <div 
+                    key={client.id} 
+                    className="flex items-center justify-between p-3 rounded-lg border bg-background/50 hover:bg-primary/5 transition-colors"
                   >
-                    Add
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex flex-col">
+                      <span className="font-bold">{client.fullname}</span>
+                      <span className="text-xs text-muted-foreground">{client.nic}</span>
+                    </div>
+                    {isAlreadyMember ? (
+                      <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1 px-3 py-1">
+                        <Check className="w-3 h-3" /> Already Added
+                      </Badge>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleAddMember(client.id)}
+                        disabled={addMemberMutation.isPending}
+                        className="px-6"
+                      >
+                        Add
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
               {clientsData?.clients?.length === 0 && clientSearch && (
                 <p className="text-center text-muted-foreground py-4">No clients found.</p>
               )}

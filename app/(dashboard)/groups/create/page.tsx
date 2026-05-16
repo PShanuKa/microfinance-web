@@ -35,20 +35,12 @@ export default function CreateGroupPage() {
 
   // Get officers (Loan Officers)
   const { data: userData } = useUsersQuery({ role: "LOAN_OFFICER", limit: 100 });
-  const createMutation = useCreateGroupMutation({
-    onSuccess: (data: any) => {
-      router.push(`/groups/${data.group.id}/edit`);
-    },
-    onError: (error: any) => {
-      setServerError(error.response?.data?.error || "Failed to create group");
-    },
-  });
-
   const {
     register,
     handleSubmit,
     setValue,
     watch,
+    setError,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -60,11 +52,36 @@ export default function CreateGroupPage() {
     },
   });
 
+  const handleApiError = (error: any) => {
+    const response = error.response?.data;
+    
+    if (response?.error) {
+      setServerError(response.error);
+    }
+
+    if (response?.fields) {
+      Object.keys(response.fields).forEach((field: any) => {
+        setError(field as any, { type: "manual", message: response.fields[field] });
+      });
+    } else if (!response?.error) {
+      setServerError("An error occurred. Please try again.");
+    }
+  };
+
+  const createMutation = useCreateGroupMutation({
+    onSuccess: (data: any) => {
+      router.push(`/groups/${data.group.id}/edit`);
+    },
+    onError: (error: any) => {
+      handleApiError(error);
+    },
+  });
+
   const selectedDay = watch("collectionDay");
   const selectedOfficer = watch("officerId");
 
   const onSubmit = (data: any) => {
-    // For demo, using a dummy createdBy. In real app, get from auth context.
+    setServerError(null);
     createMutation.mutate({
       ...data,
       collectionDay: Number(data.collectionDay),
@@ -102,7 +119,7 @@ export default function CreateGroupPage() {
                   <Input
                     id="name"
                     placeholder="e.g. Sunlight Group"
-                    {...register("name", { required: "Group name is required" })}
+                    {...register("name")}
                     className={errors.name ? "border-destructive" : ""}
                   />
                   {errors.name && <p className="text-xs text-destructive">{errors.name.message as string}</p>}
@@ -113,7 +130,7 @@ export default function CreateGroupPage() {
                   <Input
                     id="branch"
                     placeholder="e.g. Colombo North"
-                    {...register("branch", { required: "Branch is required" })}
+                    {...register("branch")}
                     className={errors.branch ? "border-destructive" : ""}
                   />
                   {errors.branch && <p className="text-xs text-destructive">{errors.branch.message as string}</p>}
@@ -124,7 +141,7 @@ export default function CreateGroupPage() {
                   <Input
                     id="location"
                     placeholder="e.g. Kaduwela, Malabe"
-                    {...register("location", { required: "Location is required" })}
+                    {...register("location")}
                     className={errors.location ? "border-destructive" : ""}
                   />
                   {errors.location && <p className="text-xs text-destructive">{errors.location.message as string}</p>}
@@ -134,11 +151,13 @@ export default function CreateGroupPage() {
                   <div className="grid gap-2">
                     <Label>Collection Day</Label>
                     <Select
-                      value={selectedDay.toString()}
-                      onValueChange={(val) => setValue("collectionDay", Number(val || 1))}
+                      value={selectedDay?.toString()}
+                      onValueChange={(val) => setValue("collectionDay", Number(val))}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select day" />
+                      <SelectTrigger className={errors.collectionDay ? "border-destructive" : ""}>
+                        <SelectValue>
+                          {DAYS.find(d => d.id === Number(selectedDay))?.name || "Select day"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {DAYS.map((day) => (
@@ -148,6 +167,7 @@ export default function CreateGroupPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.collectionDay && <p className="text-xs text-destructive">{errors.collectionDay.message as string}</p>}
                   </div>
 
                   <div className="grid gap-2">
@@ -156,8 +176,10 @@ export default function CreateGroupPage() {
                       value={selectedOfficer}
                       onValueChange={(val) => setValue("officerId", val || "")}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select officer" />
+                      <SelectTrigger className={errors.officerId ? "border-destructive" : ""}>
+                        <SelectValue>
+                          {userData?.users?.find((u: any) => u.id === selectedOfficer)?.fullname || "Select officer"}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         {userData?.users?.map((user: any) => (
@@ -167,6 +189,7 @@ export default function CreateGroupPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.officerId && <p className="text-xs text-destructive">{errors.officerId.message as string}</p>}
                   </div>
                 </div>
               </div>

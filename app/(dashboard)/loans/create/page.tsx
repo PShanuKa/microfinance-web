@@ -179,7 +179,9 @@ export default function CreateLoanPage() {
                   onValueChange={(val) => setValue("groupId", val || "")}
                 >
                   <SelectTrigger id="groupId">
-                    <SelectValue placeholder="Choose a group..." />
+                    <SelectValue>
+                      {selectedGroup ? `${selectedGroup.name} (${selectedGroup.branch})` : "Choose a group..."}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {groupsData?.groups?.map((group: any) => (
