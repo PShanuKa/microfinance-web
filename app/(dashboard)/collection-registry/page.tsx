@@ -55,7 +55,7 @@ export default function CollectionRegistryPage() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      Verified: "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20",
+      PAID: "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20",
       PENDING_APPROVAL: "bg-blue-500 hover:bg-blue-600 shadow-blue-500/20",
       PARTIAL: "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20",
       UNPAID: "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20",

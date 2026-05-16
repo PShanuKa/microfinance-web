@@ -243,7 +243,7 @@ export default function EditLoanSchedulePage() {
   if (loanLoading) return <div className="p-10 text-center font-bold animate-pulse">Loading loan details...</div>;
 
   return (
-    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 ">
       <PageHeader
         title={`Edit Loan Schedule: ${loanData?.loan?.loanNo}`}
         description="Modify loan parameters and update the repayment structure"

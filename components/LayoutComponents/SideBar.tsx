@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useUiStore } from "@/store/useUiStore";
@@ -22,22 +21,80 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
   { icon: Users, label: "Clients", href: "/clients" },
   { icon: UsersRound, label: "Groups", href: "/groups" },
   { icon: Wallet, label: "Loans", href: "/loans" },
   { icon: Receipt, label: "Collections", href: "/collections" },
-  { icon: ClipboardList, label: "Collection Registry", href: "/collection-registry" },
+  {
+    icon: ClipboardList,
+    label: "Collection Registry",
+    href: "/collection-registry",
+  },
   { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
   { icon: FileBarChart, label: "Reports", href: "/reports" },
   // { icon: Settings, label: "Administration", href: "/admin" },
 
   /* Dev links */
   { icon: Box, label: "Components-Dev", href: "/components" },
-  
+];
 
+const items = [
+  {
+    title: "Modules",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+      { icon: Users, label: "Clients", href: "/clients" },
+     
+      
+     
+      // { icon: Settings, label: "Administration", href: "/admin" },
+
+      /* Dev links */
+      { icon: Box, label: "Components-Dev", href: "/components" },
+    ],
+  },
+  {
+    title: "Arunodayata Saviyak",
+    items: [
+       { icon: UsersRound, label: "Groups", href: "/groups" },
+        { icon: Wallet, label: "Loans", href: "/loans" },
+    ],
+  },
+  {
+    title: "Morgage Loans",
+    items: [
+        { icon: Wallet, label: "Loans", href: "/loans" },
+    ],
+  },
+  {
+    title: "Collections",
+    items: [
+       { icon: Receipt, label: "Collections", href: "/collections" },
+      {
+        icon: ClipboardList,
+        label: "Collection Registry",
+        href: "/collection-registry",
+      },
+    ],
+  },
+  {
+    title: "Reports",
+    items: [
+        { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
+      { icon: FileBarChart, label: "Reports", href: "/reports" },
+    ],
+  },
+  {
+    title: "System Settings",
+    items: [
+      { icon: ShieldUser, label: "User Management", href: "/user-management" },
+      { icon: CalendarDays, label: "Non-Collection Weeks", href: "/con-weeks" },
+      { icon: Target, label: "Collection Targets", href: "/col-targets" },
+      { icon: Cog, label: "Settings", href: "/settings" },
+    ],
+  },
 ];
 
 const systemSettingsItems = [
@@ -45,10 +102,7 @@ const systemSettingsItems = [
   { icon: CalendarDays, label: "Non-Collection Weeks", href: "/con-weeks" },
   { icon: Target, label: "Collection Targets", href: "/col-targets" },
   { icon: Cog, label: "Settings", href: "/settings" },
- 
 ];
-
-
 
 export default function SideBar() {
   const pathname = usePathname();
@@ -63,26 +117,59 @@ export default function SideBar() {
 
       <div>
         <div className="w-full  flex flex-col gap-1 mt-5 px-2">
-           <p className="text-xs text-muted-foreground mt-5 px-2">Modules</p>
+
+          {
+            items.map((group) => (
+              <>
+              <p className="text-xs text-muted-foreground mt-1 px-2">{group.title}</p>
+          {group.items.map((item) => (
+            <SideBarButton
+              href={item.href}
+              isActive={pathname == item.href}
+              key={item.label}
+              icon={
+                <item.icon
+                  className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`}
+                />
+              }
+              text={item.label}
+            />
+          ))}
+          </>
+            ))
+            
+          }
+
+          {/* <p className="text-xs text-muted-foreground mt-5 px-2">Modules</p>
           {navItems.map((item) => (
             <SideBarButton
               href={item.href}
               isActive={pathname == item.href}
               key={item.label}
-              icon={<item.icon className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`} />}
+              icon={
+                <item.icon
+                  className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`}
+                />
+              }
               text={item.label}
             />
           ))}
-          <p className="text-xs text-muted-foreground mt-5 px-2">System Settings</p>
+          <p className="text-xs text-muted-foreground mt-5 px-2">
+            System Settings
+          </p>
           {systemSettingsItems.map((item) => (
             <SideBarButton
               href={item.href}
               isActive={pathname == item.href}
               key={item.label}
-              icon={<item.icon className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`} />}
+              icon={
+                <item.icon
+                  className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`}
+                />
+              }
               text={item.label}
             />
-          ))}
+          ))} */}
         </div>
       </div>
     </div>
@@ -106,7 +193,11 @@ function SideBarButton({
         className={`rounded-lg w-full h-[40px] flex flex-row items-center gap-3 pl-3 hover:cursor-pointer  ${isActive ? "bg-(--sidebar-button-bg)" : ""}`}
       >
         {icon}
-        <h1 className={`  ${isActive ? "text-white" : "text-(--sidebar-text)"} text-md font-semibold `}>{text}</h1>
+        <h1
+          className={`  ${isActive ? "text-white" : "text-(--sidebar-text)"} text-md font-semibold `}
+        >
+          {text}
+        </h1>
       </div>
     </Link>
   );

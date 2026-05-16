@@ -63,8 +63,10 @@ import {
   useLoanInstalmentsQuery,
   useApproveLoanMutation,
   useRejectLoanMutation,
+  useUpdateLoanStatusMutation,
 } from "@/services/loanApi";
 import { format } from "date-fns";
+// import { toast } from "sonner";
 import { LoanGuarantorViewModal } from "@/components/Custom/LoanGuarantorViewModal";
 import { DialogTitle } from "@/components/ui/dialog";
 
@@ -78,6 +80,16 @@ export default function LoanViewPage() {
 
   const approveMutation = useApproveLoanMutation();
   const rejectMutation = useRejectLoanMutation();
+  const statusMutation = useUpdateLoanStatusMutation();
+
+  const handleSendForApproval = () => {
+    if (confirm("Send this loan for approval?")) {
+      statusMutation.mutate(
+        { id: id as string, status: "PENDING" },
+        
+      );
+    }
+  };
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [activeGuarantor, setActiveGuarantor] = useState<any>(null);
@@ -296,6 +308,20 @@ export default function LoanViewPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          {loan.status === "DRAFT" && (
+            <Button
+              onClick={handleSendForApproval}
+              className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 h-11 px-6 font-bold text-white"
+              disabled={statusMutation.isPending}
+            >
+              {statusMutation.isPending ? (
+                <Clock className="h-4 w-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="h-4 w-4" />
+              )}
+              Send for Approval
+            </Button>
+          )}
           {loan.status === "PENDING" && (
             <>
               <Button

@@ -38,6 +38,10 @@ const loanService = {
     const response = await api.delete(`/loans/${id}/guarantors/${clientId}/${index}`);
     return response.data;
   },
+  updateLoanStatus: async ({ id, status, approvedById, rejectionReason }: { id: string; status: string; approvedById?: string; rejectionReason?: string }) => {
+    const response = await api.patch(`/loans/${id}/status`, { status, approvedById, rejectionReason });
+    return response.data;
+  },
 };
 
 export const useLoansQuery = (params: any = {}) => {
@@ -95,6 +99,19 @@ export const useRejectLoanMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: loanService.rejectLoan,
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
+      queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["Loans"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+
+export const useUpdateLoanStatusMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: loanService.updateLoanStatus,
     ...options,
     onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
