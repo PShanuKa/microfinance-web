@@ -221,7 +221,7 @@ export default function ClientsPage() {
             </div>
 
             <div
-              className="flex items-center gap-3 w-full md:w-auto"
+              className="flex items-center gap-3 w-full md:w-auto cursor-pointer "
               onClick={() =>
                 setOpenItem((prev) => (prev.includes("item-1") ? [] : ["item-1"]))
               }

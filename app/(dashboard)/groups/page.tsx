@@ -36,10 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,20 +63,61 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+} from "@/components/ui/accordion";
+import { Label } from "@/components/ui/label";
+import { Clock } from "lucide-react";
 import { useGroupsQuery, useDeleteGroupMutation } from "@/services/groupApi";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export default function GroupsPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // URL synced filters
+  const statusFilter = searchParams.get("status") || "All";
+  const collectionDayFilter = searchParams.get("collectionDay") || "All";
+
+  const [openItem, setOpenItem] = useState<string[]>([]);
   
   // Delete Dialog State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState<any>(null);
 
-  const { data, isLoading } = useGroupsQuery({ page, limit: 10, search: searchTerm });
+  // Function to update URL params
+  const updateFilters = (updates: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && value !== "All") {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+    router.push(`${pathname}?${params.toString()}`);
+    setPage(1);
+  };
+
+  const { data, isLoading } = useGroupsQuery({ 
+    page, 
+    limit: 10, 
+    search: searchTerm,
+    status: statusFilter,
+    collectionDay: collectionDayFilter
+  });
+
   const deleteMutation = useDeleteGroupMutation({
     onSuccess: () => {
       setIsDeleteDialogOpen(false);
@@ -97,6 +134,24 @@ export default function GroupsPage() {
     if (groupToDelete) {
       deleteMutation.mutate(groupToDelete.id);
     }
+  };
+
+  const highlightText = (text: string, term: string) => {
+    if (!term || !text) return text;
+    const parts = text.toString().split(new RegExp(`(${term})`, "gi"));
+    return (
+      <span>
+        {parts.map((part, i) =>
+          part.toLowerCase() === term.toLowerCase() ? (
+            <mark key={i} className="bg-primary/20 text-primary font-black rounded-sm px-0.5">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </span>
+    );
   };
 
   return (
@@ -116,12 +171,12 @@ export default function GroupsPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row items-center justify-between p-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-full max-md:max-w-md">
+          <div className="flex flex-col md:flex-row items-center  p-4 border-b bg-muted/20 gap-4">
+            <div className="relative flex-1 w-[80px] md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by group name or branch..."
-                className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
+                placeholder="Search by ID, Name, Officer or Leader..."
+                className="pl-10 h-10 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -130,22 +185,81 @@ export default function GroupsPage() {
               />
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <Select defaultValue="all">
-                <SelectTrigger className="w-full md:w-[180px] h-11 bg-background/50">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="Filter Branch" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Branches</SelectItem>
-                  <SelectItem value="colombo">Colombo North</SelectItem>
-                  <SelectItem value="gampaha">Gampaha</SelectItem>
-                </SelectContent>
-              </Select>
+            <div
+              className="flex items-center gap-3 w-full md:w-auto cursor-pointer "
+              onClick={() =>
+                setOpenItem((prev) => (prev.includes("item-1") ? [] : ["item-1"]))
+              }
+            >
+              filters
             </div>
           </div>
+
+          <Accordion
+            value={openItem}
+            onValueChange={setOpenItem}
+            className="w-full border-none"
+          >
+            <AccordionItem value="item-1" className="border-none">
+              <AccordionContent className="px-4 py-4 border-b bg-muted/20">
+                <div className="flex flex-col md:flex-row items-end gap-4">
+                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                    <Label className="text-xs text-muted-foreground ml-1">Status</Label>
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(val) => updateFilters({ status: val || "All" })}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Filter Status" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Statuses</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                    <Label className="text-xs text-muted-foreground ml-1">Collection Day</Label>
+                    <Select
+                      value={collectionDayFilter}
+                      onValueChange={(val) => updateFilters({ collectionDay: val || "All" })}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Collection Day" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Days</SelectItem>
+                        {DAYS.map((day, idx) => (
+                          <SelectItem key={day} value={(idx + 1).toString()}>
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {(statusFilter !== "All" || collectionDayFilter !== "All") && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => updateFilters({ status: "All", collectionDay: "All" })}
+                      className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           <div className="overflow-x-auto">
             <Table>
@@ -174,8 +288,12 @@ export default function GroupsPage() {
                     <TableRow key={group.id} className="hover:bg-primary/5 transition-colors group">
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">{group.name}</span>
-                          <span className="text-[10px] font-mono text-muted-foreground uppercase">{group.id}</span>
+                          <span className="font-bold text-foreground group-hover:text-primary transition-colors">
+                            {highlightText(group.name, searchTerm)}
+                          </span>
+                          <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                            {highlightText(group.groupNo || group.id, searchTerm)}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -193,7 +311,7 @@ export default function GroupsPage() {
                       <TableCell>
                         <div className="flex items-center gap-1.5 text-sm font-medium">
                           <User className="h-3.5 w-3.5 text-primary/60" />
-                          {group.officer?.fullname || "N/A"}
+                          {highlightText(group.officer?.fullname || "N/A", searchTerm)}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -204,7 +322,7 @@ export default function GroupsPage() {
                             <div className="flex flex-col">
                               <span className="text-sm font-bold flex items-center gap-1">
                                 <Crown className="h-3 w-3 text-amber-500" />
-                                {leader.client?.fullname}
+                                {highlightText(leader.client?.fullname, searchTerm)}
                               </span>
                               <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                 <Phone className="h-2.5 w-2.5" />
