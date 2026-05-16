@@ -17,7 +17,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuGroup
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -25,11 +25,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  MoreVertical, 
-  Plus, 
-  Search, 
-  UserPen, 
+import {
+  MoreVertical,
+  Plus,
+  Search,
+  UserPen,
   Eye,
   CreditCard,
   Phone,
@@ -37,7 +37,7 @@ import {
   Clock,
   Filter,
   User2,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +59,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -79,16 +85,25 @@ export default function ClientsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [openItem, setOpenItem] = useState<string | null>();
 
-  const { data, isLoading } = useClientsQuery({ page, limit: 10, search, status: statusFilter });
+  const { data, isLoading } = useClientsQuery({
+    page,
+    limit: 10,
+    search,
+    status: statusFilter,
+  });
   const deleteMutation = useDeleteClientMutation({
     onSuccess: () => {
       setDeleteConfirmId(null);
     },
     onError: (error: any) => {
-      alert(error.response?.data?.error || "Failed to delete client. They might have active loans or group associations.");
+      alert(
+        error.response?.data?.error ||
+          "Failed to delete client. They might have active loans or group associations.",
+      );
       setDeleteConfirmId(null);
-    }
+    },
   });
 
   const handleEdit = (client: any) => {
@@ -117,7 +132,12 @@ export default function ClientsPage() {
     };
 
     return (
-      <Badge className={cn("border-none px-3 py-1 rounded-full font-bold text-white", colors[status] || "bg-slate-500")}>
+      <Badge
+        className={cn(
+          "border-none px-3 py-1 rounded-full font-bold text-white",
+          colors[status] || "bg-slate-500",
+        )}
+      >
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3" />
           {status}
@@ -132,7 +152,7 @@ export default function ClientsPage() {
         title="Clients"
         description="Manage client profiles, contact information, and registration status"
       >
-        <Button 
+        <Button
           onClick={handleCreate}
           className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
         >
@@ -143,12 +163,12 @@ export default function ClientsPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row items-center justify-between p-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-full max-md:max-w-md">
+          <div className="flex flex-col md:flex-row items-center  py-4 border-b bg-muted/20 gap-4">
+            <div className="relative flex-1 w-[80px] md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search by name, ID, or NIC..."
-                className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
+                className="pl-10 h-10 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -157,60 +177,139 @@ export default function ClientsPage() {
               />
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val || "ALL"); setPage(1); }}>
-                <SelectTrigger className="w-full md:w-[180px] h-11 bg-background/50">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="Filter Status" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Statuses</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
-                  <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
-                </SelectContent>
-              </Select>
+            <div
+              className="flex items-center gap-3 w-full md:w-auto"
+              onClick={() =>
+                setOpenItem((prev) => (prev === "item-1" ? null : "item-1"))
+              }
+            >
+              filters
             </div>
           </div>
+
+          <Accordion type="single" collapsible value="item-1">
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Is it accessible?</AccordionTrigger>
+              <AccordionContent>
+                <div className="flex flex-col md:flex-row items-center  py-4 border-b bg-muted/20 gap-4">
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(val) => {
+                        setStatusFilter(val || "ALL");
+                        setPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px] h-11 bg-background/50">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Filter Status" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Statuses</SelectItem>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="INACTIVE">Inactive</SelectItem>
+                        <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Select
+                      value={statusFilter}
+                      onValueChange={(val) => {
+                        setStatusFilter(val || "ALL");
+                        setPage(1);
+                      }}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px] h-11 bg-background/50">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Filter Status" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Statuses</SelectItem>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="INACTIVE">Inactive</SelectItem>
+                        <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-                  <TableHead className="font-bold text-foreground">Client Details</TableHead>
-                  <TableHead className="font-bold text-foreground">NIC Number</TableHead>
-                  <TableHead className="font-bold text-foreground">Phone</TableHead>
-                  <TableHead className="font-bold text-foreground">Job / Occupation</TableHead>
-                  <TableHead className="font-bold text-foreground">Status</TableHead>
-                  <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
+                  <TableHead className="font-bold text-foreground">
+                    Client Details
+                  </TableHead>
+                  <TableHead className="font-bold text-foreground">
+                    NIC Number
+                  </TableHead>
+                  <TableHead className="font-bold text-foreground">
+                    Phone
+                  </TableHead>
+                  <TableHead className="font-bold text-foreground">
+                    Job / Occupation
+                  </TableHead>
+                  <TableHead className="font-bold text-foreground">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-right font-bold text-foreground">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">Loading clients...</TableCell>
+                    <TableCell
+                      colSpan={6}
+                      className="h-32 text-center text-muted-foreground"
+                    >
+                      Loading clients...
+                    </TableCell>
                   </TableRow>
                 ) : data?.clients?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No clients found.</TableCell>
+                    <TableCell
+                      colSpan={6}
+                      className="h-32 text-center text-muted-foreground"
+                    >
+                      No clients found.
+                    </TableCell>
                   </TableRow>
                 ) : (
                   data?.clients?.map((client: any) => (
-                    <TableRow key={client.id} className="hover:bg-primary/5 transition-colors group">
+                    <TableRow
+                      key={client.id}
+                      className="hover:bg-primary/5 transition-colors group"
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl overflow-hidden bg-muted flex items-center justify-center shrink-0 border border-slate-100 group-hover:border-primary/20 transition-colors">
                             {client.profileImage?.fileUrl ? (
-                              <img src={client.profileImage.fileUrl} alt="" className="w-full h-full object-cover" />
+                              <img
+                                src={client.profileImage.fileUrl}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <User2 className="w-5 h-5 text-slate-400" />
                             )}
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-bold text-foreground group-hover:text-primary transition-colors">{client.fullname}</span>
-                            <span className="text-xs text-muted-foreground font-mono">{client.clientNo}</span>
+                            <span className="font-bold text-foreground group-hover:text-primary transition-colors">
+                              {client.fullname}
+                            </span>
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {client.clientNo}
+                            </span>
                           </div>
                         </div>
                       </TableCell>
@@ -232,9 +331,7 @@ export default function ClientsPage() {
                           {client.job || "N/A"}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {getStatusBadge(client.status)}
-                      </TableCell>
+                      <TableCell>{getStatusBadge(client.status)}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger>
@@ -242,20 +339,33 @@ export default function ClientsPage() {
                               <MoreVertical className="h-4 w-4" />
                             </div>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md">
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-56 bg-card/95 backdrop-blur-md"
+                          >
                             <DropdownMenuGroup>
-                              <DropdownMenuLabel>Client Actions</DropdownMenuLabel>
+                              <DropdownMenuLabel>
+                                Client Actions
+                              </DropdownMenuLabel>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleView(client)} className="gap-2 cursor-pointer">
-                              <Eye className="w-4 h-4 text-primary" /> View Details
+                            <DropdownMenuItem
+                              onClick={() => handleView(client)}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <Eye className="w-4 h-4 text-primary" /> View
+                              Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEdit(client)} className="gap-2 cursor-pointer">
-                              <UserPen className="w-4 h-4 text-blue-500" /> Edit Client
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(client)}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <UserPen className="w-4 h-4 text-blue-500" /> Edit
+                              Client
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => setDeleteConfirmId(client.id)} 
+                            <DropdownMenuItem
+                              onClick={() => setDeleteConfirmId(client.id)}
                               className="gap-2 cursor-pointer text-rose-500 focus:text-rose-500 focus:bg-rose-500/10"
                             >
                               <Trash2 className="w-4 h-4" /> Delete Client
@@ -276,19 +386,27 @@ export default function ClientsPage() {
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious 
-                      href="#" 
-                      onClick={(e) => { e.preventDefault(); if (page > 1) setPage(page - 1); }} 
-                      className={cn(page === 1 && "pointer-events-none opacity-50")}
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page > 1) setPage(page - 1);
+                      }}
+                      className={cn(
+                        page === 1 && "pointer-events-none opacity-50",
+                      )}
                     />
                   </PaginationItem>
-                  
+
                   {[...Array(data.pagination.totalPages)].map((_, i) => (
                     <PaginationItem key={i}>
-                      <PaginationLink 
-                        href="#" 
+                      <PaginationLink
+                        href="#"
                         isActive={page === i + 1}
-                        onClick={(e) => { e.preventDefault(); setPage(i + 1); }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPage(i + 1);
+                        }}
                       >
                         {i + 1}
                       </PaginationLink>
@@ -296,10 +414,17 @@ export default function ClientsPage() {
                   ))}
 
                   <PaginationItem>
-                    <PaginationNext 
-                      href="#" 
-                      onClick={(e) => { e.preventDefault(); if (page < data.pagination.totalPages) setPage(page + 1); }}
-                      className={cn(page === data.pagination.totalPages && "pointer-events-none opacity-50")}
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page < data.pagination.totalPages)
+                          setPage(page + 1);
+                      }}
+                      className={cn(
+                        page === data.pagination.totalPages &&
+                          "pointer-events-none opacity-50",
+                      )}
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -310,17 +435,25 @@ export default function ClientsPage() {
       </Card>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+      <AlertDialog
+        open={!!deleteConfirmId}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+      >
         <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-slate-800 tracking-tighter uppercase">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogTitle className="text-2xl font-black text-slate-800 tracking-tighter uppercase">
+              Confirm Deletion
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-500 font-bold">
-              Are you sure you want to delete this client? This action cannot be undone if the client has no active associations.
+              Are you sure you want to delete this client? This action cannot be
+              undone if the client has no active associations.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3 mt-6">
-            <AlertDialogCancel className="rounded-xl border-slate-200 font-bold px-6 h-12">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogCancel className="rounded-xl border-slate-200 font-bold px-6 h-12">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
               className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-black px-8 h-12 shadow-lg shadow-rose-200 transition-all"

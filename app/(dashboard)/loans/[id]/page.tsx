@@ -597,15 +597,14 @@ export default function LoanViewPage() {
                         <TableCell className="text-center">
                           <DropdownMenu>
                             <DropdownMenuTrigger>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="gap-2 font-bold text-primary hover:bg-primary/5"
+                              <div
+                            
+                                className="gap-2 font-bold text-primary hover:bg-primary/5 flex items-center cursor-pointer"
                               >
                                 <ShieldCheck className="w-4 h-4" />
                                 {member.guarantors.length} Guarantors
                                 <ChevronDown className="w-3 h-3 ml-1 opacity-40" />
-                              </Button>
+                              </div>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent
                               align="center"
