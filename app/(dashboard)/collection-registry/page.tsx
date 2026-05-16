@@ -55,18 +55,20 @@ export default function CollectionRegistryPage() {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      Verified: "bg-emerald-500 hover:bg-emerald-600",
-      Pending: "bg-amber-500 hover:bg-amber-600",
-      Disputed: "bg-rose-500 hover:bg-rose-600",
+      Verified: "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20",
+      PENDING_APPROVAL: "bg-blue-500 hover:bg-blue-600 shadow-blue-500/20",
+      PARTIAL: "bg-amber-500 hover:bg-amber-600 shadow-amber-500/20",
+      UNPAID: "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20",
+      Pending: "bg-slate-500 hover:bg-slate-600 shadow-slate-500/20",
     };
     return (
       <Badge
         className={cn(
-          "font-bold text-[10px] uppercase px-2 py-0.5 border-none text-white",
+          "font-bold text-[10px] uppercase px-2 py-0.5 border-none text-white shadow-sm transition-all duration-300",
           colors[status] || "bg-slate-500",
         )}
       >
-        {status}
+        {status.replace("_", " ")}
       </Badge>
     );
   };

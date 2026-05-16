@@ -278,7 +278,9 @@ export default function RegistryDetailPage() {
                   <TableCell className="text-center">
                     <Badge className={cn(
                       "font-bold text-[10px] uppercase px-2 py-0.5 border-none text-white",
-                      inst.status === "PAID" ? "bg-emerald-500" : inst.status === "PARTIAL" ? "bg-amber-500" : "bg-slate-400"
+                      inst.status === "PAID" ? "bg-emerald-500" : 
+                      inst.status === "PARTIAL" ? "bg-amber-500" : 
+                      inst.status === "Pending" ? "bg-blue-500" : "bg-slate-400"
                     )}>
                       {inst.status}
                     </Badge>
