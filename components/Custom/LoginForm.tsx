@@ -36,7 +36,7 @@ export function LoginForm() {
     onSuccess: (data: any) => {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
-      window.location.href = "/dashboard";
+      window.location.href = "/";
     },
     onError: (error: any) => {
       const response = error.response?.data;

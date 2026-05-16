@@ -3,7 +3,10 @@
 import NavBar from "@/components/LayoutComponents/NavBar";
 import Sidebar from "@/components/LayoutComponents/SideBar";
 import { useUiStore } from "@/store/useUiStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useGetMeQuery } from "@/services/authApi";
+import { useRouter } from "next/navigation";
+import { PremiumLoading } from "@/components/Custom/PremiumLoading";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +14,28 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { sideBarOpen , setSideBar } = useUiStore();
+  const router = useRouter();
+  const [minLoading, setMinLoading] = useState(true);
+
+  // Initial Auth Check
+  const { isLoading, isError, data } = useGetMeQuery({
+    retry: false,
+  });
+
+  useEffect(() => {
+    // Minimum 1.2s loading time for premium feel
+    const timer = setTimeout(() => {
+      setMinLoading(false);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (isError) {
+      router.push("/login");
+    }
+  }, [isError, router]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -27,6 +52,11 @@ export default function DashboardLayout({
     
     return () => window.removeEventListener("resize", handleResize);
   }, [setSideBar]);
+
+  // Show Premium Loading if either API is fetching OR our minimum timer is running
+  if (isLoading || minLoading || !data) {
+    return <PremiumLoading />;
+  }
 
 
   return (
