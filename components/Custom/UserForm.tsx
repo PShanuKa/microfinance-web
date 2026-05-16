@@ -141,7 +141,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
             <Label>Role</Label>
             <Select
               value={selectedRole}
-              onValueChange={(value) => setValue("role", value)}
+              onValueChange={(value) => setValue("role", value || "LOAN_OFFICER")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />

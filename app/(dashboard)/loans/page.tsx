@@ -123,7 +123,7 @@ export default function LoansPage() {
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto">
-              <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val); setPage(1); }}>
+              <Select value={statusFilter} onValueChange={(val) => { setStatusFilter(val || "All"); setPage(1); }}>
                 <SelectTrigger className="w-full md:w-[180px] h-11 bg-background/50">
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4 text-muted-foreground" />

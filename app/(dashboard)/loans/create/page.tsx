@@ -65,7 +65,7 @@ export default function CreateLoanPage() {
   const settings = settingsData?.settings;
 
   const createMutation = useCreateLoanMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       router.push(`/loans/${data.loan.id}`);
     },
     onError: (error: any) => {
@@ -176,7 +176,7 @@ export default function CreateLoanPage() {
                 <Label htmlFor="groupId">Select Group</Label>
                 <Select
                   value={selectedGroupId}
-                  onValueChange={(val) => setValue("groupId", val)}
+                  onValueChange={(val) => setValue("groupId", val || "")}
                 >
                   <SelectTrigger id="groupId">
                     <SelectValue placeholder="Choose a group..." />

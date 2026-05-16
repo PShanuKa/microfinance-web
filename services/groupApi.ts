@@ -115,24 +115,24 @@ export const useUpdateMemberMutation = (options: any = {}) => {
 
 export const useRemoveMemberMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, string>({
     mutationFn: groupService.removeMember,
     ...options,
-    onSuccess: (...args: any[]) => {
+    onSuccess: (data: any, variables: string, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Group"] });
-      if (options.onSuccess) options.onSuccess(...args);
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
   });
 };
 
 export const useDeleteGroupMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, string>({
     mutationFn: groupService.deleteGroup,
     ...options,
-    onSuccess: (...args: any[]) => {
+    onSuccess: (data: any, variables: string, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Groups"] });
-      if (options.onSuccess) options.onSuccess(...args);
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
   });
 };

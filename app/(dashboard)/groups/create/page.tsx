@@ -36,7 +36,7 @@ export default function CreateGroupPage() {
   // Get officers (Loan Officers)
   const { data: userData } = useUsersQuery({ role: "LOAN_OFFICER", limit: 100 });
   const createMutation = useCreateGroupMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       router.push(`/groups/${data.group.id}/edit`);
     },
     onError: (error: any) => {
@@ -54,6 +54,7 @@ export default function CreateGroupPage() {
     defaultValues: {
       name: "",
       branch: "",
+      location: "",
       collectionDay: 1,
       officerId: "",
     },
@@ -134,7 +135,7 @@ export default function CreateGroupPage() {
                     <Label>Collection Day</Label>
                     <Select
                       value={selectedDay.toString()}
-                      onValueChange={(val) => setValue("collectionDay", Number(val))}
+                      onValueChange={(val) => setValue("collectionDay", Number(val || 1))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select day" />
@@ -153,7 +154,7 @@ export default function CreateGroupPage() {
                     <Label>Collection Officer</Label>
                     <Select
                       value={selectedOfficer}
-                      onValueChange={(val) => setValue("officerId", val)}
+                      onValueChange={(val) => setValue("officerId", val || "")}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select officer" />

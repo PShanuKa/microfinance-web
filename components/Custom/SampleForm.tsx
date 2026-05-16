@@ -32,8 +32,8 @@ const formSchema = z.object({
   mobile: z
     .string()
     .min(10, { message: "Mobile number must be at least 10 digits." }),
-  gender: z.string({ required_error: "Please select a gender." }),
-  center: z.string({ required_error: "Please select a center." }),
+  gender: z.string().min(1, "Please select a gender."),
+  center: z.string().min(1, "Please select a center."),
   address: z
     .string()
     .min(5, { message: "Address must be at least 5 characters." }),
@@ -131,7 +131,7 @@ export function SampleForm() {
             {/* Gender */}
             <div className="space-y-2">
               <Label className="text-sm font-semibold">Gender</Label>
-              <Select onValueChange={(value) => setValue("gender", value)}>
+              <Select onValueChange={(value: string | null) => setValue("gender", value || "")}>
                 <SelectTrigger className="bg-background/50">
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
@@ -151,7 +151,7 @@ export function SampleForm() {
             {/* Center */}
             <div className="space-y-2 md:col-span-2">
               <Label className="text-sm font-semibold">Assigned Center</Label>
-              <Select onValueChange={(value) => setValue("center", value)}>
+              <Select onValueChange={(value: string | null) => setValue("center", value || "")}>
                 <SelectTrigger className="bg-background/50">
                   <SelectValue placeholder="Select a center" />
                 </SelectTrigger>

@@ -34,30 +34,30 @@ export const useUsersQuery = (params: any = {}, options = {}) => {
 
 export const useCreateUserMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, any>({
     mutationFn: userService.createUser,
     ...options,
-    onSuccess: (...args: any[]) => {
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Users"] });
-      if (options.onSuccess) options.onSuccess(...args);
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
   });
 };
 
 export const useUpdateUserMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, any>({
     mutationFn: userService.updateUser,
     ...options,
-    onSuccess: (...args: any[]) => {
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Users"] });
-      if (options.onSuccess) options.onSuccess(...args);
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
   });
 };
 
 export const useResetPasswordMutation = (options = {}) => {
-  return useMutation({
+  return useMutation<any, any, any>({
     mutationFn: userService.resetPassword,
     ...options,
   });
@@ -65,12 +65,12 @@ export const useResetPasswordMutation = (options = {}) => {
 
 export const useUpdateUserStatusMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, any>({
     mutationFn: userService.updateStatus,
     ...options,
-    onSuccess: (...args: any[]) => {
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Users"] });
-      if (options.onSuccess) options.onSuccess(...args);
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
   });
 };

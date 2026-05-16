@@ -152,7 +152,7 @@ export default function EditGroupPage() {
 
   const handleRemoveMember = (memberId: string) => {
     if (confirm("Remove this member from the group?")) {
-      removeMemberMutation.mutate(memberId);
+      removeMemberMutation.mutate(memberId as string);
     }
   };
 
@@ -233,7 +233,7 @@ export default function EditGroupPage() {
                   <Label>Collection Day</Label>
                   <Select
                     value={selectedDay.toString()}
-                    onValueChange={(val) => setValue("collectionDay", Number(val))}
+                    onValueChange={(val) => setValue("collectionDay", Number(val || 1))}
                   >
                     <SelectTrigger className="bg-background/50">
                       <SelectValue placeholder="Select day" />
@@ -252,7 +252,7 @@ export default function EditGroupPage() {
                   <Label>Collection Officer</Label>
                   <Select
                     value={selectedOfficer}
-                    onValueChange={(val) => setValue("officerId", val)}
+                    onValueChange={(val) => setValue("officerId", val || "")}
                   >
                     <SelectTrigger className="bg-background/50">
                       <SelectValue placeholder="Select officer" />

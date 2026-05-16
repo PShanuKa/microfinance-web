@@ -43,19 +43,19 @@ export const useClientQuery = (id: string, options = {}) => {
 
 export const useCreateClientMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, any>({
     mutationFn: clientService.createClient,
     ...options,
-    onSuccess: (...args: any[]) => {
+    onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Clients"] });
-      if (options.onSuccess) options.onSuccess(...args);
+      if (options.onSuccess) options.onSuccess(data, variables, context);
     },
   });
 };
 
 export const useUpdateClientMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, any>({
     mutationFn: clientService.updateClient,
     ...options,
     onSuccess: (data: any, variables: any, context: any) => {
@@ -68,10 +68,10 @@ export const useUpdateClientMutation = (options: any = {}) => {
 
 export const useDeleteClientMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, string>({
     mutationFn: clientService.deleteClient,
     ...options,
-    onSuccess: (data: any, variables: any, context: any) => {
+    onSuccess: (data: any, variables: string, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Client", variables] });
       queryClient.invalidateQueries({ queryKey: ["Clients"] });
       if (options.onSuccess) options.onSuccess(data, variables, context);

@@ -280,7 +280,7 @@ export default function EditLoanSchedulePage() {
                 <Label>Change Group</Label>
                 <Select
                   value={selectedGroupId}
-                  onValueChange={(val) => setValue("groupId", val)}
+                  onValueChange={(val) => setValue("groupId", val || "")}
                 >
                   <SelectTrigger className="bg-background/50 h-12 text-lg font-bold">
                     <SelectValue placeholder="Choose a group..." />
@@ -479,7 +479,7 @@ export default function EditLoanSchedulePage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                            <DropdownMenuTrigger >
                               <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
                                 <MoreVertical className="h-4 w-4" />
                               </div>

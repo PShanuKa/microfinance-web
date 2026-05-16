@@ -145,7 +145,7 @@ export default function CreateCollectionPage() {
             <CardContent className="space-y-4">
               <div className="grid gap-2">
                 <Label>Select Group</Label>
-                <Select onValueChange={(val) => setValue("groupId", val)}>
+                <Select onValueChange={(val: string | null) => setValue("groupId", (val as string) || "")}>
                   <SelectTrigger className="bg-background/50">
                     <SelectValue placeholder="Choose Group" />
                   </SelectTrigger>

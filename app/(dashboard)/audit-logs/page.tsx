@@ -146,8 +146,7 @@ export default function AuditLogsPage() {
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader 
         title="Audit Logs" 
-        subtitle="Track system activities and data changes across the platform"
-        icon={<History className="w-8 h-8 text-primary" />}
+        description="Track system activities and data changes across the platform"
       />
 
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
@@ -159,7 +158,7 @@ export default function AuditLogsPage() {
               className="pl-9 h-11 bg-slate-50 border-none focus-visible:ring-primary"
             />
           </div>
-          <Select value={entity} onValueChange={setEntity}>
+          <Select value={entity} onValueChange={(val) => setEntity(val ?? undefined)}>
             <SelectTrigger className="w-[180px] h-11 bg-slate-50 border-none">
               <SelectValue placeholder="Module (All)" />
             </SelectTrigger>
@@ -175,7 +174,7 @@ export default function AuditLogsPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Select value={action} onValueChange={setAction}>
+          <Select value={action} onValueChange={(val) => setAction(val ?? undefined)}>
             <SelectTrigger className="w-[150px] h-11 bg-slate-50 border-none">
               <SelectValue placeholder="Action (All)" />
             </SelectTrigger>
