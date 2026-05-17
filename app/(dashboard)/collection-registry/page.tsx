@@ -79,6 +79,15 @@ export default function CollectionRegistryPage() {
     col.groupNo.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Dynamic Calculations for Summary Cards
+  const totalExpected = registryData.reduce((sum: number, item: any) => sum + (item.expected || 0), 0);
+  const totalArrears = registryData.reduce((sum: number, item: any) => sum + (item.arrears || 0), 0);
+  const totalCollected = registryData.reduce((sum: number, item: any) => sum + (item.collected || 0), 0);
+  
+  const totalDue = totalExpected + totalArrears;
+  const totalOutstanding = Math.max(0, totalDue - totalCollected);
+  const collectionEfficiency = totalDue > 0 ? (totalCollected / totalDue) * 100 : 0;
+
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
@@ -104,11 +113,16 @@ export default function CollectionRegistryPage() {
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
               Today's Expected Collection
             </p>
-            <p className="text-2xl font-black mt-2">Rs. 56,250</p>
-            <div className="mt-4 flex items-center gap-2">
+            <p className="text-2xl font-black mt-2">Rs. {totalExpected.toLocaleString()}</p>
+            <div className="mt-4 flex items-center gap-2 flex-wrap">
               <Badge className="bg-white/20 border-none text-[9px] font-black uppercase">
-                Schedule: 12 Groups
+                Schedule: {registryData.length} Groups
               </Badge>
+              {totalArrears > 0 && (
+                <Badge className="bg-rose-500/30 text-rose-100 border-none text-[9px] font-black uppercase">
+                  + Rs. {totalArrears.toLocaleString()} Arrears
+                </Badge>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -121,12 +135,17 @@ export default function CollectionRegistryPage() {
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
               Today's Collected Amount
             </p>
-            <p className="text-2xl font-black mt-2">Rs. 43,750</p>
+            <p className="text-2xl font-black mt-2">Rs. {totalCollected.toLocaleString()}</p>
             <div className="mt-4 flex items-center gap-2">
               <div className="h-1 w-24 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full bg-white w-[77%]" />
+                <div 
+                  className="h-full bg-white transition-all duration-1000" 
+                  style={{ width: `${Math.min(100, totalDue > 0 ? (totalCollected / totalDue) * 100 : 0)}%` }}
+                />
               </div>
-              <span className="text-[10px] font-black">77% Recovered</span>
+              <span className="text-[10px] font-black">
+                {totalDue > 0 ? Math.round((totalCollected / totalDue) * 100) : 0}% Recovered
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -139,11 +158,11 @@ export default function CollectionRegistryPage() {
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
               My Total Outstanding
             </p>
-            <p className="text-2xl font-black mt-2">Rs. 12,500</p>
+            <p className="text-2xl font-black mt-2">Rs. {totalOutstanding.toLocaleString()}</p>
             <div className="mt-4 flex items-center gap-2 text-white/60">
               <Clock className="h-3.5 w-3.5" />
               <span className="text-[10px] font-bold uppercase tracking-tighter">
-                Due from 3 members
+                Remaining to be collected
               </span>
             </div>
           </CardContent>
@@ -157,10 +176,12 @@ export default function CollectionRegistryPage() {
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
               Collection Efficiency
             </p>
-            <p className="text-4xl font-black mt-2 tracking-tighter">77.8%</p>
+            <p className="text-4xl font-black mt-2 tracking-tighter">
+              {collectionEfficiency.toFixed(1)}%
+            </p>
             <div className="mt-2 flex items-center gap-2">
               <span className="text-[9px] font-black uppercase bg-primary/20 text-primary-foreground px-2 py-0.5 rounded-full tracking-widest">
-                Performance Tag
+                {collectionEfficiency >= 90 ? "Excellent" : collectionEfficiency >= 75 ? "Good" : collectionEfficiency >= 50 ? "Average" : "Needs Attention"}
               </span>
             </div>
           </CardContent>
@@ -338,19 +359,7 @@ export default function CollectionRegistryPage() {
                               >
                                 <Wallet className="h-4 w-4 text-blue-500" /> View Loan
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="gap-2 cursor-pointer">
-                                <ClipboardList className="h-4 w-4 text-blue-500" />{" "}
-                                Add Notes
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2 cursor-pointer">
-                                <FileUp className="h-4 w-4 text-amber-500" />{" "}
-                                Attach Docs
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2 cursor-pointer">
-                                <ArrowUpRight className="h-4 w-4 text-emerald-500" />{" "}
-                                Verify Deposit
-                              </DropdownMenuItem>
+                              
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

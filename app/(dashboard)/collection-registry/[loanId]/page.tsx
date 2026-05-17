@@ -234,18 +234,28 @@ export default function RegistryDetailPage() {
           </div>
           <CardContent className="p-6">
             <h3 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-4">Loan Summary</h3>
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase opacity-60">Expected Today</p>
-                <p className="text-2xl font-black mt-1">Rs. {registryInfo.expected.toLocaleString()}</p>
+                <p className="text-[10px] font-black uppercase opacity-65">Expected Today</p>
+                <p className="text-xl font-black mt-1">Rs. {registryInfo.expected.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase opacity-60">Week Number</p>
-                <p className="text-2xl font-black mt-1">#{registryInfo.instalmentNo}</p>
+                <p className="text-[10px] font-black uppercase opacity-65">Arrears</p>
+                <p className="text-xl font-black mt-1 text-rose-300">
+                  {registryInfo.arrears > 0 ? `Rs. ${registryInfo.arrears.toLocaleString()}` : "Rs. 0"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase opacity-65">Total Due</p>
+                <p className="text-xl font-black mt-1">Rs. {(registryInfo.expected + registryInfo.arrears).toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase opacity-65">Week Number</p>
+                <p className="text-xl font-black mt-1">#{registryInfo.instalmentNo}</p>
               </div>
               <div className="col-span-2">
-                <p className="text-[10px] font-black uppercase opacity-60">Loan Number</p>
-                <p className="text-lg font-black mt-1 tracking-widest opacity-90">{registryInfo.loanNo}</p>
+                <p className="text-[10px] font-black uppercase opacity-65">Loan Number</p>
+                <p className="text-sm font-black mt-1 tracking-widest opacity-95">{registryInfo.loanNo}</p>
               </div>
             </div>
           </CardContent>
@@ -276,11 +286,11 @@ export default function RegistryDetailPage() {
                  <div className="h-1.5 flex-1 bg-white/20 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-white transition-all duration-1000" 
-                      style={{ width: `${((isRecording ? totalCollectedNow : registryInfo.collected) / registryInfo.expected) * 100}%` }}
+                      style={{ width: `${Math.min(100, ((isRecording ? totalCollectedNow : registryInfo.collected) / (registryInfo.expected + registryInfo.arrears || 1)) * 100)}%` }}
                     />
                  </div>
                  <span className="text-xs font-black">
-                   {Math.round(((isRecording ? totalCollectedNow : registryInfo.collected) / registryInfo.expected) * 100)}%
+                   {Math.round(((isRecording ? totalCollectedNow : registryInfo.collected) / (registryInfo.expected + registryInfo.arrears || 1)) * 100)}%
                  </span>
               </div>
               <Badge className="w-fit bg-white/20 border-none text-[10px] font-black uppercase">
@@ -319,7 +329,14 @@ export default function RegistryDetailPage() {
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-bold text-foreground group-hover:text-primary transition-colors">{inst.memberName}</span>
-                      <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">{inst.clientNo}</span>
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-black uppercase tracking-widest">
+                        <span>{inst.clientNo}</span>
+                        {inst.arrears > 0 && (
+                          <Badge variant="outline" className="text-[9px] font-black uppercase text-rose-500 bg-rose-50 border-rose-200 px-1.5 py-0">
+                            Arrears: Rs. {inst.arrears.toLocaleString()}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-center font-bold text-slate-500">#{inst.weekNumber}</TableCell>
