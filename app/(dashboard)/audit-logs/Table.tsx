@@ -34,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import TablePagination from "@/components/Custom/TablePagination";
 
 const TableAuditLogs = ({ id }: { id: string }) => {
   const [page, setPage] = useState(1);
@@ -74,6 +75,10 @@ const TableAuditLogs = ({ id }: { id: string }) => {
       log.details?.message?.toLowerCase().includes(term)
     );
   }) || [];
+
+  const ITEMS_PER_PAGE = 20;
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ITEMS_PER_PAGE));
+  const paginatedLogs = filteredLogs.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   return (
     <>
@@ -209,14 +214,14 @@ const TableAuditLogs = ({ id }: { id: string }) => {
                         Loading audit logs...
                       </TableCell>
                     </TableRow>
-                  ) : filteredLogs.length === 0 ? (
+                  ) : paginatedLogs.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center h-24">
                         No audit logs found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredLogs.map((log: any) => (
+                    paginatedLogs.map((log: any) => (
                       <TableRow
                         key={log.id}
                         className="hover:bg-primary/5 transition-colors group"
@@ -311,6 +316,11 @@ const TableAuditLogs = ({ id }: { id: string }) => {
                   )}
                 </TableBody>
               </Table>
+              <TablePagination 
+                currentPage={page} 
+                totalPages={totalPages} 
+                onPageChange={setPage} 
+              />
             </div>
           </div>
         </CardContent>
