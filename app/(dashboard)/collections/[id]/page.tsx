@@ -1,11 +1,21 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useCollectionQuery, useApproveCollectionMutation, useRejectCollectionMutation } from "@/services/collectionApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 // import { toast } from "sonner";
 import {
   Table,
@@ -38,12 +48,39 @@ export default function CollectionDetailPage() {
   const router = useRouter();
   const collectionId = params.id as string;
 
+  const [conflicts, setConflicts] = useState<any[]>([]);
+  const [isOverpaymentDialogOpen, setIsOverpaymentDialogOpen] = useState(false);
+
   const { data, isLoading } = useCollectionQuery(collectionId);
   const collection = data?.collection;
 
-  const approveMutation = useApproveCollectionMutation();
+  const approveMutation = useApproveCollectionMutation({
+    onSuccess: (res: any) => {
+      if (res?.success === false && res?.code === "OVERPAYMENT_DETECTED") {
+        setConflicts(res.conflicts || []);
+        setIsOverpaymentDialogOpen(true);
+      } else {
+        alert("Collection approved successfully!");
+      }
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || "Failed to approve collection.");
+    }
+  });
 
-  const rejectMutation = useRejectCollectionMutation();
+  const rejectMutation = useRejectCollectionMutation({
+    onSuccess: () => {
+      alert("Collection rejected successfully!");
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || "Failed to reject collection.");
+    }
+  });
+
+  const handleConfirmApprove = () => {
+    setIsOverpaymentDialogOpen(false);
+    approveMutation.mutate({ id: collectionId, confirmOverpayment: true });
+  };
 
 
   if (isLoading) {
@@ -247,6 +284,56 @@ export default function CollectionDetailPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Overpayment Warning Dialog */}
+      <AlertDialog
+        open={isOverpaymentDialogOpen}
+        onOpenChange={setIsOverpaymentDialogOpen}
+      >
+        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl rounded-3xl sm:max-w-[500px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-black text-rose-600 uppercase flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-rose-500" />
+              Overpayment Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-500 font-medium leading-relaxed">
+              Some instalments in this collection have already been paid (or partially paid) by other transactions. 
+              If you proceed, the extra money will automatically cascade and apply to the upcoming unpaid weeks.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {/* List of Conflicts */}
+          <div className="my-4 max-h-[200px] overflow-y-auto space-y-2 border rounded-xl p-3 bg-rose-50/20 border-rose-100">
+            {conflicts.map((conflict, i) => (
+              <div key={i} className="text-xs flex flex-col border-b last:border-0 pb-2 last:pb-0">
+                <div className="flex justify-between items-center font-bold text-slate-800">
+                  <span>{conflict.memberName}</span>
+                  <Badge className="bg-rose-500 text-white text-[9px] uppercase px-1.5 font-bold border-none">
+                    Week #{conflict.weekNumber} ({conflict.status})
+                  </Badge>
+                </div>
+                <div className="flex justify-between text-muted-foreground mt-1 font-semibold">
+                  <span>Payment Amount: Rs. {conflict.itemAmount.toLocaleString()}</span>
+                  <span>Remaining Due: Rs. {conflict.remainingDue.toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="rounded-xl border-slate-200 font-bold px-6 h-12">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmApprove}
+              disabled={approveMutation.isPending}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 h-12 shadow-lg shadow-emerald-200 transition-all"
+            >
+              {approveMutation.isPending ? "Approving..." : "Yes, Apply & Continue"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
