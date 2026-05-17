@@ -53,10 +53,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useCollectionsQuery } from "@/services/collectionApi";
+import TablePagination from "@/components/Custom/TablePagination";
 
 export default function CollectionsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
   
   const { data, isLoading } = useCollectionsQuery();
   const collections = data?.collections || [];
@@ -65,6 +67,10 @@ export default function CollectionsPage() {
     col.groupName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     col.groupNo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const ITEMS_PER_PAGE = 20;
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+  const paginatedData = filteredData.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -181,7 +187,10 @@ export default function CollectionsPage() {
                 placeholder="Search by group or collector..."
                 className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
@@ -248,14 +257,14 @@ export default function CollectionsPage() {
                       Loading collections...
                     </TableCell>
                   </TableRow>
-                ) : filteredData.length === 0 ? (
+                ) : paginatedData.length === 0 ? (
                    <TableRow>
                     <TableCell colSpan={11} className="h-32 text-center text-muted-foreground font-medium italic">
                       No collections found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredData.map((col: any) => {
+                  paginatedData.map((col: any) => {
                     const expected = Number(col.expected || 0);
                     const arrears = Number(col.arrears || 0);
                     const collected = Number(col.amountCollected || 0);
@@ -356,6 +365,11 @@ export default function CollectionsPage() {
                 )}
               </TableBody>
             </Table>
+            <TablePagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           </div>
         </CardContent>
       </Card>

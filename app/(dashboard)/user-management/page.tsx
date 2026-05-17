@@ -40,14 +40,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/Custom/PageHeader";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import TablePagination from "@/components/Custom/TablePagination";
 import { useUsersQuery, useUpdateUserStatusMutation, useResetPasswordMutation } from "@/services/userApi";
 import { UserForm } from "@/components/Custom/UserForm";
 import { format } from "date-fns";
@@ -233,39 +226,11 @@ export default function UserManagementPage() {
 
           {/* Pagination */}
           {data?.pagination && data.pagination.totalPages > 1 && (
-            <div className="p-4 border-t bg-muted/20">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      href="#" 
-                      onClick={(e) => { e.preventDefault(); if (page > 1) setPage(page - 1); }} 
-                      className={cn(page === 1 && "pointer-events-none opacity-50")}
-                    />
-                  </PaginationItem>
-                  
-                  {[...Array(data.pagination.totalPages)].map((_, i) => (
-                    <PaginationItem key={i}>
-                      <PaginationLink 
-                        href="#" 
-                        isActive={page === i + 1}
-                        onClick={(e) => { e.preventDefault(); setPage(i + 1); }}
-                      >
-                        {i + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-
-                  <PaginationItem>
-                    <PaginationNext 
-                      href="#" 
-                      onClick={(e) => { e.preventDefault(); if (page < data.pagination.totalPages) setPage(page + 1); }}
-                      className={cn(page === data.pagination.totalPages && "pointer-events-none opacity-50")}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+            <TablePagination
+              currentPage={page}
+              totalPages={data.pagination.totalPages}
+              onPageChange={setPage}
+            />
           )}
         </CardContent>
       </Card>

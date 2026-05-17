@@ -63,6 +63,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const DAYS = [
   { id: 1, name: "Monday" },
@@ -111,13 +112,23 @@ export default function EditGroupPage() {
     onSuccess: () => setIsEditingInfo(false),
     onError: (error: any) => handleApiError(error),
   });
-  const addMemberMutation = useAddMemberMutation();
-  const updateMemberMutation = useUpdateMemberMutation();
-  const removeMemberMutation = useRemoveMemberMutation();
+  const addMemberMutation = useAddMemberMutation({
+    onSuccess: () => setIsEditingInfo(false),
+    onError: (error: any) => toast.error(error.response?.data?.error || "Failed to add member."),
+  });
+  const updateMemberMutation = useUpdateMemberMutation({
+    onSuccess: () => setIsEditingInfo(false),
+    onError: (error: any) => toast.error(error.response?.data?.error || "Failed to update member."),
+  });
+  const removeMemberMutation = useRemoveMemberMutation({
+    onSuccess: () => setIsEditingInfo(false),
+    onError: (error: any) => toast.error(error.response?.data?.error || "Failed to remove member."),
+  });
   const deleteMutation = useDeleteGroupMutation({
     onSuccess: () => {
       router.push("/groups");
-    }
+    },
+    onError: (error: any) => toast.error(error.response?.data?.error || "Failed to delete group."),
   });
 
   const {

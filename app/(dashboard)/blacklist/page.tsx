@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ClientViewModal } from "@/components/Custom/ClientViewModal";
+import TablePagination from "@/components/Custom/TablePagination";
 
 const blacklistData = [
   {
@@ -70,6 +71,7 @@ const blacklistData = [
 
 export default function BlacklistPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
@@ -80,6 +82,10 @@ export default function BlacklistPage() {
       client.nic.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  const ITEMS_PER_PAGE = 20;
+  const totalPages = Math.max(1, Math.ceil(filteredBlacklist.length / ITEMS_PER_PAGE));
+  const paginatedBlacklist = filteredBlacklist.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const handleViewDetails = (client: any) => {
     setSelectedClient(client);
@@ -102,7 +108,10 @@ export default function BlacklistPage() {
                 placeholder="Search blacklisted clients..."
                 className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
             <div className="p-2 px-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs font-bold flex items-center gap-2">
@@ -125,8 +134,8 @@ export default function BlacklistPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredBlacklist.length > 0 ? (
-                  filteredBlacklist.map((client) => (
+                {paginatedBlacklist.length > 0 ? (
+                  paginatedBlacklist.map((client) => (
                     <TableRow key={client.id} className="hover:bg-rose-500/5 transition-colors group">
                       <TableCell>
                         <div className="flex flex-col">
@@ -202,6 +211,11 @@ export default function BlacklistPage() {
                 )}
               </TableBody>
             </Table>
+            <TablePagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           </div>
         </CardContent>
       </Card>
