@@ -1,11 +1,12 @@
 "use client"
 
 import { useCreateCollectionMutation, useDailyRegistryQuery } from "@/services/collectionApi";
+import { useUploadAttachmentMutation, useDeleteAttachmentMutation } from "@/services/attachmentApi";
 import { Input } from "@/components/ui/input";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Banknote, CheckCircle2, MapPin, Phone, Plus, Receipt, Users, Wallet } from "lucide-react";
+import { ArrowLeft, Banknote, CheckCircle2, MapPin, Phone, Plus, Receipt, Users, Wallet, UploadCloud, Trash2, Paperclip, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -21,10 +22,23 @@ export default function RegistryDetailPage() {
 
   const [isRecording, setIsRecording] = React.useState(false);
   const [collectedAmounts, setCollectedAmounts] = React.useState<Record<string, string>>({});
+  const [attachments, setAttachments] = React.useState<{ attachmentId: string; note: string; fileName: string; fileUrl: string }[]>([]);
+  const [isUploading, setIsUploading] = React.useState(false);
 
   const { data, isLoading } = useDailyRegistryQuery({ loanId, date });
+
+  const uploadMutation = useUploadAttachmentMutation();
+  const deleteMutation = useDeleteAttachmentMutation();
+
   const createCollection = useCreateCollectionMutation({
-   
+    onSuccess: () => {
+      alert("Collection created successfully!");
+      setIsRecording(false);
+      setAttachments([]);
+    },
+    onError: (err: any) => {
+      alert(err.response?.data?.error || "Failed to save collection.");
+    }
   });
 
   const registryInfo = data?.registry?.[0];
@@ -45,6 +59,52 @@ export default function RegistryDetailPage() {
     setCollectedAmounts(prev => ({ ...prev, [id]: val }));
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const res = await uploadMutation.mutateAsync(file);
+        if (res?.success) {
+          setAttachments(prev => [
+            ...prev,
+            {
+              attachmentId: res.id,
+              note: "",
+              fileName: file.name,
+              fileUrl: res.link
+            }
+          ]);
+        }
+      }
+    } catch (error) {
+      alert("Failed to upload file(s).");
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveAttachment = async (id: string, index: number) => {
+    try {
+      await deleteMutation.mutateAsync(id);
+      setAttachments(prev => prev.filter((_, i) => i !== index));
+    } catch (error) {
+      setAttachments(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleNoteChange = (index: number, note: string) => {
+    setAttachments(prev => {
+      const copy = [...prev];
+      copy[index].note = note;
+      return copy;
+    });
+  };
+
   const handleSaveCollection = () => {
     const breakdown = instalments.map((inst: any) => ({
       instalmentId: inst.id,
@@ -58,7 +118,11 @@ export default function RegistryDetailPage() {
       date: new Date(date).toISOString(),
       instalmentNumber: registryInfo.instalmentNo,
       collectorId: "SYSTEM", 
-      breakdownData: breakdown
+      breakdownData: breakdown,
+      attachments: attachments.map(att => ({
+        attachmentId: att.attachmentId,
+        note: att.note
+      }))
     };
 
     createCollection.mutate(payload);
@@ -291,6 +355,76 @@ export default function RegistryDetailPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {isRecording && (
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+          <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
+            <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
+              <Paperclip className="h-4 w-4 text-primary" />
+              Collection Attachments & Verification Documents
+            </h3>
+            <Badge variant="outline" className="font-bold">{attachments.length} Files</Badge>
+          </div>
+          <CardContent className="p-6 space-y-6">
+            <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50/50 hover:bg-slate-50 transition-all relative group">
+              <input
+                type="file"
+                multiple
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={handleFileChange}
+                disabled={isUploading}
+              />
+              <UploadCloud className="h-10 w-10 text-slate-400 group-hover:text-primary transition-colors mb-3" />
+              <p className="text-sm font-bold text-slate-700">Click or drag files here to upload</p>
+              <p className="text-xs text-muted-foreground mt-1">Upload multiple documents, deposit slips, or images</p>
+              {isUploading && (
+                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-2xl gap-3">
+                  <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                  <span className="font-bold text-xs uppercase tracking-widest text-slate-700">Uploading File(s)...</span>
+                </div>
+              )}
+            </div>
+
+            {attachments.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Uploaded Documents</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {attachments.map((att, index) => (
+                    <div key={att.attachmentId} className="flex flex-col border rounded-2xl p-3 bg-white shadow-sm relative group">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAttachment(att.attachmentId, index)}
+                        className="absolute top-2 right-2 p-1.5 bg-rose-50 hover:bg-rose-100 rounded-full text-rose-600 transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-100 rounded-xl">
+                          <Paperclip className="h-5 w-5 text-slate-600" />
+                        </div>
+                        <div className="flex-1 min-w-0 pr-8">
+                          <p className="text-xs font-bold text-slate-800 truncate">{att.fileName}</p>
+                          <a href={att.fileUrl} target="_blank" rel="noreferrer" className="text-[10px] text-primary font-semibold hover:underline">
+                            View file
+                          </a>
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <Input
+                          placeholder="Add note or description (e.g. Member slip)"
+                          className="h-8 text-xs font-medium"
+                          value={att.note}
+                          onChange={(e) => handleNoteChange(index, e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

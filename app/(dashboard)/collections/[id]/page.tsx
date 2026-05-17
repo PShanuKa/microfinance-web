@@ -40,6 +40,9 @@ import {
   Check,
   X,
   Loader2,
+  Paperclip,
+  Eye,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -305,6 +308,68 @@ export default function CollectionDetailPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {collection.attachments && collection.attachments.length > 0 && (
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+          <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
+            <h3 className="font-black text-sm uppercase tracking-widest flex items-center gap-2">
+              <Paperclip className="h-4 w-4 text-primary" />
+              Collection Attachments
+            </h3>
+            <Badge variant="outline" className="font-bold">{collection.attachments.length} Files</Badge>
+          </div>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {collection.attachments.map((att: any) => (
+                <div key={att.id} className="flex flex-col border rounded-2xl p-4 bg-white shadow-sm hover:shadow-md transition-shadow relative">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2.5 bg-primary/10 rounded-xl">
+                        <Paperclip className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate max-w-[160px] md:max-w-[200px]">{att.attachment?.fileName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider font-semibold text-[9px]">
+                          {att.attachment?.fileType?.split("/")[1] || "Document"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <a 
+                        href={att.attachment?.fileUrl} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        title="View Document"
+                        className="p-2 bg-slate-50 hover:bg-primary hover:text-white rounded-xl text-slate-600 transition-all border shadow-sm"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </a>
+                      <a 
+                        href={att.attachment?.fileUrl} 
+                        download={att.attachment?.fileName}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Download Document"
+                        className="p-2 bg-slate-50 hover:bg-emerald-600 hover:text-white rounded-xl text-slate-600 transition-all border shadow-sm"
+                      >
+                        <Download className="h-4 w-4" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {att.note && (
+                    <div className="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                      <p className="text-[10px] font-black uppercase text-muted-foreground">Attachment Note</p>
+                      <p className="text-xs text-slate-700 font-semibold mt-1">{att.note}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Overpayment Warning Dialog */}
       <AlertDialog
