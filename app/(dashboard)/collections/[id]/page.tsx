@@ -134,27 +134,48 @@ export default function CollectionDetailPage() {
           </div>
         </div>
 
-        {collection.status === "SUBMITTED" && (
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {collection.loanId && (
             <Button 
               variant="outline" 
-              className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold"
-              disabled={rejectMutation.isPending || approveMutation.isPending}
-              onClick={() => rejectMutation.mutate(collectionId)}
+              className="font-bold border-slate-200 hover:bg-muted text-slate-800"
+              onClick={() => router.push(`/loans/${collection.loanId}`)}
             >
-              {rejectMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <X className="h-4 w-4 mr-2" />}
-              Reject Collection
+              <Banknote className="h-4 w-4 mr-2 text-primary" />
+              View Loan
             </Button>
-            <Button 
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20"
-              disabled={approveMutation.isPending || rejectMutation.isPending}
-              onClick={() => approveMutation.mutate(collectionId)}
-            >
-              {approveMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-              Approve & Update Balances
-            </Button>
-          </div>
-        )}
+          )}
+          <Button 
+            variant="outline" 
+            className="font-bold border-slate-200 hover:bg-muted text-slate-800"
+            onClick={() => router.push(`/groups/${collection.groupId}`)}
+          >
+            <Users className="h-4 w-4 mr-2 text-emerald-500" />
+            View Group
+          </Button>
+
+          {collection.status === "SUBMITTED" && (
+            <>
+              <Button 
+                variant="outline" 
+                className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold"
+                disabled={rejectMutation.isPending || approveMutation.isPending}
+                onClick={() => rejectMutation.mutate(collectionId)}
+              >
+                {rejectMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <X className="h-4 w-4 mr-2" />}
+                Reject Collection
+              </Button>
+              <Button 
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20"
+                disabled={approveMutation.isPending || rejectMutation.isPending}
+                onClick={() => approveMutation.mutate(collectionId)}
+              >
+                {approveMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                Approve & Update Balances
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
