@@ -56,6 +56,25 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useRouter, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -83,13 +102,24 @@ export default function LoanViewPage() {
   const rejectMutation = useRejectLoanMutation();
   const statusMutation = useUpdateLoanStatusMutation();
 
-  const handleSendForApproval = () => {
-    if (confirm("Send this loan for approval?")) {
-      statusMutation.mutate(
-        { id: id as string, status: "PENDING" },
-        
-      );
-    }
+  const [isSendForApprovalOpen, setIsSendForApprovalOpen] = useState(false);
+  const [isApproveOpen, setIsApproveOpen] = useState(false);
+  const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const handleSendForApprovalConfirm = () => {
+    setIsSendForApprovalOpen(false);
+    statusMutation.mutate(
+      { id: id as string, status: "PENDING" },
+      {
+        onSuccess: () => {
+          setSuccessMessage("Loan has been successfully submitted for approval!");
+          setIsSuccessOpen(true);
+        }
+      }
+    );
   };
 
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -181,17 +211,32 @@ export default function LoanViewPage() {
     });
   }, [loan, instalments]);
 
-  const handleApprove = () => {
-    if (confirm("Approve this loan application?")) {
-      approveMutation.mutate({ id: id as string, approvedById: "system" });
-    }
+  const handleApproveConfirm = () => {
+    setIsApproveOpen(false);
+    approveMutation.mutate(
+      { id: id as string, approvedById: "system" },
+      {
+        onSuccess: () => {
+          setSuccessMessage("Loan application approved and repayment instalments rescheduled successfully!");
+          setIsSuccessOpen(true);
+        }
+      }
+    );
   };
 
-  const handleReject = () => {
-    const reason = prompt("Enter rejection reason:");
-    if (reason) {
-      rejectMutation.mutate({ id: id as string, rejectionReason: reason });
-    }
+  const handleRejectConfirm = () => {
+    if (!rejectionReason.trim()) return;
+    setIsRejectOpen(false);
+    rejectMutation.mutate(
+      { id: id as string, rejectionReason },
+      {
+        onSuccess: () => {
+          setSuccessMessage("Loan application has been successfully rejected.");
+          setIsSuccessOpen(true);
+          setRejectionReason("");
+        }
+      }
+    );
   };
 
   if (isLoanLoading || isInstalmentsLoading)
@@ -311,7 +356,7 @@ export default function LoanViewPage() {
         <div className="flex gap-2">
           {loan.status === "DRAFT" && (
             <Button
-              onClick={handleSendForApproval}
+              onClick={() => setIsSendForApprovalOpen(true)}
               className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 h-11 px-6 font-bold text-white"
               disabled={statusMutation.isPending}
             >
@@ -326,7 +371,7 @@ export default function LoanViewPage() {
           {loan.status === "PENDING" && (
             <>
               <Button
-                onClick={handleApprove}
+                onClick={() => setIsApproveOpen(true)}
                 variant="default"
                 className="gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 h-11 px-6 font-bold"
                 disabled={approveMutation.isPending}
@@ -334,7 +379,7 @@ export default function LoanViewPage() {
                 <FileCheck className="h-4 w-4" /> Approve Loan
               </Button>
               <Button
-                onClick={handleReject}
+                onClick={() => setIsRejectOpen(true)}
                 variant="destructive"
                 className="gap-2 shadow-lg shadow-rose-600/20 h-11 px-6 font-bold"
                 disabled={rejectMutation.isPending}
@@ -801,6 +846,116 @@ export default function LoanViewPage() {
         guarantor={activeGuarantor}
         memberName={activeMemberName}
       />
+
+      {/* Send for Approval Confirmation AlertDialog */}
+      <AlertDialog open={isSendForApprovalOpen} onOpenChange={setIsSendForApprovalOpen}>
+        <AlertDialogContent className="rounded-3xl p-6 border-slate-200 bg-card/95 backdrop-blur-md max-w-md w-full shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-slate-800" />
+              Send for Approval
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
+              Are you sure you want to submit this loan application for manager approval?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 pt-4">
+            <AlertDialogCancel className="font-bold rounded-xl border-slate-200">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleSendForApprovalConfirm}
+              className="bg-slate-900 hover:bg-slate-800 font-bold rounded-xl text-white"
+            >
+              Submit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Approve Loan Confirmation AlertDialog */}
+      <AlertDialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
+        <AlertDialogContent className="rounded-3xl p-6 border-slate-200 bg-card/95 backdrop-blur-md max-w-md w-full shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <FileCheck className="h-5 w-5 text-emerald-600" />
+              Approve Loan Application
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
+              Are you sure you want to approve this loan? This action will automatically regenerate and reschedule all repayment instalments starting from today.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 pt-4">
+            <AlertDialogCancel className="font-bold rounded-xl border-slate-200">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleApproveConfirm}
+              className="bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl text-white shadow-lg shadow-emerald-600/20"
+            >
+              Approve
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Reject Loan Confirmation Dialog */}
+      <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
+        <DialogContent className="rounded-3xl p-6 border-slate-200 bg-card/95 backdrop-blur-md max-w-md w-full shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-rose-500" />
+              Reject Loan Application
+            </DialogTitle>
+            <DialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
+              Please enter the reason for rejecting this loan application below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Enter rejection reason here..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="min-h-24 rounded-xl border-slate-200 font-medium"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setIsRejectOpen(false)}
+              className="font-bold rounded-xl border-slate-200"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRejectConfirm}
+              disabled={!rejectionReason.trim() || rejectMutation.isPending}
+              className="bg-rose-600 hover:bg-rose-700 font-bold rounded-xl text-white shadow-lg shadow-rose-600/20"
+            >
+              Confirm Rejection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Modal (Simple Tailwind CSS only) */}
+      {isSuccessOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-emerald-500/10 text-center animate-in zoom-in-95 duration-300">
+            <div className="mx-auto w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 mb-6">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 animate-bounce" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+              Action Successful
+            </h3>
+            <p className="text-slate-500 font-semibold text-xs leading-relaxed mb-6">
+              {successMessage}
+            </p>
+            <Button 
+              onClick={() => setIsSuccessOpen(false)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 font-bold h-11 rounded-xl text-white shadow-lg shadow-emerald-600/20"
+            >
+              Great, Thank you
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
