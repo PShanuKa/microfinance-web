@@ -43,6 +43,7 @@ import {
 import { useAuditLogsQuery } from "@/services/auditApi";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import MyTable from "./Table";
 
 export default function AuditLogsPage() {
   const [page, setPage] = useState(1);
@@ -148,6 +149,8 @@ export default function AuditLogsPage() {
         title="Audit Logs" 
         description="Track system activities and data changes across the platform"
       />
+
+      <MyTable />
 
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
         <div className="flex items-center gap-3 w-full md:w-auto">

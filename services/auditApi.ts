@@ -7,6 +7,7 @@ const auditService = {
     page?: number; 
     limit?: number; 
     entity?: string; 
+    entityId?: string;
     action?: string; 
     userId?: string; 
   }) => {
@@ -24,6 +25,7 @@ export const useAuditLogsQuery = (params: {
   page?: number; 
   limit?: number; 
   entity?: string; 
+  entityId?: string;
   action?: string; 
   userId?: string; 
 }, options = {}) => {

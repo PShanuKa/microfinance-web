@@ -65,7 +65,7 @@ const items = [
       { icon: ShieldUser, label: "User Management", href: "/user-management" },
       { icon: History, label: "Audit Logs", href: "/audit-logs" },
       { icon: CalendarDays, label: "Non-Collection Weeks", href: "/con-weeks" },
-      { icon: Target, label: "Collection Targets", href: "/col-targets" },
+      // { icon: Target, label: "Collection Targets", href: "/col-targets" },
       { icon: Cog, label: "Settings", href: "/settings" },
     ],
   },

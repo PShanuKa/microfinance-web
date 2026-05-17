@@ -68,7 +68,8 @@ import {
 import { format } from "date-fns";
 // import { toast } from "sonner";
 import { LoanGuarantorViewModal } from "@/components/Custom/LoanGuarantorViewModal";
-import { DialogTitle } from "@/components/ui/dialog";
+import { AuditHistory } from "@/components/Custom/AuditHistory";
+import TableAuditLogs from "../../audit-logs/Table";
 
 export default function LoanViewPage() {
   const router = useRouter();
@@ -789,40 +790,7 @@ export default function LoanViewPage() {
           value="history"
           className="animate-in fade-in slide-in-from-bottom-4 duration-500"
         >
-          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
-            <CardHeader className="border-b bg-muted/10">
-              <CardTitle className="font-bold">
-                Transaction & Activity History
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-8">
-              <div className="space-y-8 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-px before:bg-muted">
-                <div className="relative pl-10">
-                  <div className="absolute left-0 top-1 w-[34px] h-[34px] rounded-full bg-background border-2 border-emerald-500 flex items-center justify-center z-10 shadow-lg shadow-emerald-500/20">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-bold text-foreground">
-                        Loan Application Created
-                      </h4>
-                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded uppercase">
-                        {format(new Date(loan.createdAt), "PPP p")}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground font-medium">
-                      The loan application was submitted with identification{" "}
-                      {loan.loanNo} for group {loan.group?.name}.
-                    </p>
-                    <p className="text-[10px] font-bold text-primary mt-1 flex items-center gap-1">
-                      <User className="h-2.5 w-2.5" />
-                      By {loan.createdBy}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <TableAuditLogs id={id as string} />
         </TabsContent>
       </Tabs>
 
