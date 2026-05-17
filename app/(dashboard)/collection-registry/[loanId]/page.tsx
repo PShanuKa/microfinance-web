@@ -176,16 +176,22 @@ export default function RegistryDetailPage() {
                 className="bg-emerald-600 hover:bg-emerald-700 font-bold gap-2 text-white"
                 disabled={createCollection.isPending}
               >
-                {createCollection.isPending ? "Saving..." : <><CheckCircle2 className="h-4 w-4" /> Save Collection</>}
+                {createCollection.isPending ? "Saving..." : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" /> 
+                    {registryInfo?.status === "PENDING_APPROVAL" ? "Update Collection" : "Save Collection"}
+                  </>
+                )}
               </Button>
             </>
           ) : (
             <Button 
               onClick={() => setIsRecording(true)} 
               className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300 font-bold"
+              disabled={registryInfo?.status === "PAID"}
             >
               <Plus className="h-4 w-4" />
-              New Collection
+              {registryInfo?.status === "PENDING_APPROVAL" ? "Update Collection" : "New Collection"}
             </Button>
           )}
         </div>
@@ -358,10 +364,10 @@ export default function RegistryDetailPage() {
                   </TableCell>
                   <TableCell className="text-center">
                     <Badge className={cn(
-                      "font-bold text-[10px] uppercase px-2 py-0.5 border-none text-white",
-                      inst.status === "PAID" ? "bg-emerald-500" : 
-                      inst.status === "PARTIAL" ? "bg-amber-500" : 
-                      inst.status === "Pending" ? "bg-blue-500" : "bg-slate-400"
+                      "font-bold text-[10px] uppercase px-2 py-0.5 border-none text-white shadow-sm",
+                      inst.status === "Collected" || inst.status === "PAID" ? "bg-emerald-600 hover:bg-emerald-600" : 
+                      inst.status === "PARTIAL Collected" || inst.status === "PARTIAL" ? "bg-amber-500 hover:bg-amber-500" : 
+                      inst.status === "Pending" ? "bg-blue-500 hover:bg-blue-500" : "bg-rose-500 hover:bg-rose-500"
                     )}>
                       {inst.status}
                     </Badge>
