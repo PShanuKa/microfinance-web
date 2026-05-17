@@ -344,18 +344,7 @@ export default function CollectionsPage() {
                                 <FileText className="h-4 w-4 text-primary" /> View
                                 Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2 cursor-pointer">
-                                <ClipboardList className="h-4 w-4 text-blue-500" />{" "}
-                                Add Notes
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2 cursor-pointer">
-                                <FileUp className="h-4 w-4 text-amber-500" />{" "}
-                                Attach Docs
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2 cursor-pointer">
-                                <ArrowUpRight className="h-4 w-4 text-emerald-500" />{" "}
-                                Verify Deposit
-                              </DropdownMenuItem>
+                            
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
