@@ -36,7 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import TablePagination from "@/components/Custom/TablePagination";
 
-const TableAuditLogs = ({ id }: { id: string }) => {
+const TableAuditLogs = ({ id }: { id?: string }) => {
   const [page, setPage] = useState(1);
   const [actionFilter, setActionFilter] = useState("All");
   const [entityFilter, setEntityFilter] = useState("All");
