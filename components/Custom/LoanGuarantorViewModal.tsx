@@ -15,7 +15,8 @@ import {
   MapPin, 
   ShieldCheck, 
   FileText,
-  Eye
+  Eye,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,12 @@ interface GuarantorDocument {
   type: string;
   fileUrl?: string;
   fileName?: string;
+  attachment?: {
+    id?: string;
+    fileUrl: string;
+    fileName: string;
+    fileType?: string;
+  };
 }
 
 interface Guarantor {
@@ -68,7 +75,7 @@ export function LoanGuarantorViewModal({ guarantor, open, onOpenChange, memberNa
             <div className="flex items-center gap-6">
               <div className="w-20 h-20 rounded-full bg-white border-4 border-primary/10 shadow-xl flex items-center justify-center overflow-hidden">
                 {profileImg ? (
-                  <img src={profileImg.fileUrl} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={profileImg.attachment?.fileUrl || profileImg.fileUrl} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <User className="w-10 h-10 text-primary/40" />
                 )}
@@ -128,18 +135,43 @@ export function LoanGuarantorViewModal({ guarantor, open, onOpenChange, memberNa
              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {DOCUMENT_TYPES.map((type) => {
                   const doc = getDocByType(type.id);
+                  const fileUrl = doc?.attachment?.fileUrl || doc?.fileUrl;
                   return (
                     <div key={type.id} className={cn(
-                      "group relative rounded-2xl border-2 transition-all p-1 overflow-hidden h-40",
-                      doc ? "bg-white border-slate-100 hover:border-primary/30" : "bg-slate-50/50 border-slate-100 border-dashed opacity-50"
+                       "group relative rounded-2xl border-2 transition-all p-1 overflow-hidden h-40",
+                       doc ? "bg-white border-slate-100 hover:border-primary/30" : "bg-slate-50/50 border-slate-100 border-dashed opacity-50"
                     )}>
                       {doc ? (
                         <>
-                          <img src={doc.fileUrl} className="w-full h-full object-cover rounded-xl" alt={type.label} />
+                          <img src={fileUrl} className="w-full h-full object-cover rounded-xl" alt={type.label} />
                           <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4">
-                             <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-slate-900 p-2 rounded-full shadow-xl hover:scale-110 transition-transform">
-                                <Eye className="w-5 h-5" />
-                             </a>
+                             <div className="flex gap-2">
+                               <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="bg-white text-slate-900 p-2 rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center">
+                                  <Eye className="w-4 h-4" />
+                               </a>
+                               <button 
+                                  type="button"
+                                  onClick={async () => {
+                                     try {
+                                        const response = await fetch(fileUrl!);
+                                        const blob = await response.blob();
+                                        const blobUrl = window.URL.createObjectURL(blob);
+                                        const link = document.createElement("a");
+                                        link.href = blobUrl;
+                                        link.download = doc.attachment?.fileName || doc.fileName || `${type.label}.png`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(blobUrl);
+                                     } catch (error) {
+                                        window.open(fileUrl, "_blank");
+                                     }
+                                  }}
+                                  className="bg-white text-emerald-600 p-2 rounded-full shadow-xl hover:scale-110 transition-transform flex items-center justify-center"
+                               >
+                                  <Download className="w-4 h-4" />
+                               </button>
+                             </div>
                              <span className="text-white text-[10px] font-bold mt-2 uppercase tracking-widest">{type.label}</span>
                           </div>
                         </>

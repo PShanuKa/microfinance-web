@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -95,7 +96,7 @@ export default function EditGroupPage() {
   const { data: groupData, isLoading: groupLoading } = useGroupQuery(id as string);
   const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
   const branches = branchesData?.branches || [];
-  const { data: clientsData } = useClientsQuery({ search: clientSearch, limit: 5 });
+  const { data: clientsData, isLoading: isClientsLoading } = useClientsQuery({ search: clientSearch, limit: 5 });
   const { data: userData } = useUsersQuery({ role: "COLLECTION_OFFICER", limit: 100 });
 
   const handleApiError = (error: any) => {
@@ -439,14 +440,20 @@ export default function EditGroupPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
                 placeholder="Search by name or NIC..." 
-                className="pl-10"
+                className="pl-10 pr-10"
                 value={clientSearch}
                 onChange={(e) => setClientSearch(e.target.value)}
               />
+              {isClientsLoading && (
+                <Spinner className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              )}
             </div>
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
               {clientsData?.clients?.map((client: any) => {
                 const isAlreadyMember = group?.members?.some((m: any) => m.clientId === client.id);
+                const hasActiveLoan = client.instalments?.some(
+                  (inst: any) => inst.loan?.status === "APPROVED" || inst.loan?.status === "ACTIVE"
+                );
                 return (
                   <div 
                     key={client.id} 
@@ -458,6 +465,11 @@ export default function EditGroupPage() {
                         {client.status === "BLACKLISTED" && (
                           <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-rose-500/20">
                             Blacklisted
+                          </Badge>
+                        )}
+                        {hasActiveLoan && (
+                          <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-emerald-500/20">
+                            Active Loan
                           </Badge>
                         )}
                       </span>
