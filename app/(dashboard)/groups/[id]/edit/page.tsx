@@ -93,7 +93,7 @@ export default function EditGroupPage() {
   const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
   const branches = branchesData?.branches || [];
   const { data: clientsData } = useClientsQuery({ search: clientSearch, limit: 5 });
-  const { data: userData } = useUsersQuery({ role: "LOAN_OFFICER", limit: 100 });
+  const { data: userData } = useUsersQuery({ role: "COLLECTION_OFFICER", limit: 100 });
 
   const handleApiError = (error: any) => {
     const response = error.response?.data;

@@ -38,8 +38,8 @@ export default function CreateGroupPage() {
   const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
   const branches = branchesData?.branches || [];
 
-  // Get officers (Loan Officers)
-  const { data: userData } = useUsersQuery({ role: "LOAN_OFFICER", limit: 100 });
+  // Get officers (Collection Officers)
+  const { data: userData } = useUsersQuery({ role: "COLLECTION_OFFICER", limit: 100 });
   const {
     register,
     handleSubmit,

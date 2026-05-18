@@ -405,13 +405,21 @@ export default function ClientProfilePage() {
                                     variant="ghost" 
                                     size="icon" 
                                     className="rounded-full hover:bg-emerald-50 text-emerald-600"
-                                    onClick={() => {
-                                       const link = document.createElement("a");
-                                       link.href = doc.attachment.fileUrl;
-                                       link.download = doc.attachment.fileName;
-                                       document.body.appendChild(link);
-                                       link.click();
-                                       document.body.removeChild(link);
+                                    onClick={async () => {
+                                       try {
+                                          const response = await fetch(doc.attachment.fileUrl);
+                                          const blob = await response.blob();
+                                          const blobUrl = window.URL.createObjectURL(blob);
+                                          const link = document.createElement("a");
+                                          link.href = blobUrl;
+                                          link.download = doc.attachment.fileName;
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          document.body.removeChild(link);
+                                          window.URL.revokeObjectURL(blobUrl);
+                                       } catch (error) {
+                                          window.open(doc.attachment.fileUrl, "_blank");
+                                       }
                                     }}
                                  >
                                     <Download className="w-4 h-4" />
