@@ -17,6 +17,7 @@ import {
 import { PageHeader } from "@/components/Custom/PageHeader";
 import { useCreateGroupMutation } from "@/services/groupApi";
 import { useUsersQuery } from "@/services/userApi";
+import { useBranchesQuery } from "@/services/branchApi";
 import { Save, ArrowLeft } from "lucide-react";
 
 const DAYS = [
@@ -32,6 +33,10 @@ const DAYS = [
 export default function CreateGroupPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Get branches
+  const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
+  const branches = branchesData?.branches || [];
 
   // Get officers (Loan Officers)
   const { data: userData } = useUsersQuery({ role: "LOAN_OFFICER", limit: 100 });
@@ -79,6 +84,7 @@ export default function CreateGroupPage() {
 
   const selectedDay = watch("collectionDay");
   const selectedOfficer = watch("officerId");
+  const selectedBranch = watch("branch");
 
   const onSubmit = (data: any) => {
     setServerError(null);
@@ -126,13 +132,22 @@ export default function CreateGroupPage() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="branch">Branch</Label>
-                  <Input
-                    id="branch"
-                    placeholder="e.g. Colombo North"
-                    {...register("branch")}
-                    className={errors.branch ? "border-destructive" : ""}
-                  />
+                  <Label>Branch</Label>
+                  <Select
+                    value={selectedBranch}
+                    onValueChange={(val) => setValue("branch", val || "")}
+                  >
+                    <SelectTrigger className={errors.branch ? "border-destructive" : ""}>
+                      <SelectValue placeholder={isLoadingBranches ? "Loading branches..." : "Select branch"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map((b: any) => (
+                        <SelectItem key={b.id} value={b.name}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {errors.branch && <p className="text-xs text-destructive">{errors.branch.message as string}</p>}
                 </div>
 
