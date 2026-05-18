@@ -292,7 +292,7 @@ export default function EditLoanSchedulePage() {
                   <SelectContent>
                     {groupsData?.groups?.map((group: any) => (
                       <SelectItem key={group.id} value={group.id}>
-                        {group.name} ({group.branch})
+                        {group.name} ({group.branch?.name || "Main Branch"})
                       </SelectItem>
                     ))}
                   </SelectContent>

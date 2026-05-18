@@ -67,10 +67,7 @@ export default function NavBar() {
                 <span>Profile Settings</span>
               </DropdownMenuItem>
             </Link>
-            <DropdownMenuItem className="gap-2 cursor-pointer py-2.5 focus:bg-slate-50 rounded-lg">
-              <Settings size={18} className="text-slate-500" />
-              <span>System Settings</span>
-            </DropdownMenuItem>
+            
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               onClick={handleLogout}

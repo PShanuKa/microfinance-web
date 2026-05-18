@@ -349,7 +349,7 @@ export default function LoanViewPage() {
             <p className="text-sm text-muted-foreground font-semibold flex items-center gap-2">
               <Users className="w-4 h-4" /> {loan.group?.name}{" "}
               <span className="opacity-40">|</span>{" "}
-              <Building className="w-4 h-4" /> {loan.group?.branch} Branch
+              <Building className="w-4 h-4" /> {loan.group?.branch?.name || "Main"} Branch
             </p>
           </div>
         </div>

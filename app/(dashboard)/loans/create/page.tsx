@@ -182,13 +182,13 @@ export default function CreateLoanPage() {
                 >
                   <SelectTrigger id="groupId">
                     <SelectValue>
-                      {selectedGroup ? `${selectedGroup.name} (${selectedGroup.branch})` : "Choose a group..."}
+                      {selectedGroup ? `${selectedGroup.name} (${selectedGroup.branch?.name || "Main Branch"})` : "Choose a group..."}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {groupsData?.groups?.map((group: any) => (
                       <SelectItem key={group.id} value={group.id} className="font-semibold">
-                        {group.name} ({group.branch})
+                        {group.name} ({group.branch?.name || "Main Branch"})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -226,7 +226,7 @@ export default function CreateLoanPage() {
                         <span className="font-black text-amber-700 leading-tight">
                           Every {DAYS[selectedGroup.collectionDay - 1]}
                         </span>
-                        <span className="text-xs text-muted-foreground font-semibold">{selectedGroup.branch} Branch | {totalMembers} Members</span>
+                        <span className="text-xs text-muted-foreground font-semibold">{selectedGroup.branch?.name || "Main"} Branch | {totalMembers} Members</span>
                       </div>
                     </div>
                   </div>

@@ -339,7 +339,7 @@ export default function LoansPage() {
                           </span>
                           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <MapPin className="h-2.5 w-2.5" />
-                            {loan.group?.branch}
+                            {loan.group?.branch?.name || "Main Branch"}
                           </span>
                         </div>
                       </TableCell>
