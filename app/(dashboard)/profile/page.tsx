@@ -88,11 +88,11 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-1">
-                <LabelItem icon={<Building2 className="w-4 h-4" />} label="Assigned Branches" />
+                <LabelItem icon={<Building2 className="w-4 h-4" />} label="Assigned Branch" />
                 <div className="flex flex-wrap gap-2 ml-6 mt-1">
-                  {user?.branch?.length > 0 ? user.branch.map((b: string) => (
-                    <Badge key={b} variant="secondary" className="font-bold text-[10px]">{b}</Badge>
-                  )) : <span className="text-slate-400 italic text-sm">No branches assigned</span>}
+                  {user?.branch ? (
+                    <Badge variant="secondary" className="font-bold text-[10px]">{user.branch.name}</Badge>
+                  ) : <span className="text-slate-400 italic text-sm">No branch assigned</span>}
                 </div>
               </div>
 

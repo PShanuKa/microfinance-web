@@ -50,7 +50,7 @@ export default function CreateGroupPage() {
   } = useForm({
     defaultValues: {
       name: "",
-      branch: "",
+      branchId: "",
       location: "",
       collectionDay: 1,
       officerId: "",
@@ -84,7 +84,7 @@ export default function CreateGroupPage() {
 
   const selectedDay = watch("collectionDay");
   const selectedOfficer = watch("officerId");
-  const selectedBranch = watch("branch");
+  const selectedBranchId = watch("branchId");
 
   const onSubmit = (data: any) => {
     setServerError(null);
@@ -134,21 +134,26 @@ export default function CreateGroupPage() {
                 <div className="grid gap-2">
                   <Label>Branch</Label>
                   <Select
-                    value={selectedBranch}
-                    onValueChange={(val) => setValue("branch", val || "")}
+                    value={selectedBranchId || "none"}
+                    onValueChange={(val) => setValue("branchId", val && val !== "none" ? val : "")}
                   >
-                    <SelectTrigger className={errors.branch ? "border-destructive" : ""}>
-                      <SelectValue placeholder={isLoadingBranches ? "Loading branches..." : "Select branch"} />
+                    <SelectTrigger className={errors.branchId ? "border-destructive" : ""}>
+                      <SelectValue>
+                        {selectedBranchId && selectedBranchId !== "none"
+                          ? (branches.find((b: any) => b.id === selectedBranchId)?.name || "Select branch")
+                          : "None / No Branch"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">None / No Branch</SelectItem>
                       {branches.map((b: any) => (
-                        <SelectItem key={b.id} value={b.name}>
+                        <SelectItem key={b.id} value={b.id}>
                           {b.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.branch && <p className="text-xs text-destructive">{errors.branch.message as string}</p>}
+                  {errors.branchId && <p className="text-xs text-destructive">{errors.branchId.message as string}</p>}
                 </div>
 
                 <div className="grid gap-2">

@@ -145,7 +145,7 @@ export default function EditGroupPage() {
   } = useForm({
     defaultValues: {
       name: "",
-      branch: "",
+      branchId: "",
       collectionDay: 1,
       officerId: "",
       location: "",
@@ -156,7 +156,7 @@ export default function EditGroupPage() {
     if (groupData?.group) {
       reset({
         name: groupData.group.name,
-        branch: groupData.group.branch,
+        branchId: groupData.group.branchId || groupData.group.branch?.id || "",
         collectionDay: groupData.group.collectionDay,
         officerId: groupData.group.officerId,
         location: groupData.group.location || "",
@@ -166,7 +166,7 @@ export default function EditGroupPage() {
 
   const selectedDay = watch("collectionDay");
   const selectedOfficer = watch("officerId");
-  const selectedBranch = watch("branch");
+  const selectedBranchId = watch("branchId");
 
   const onUpdateGroup = (data: any) => {
     setServerError(null);
@@ -259,21 +259,26 @@ export default function EditGroupPage() {
                 <div className="grid gap-2">
                   <Label>Branch</Label>
                   <Select
-                    value={selectedBranch}
-                    onValueChange={(val) => setValue("branch", val || "")}
+                    value={selectedBranchId || "none"}
+                    onValueChange={(val) => setValue("branchId", val && val !== "none" ? val : "")}
                   >
-                    <SelectTrigger className={cn("bg-background/50", errors.branch && "border-destructive")}>
-                      <SelectValue placeholder={isLoadingBranches ? "Loading branches..." : "Select branch"} />
+                    <SelectTrigger className={cn("bg-background/50", errors.branchId && "border-destructive")}>
+                      <SelectValue>
+                        {selectedBranchId && selectedBranchId !== "none"
+                          ? (branches.find((b: any) => b.id === selectedBranchId)?.name || "Select branch")
+                          : "None / No Branch"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">None / No Branch</SelectItem>
                       {branches.map((b: any) => (
-                        <SelectItem key={b.id} value={b.name}>
+                        <SelectItem key={b.id} value={b.id}>
                           {b.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.branch && <p className="text-xs text-destructive">{errors.branch.message as string}</p>}
+                  {errors.branchId && <p className="text-xs text-destructive">{errors.branchId.message as string}</p>}
                 </div>
 
                 <div className="grid gap-2">

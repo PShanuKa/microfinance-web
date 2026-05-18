@@ -69,7 +69,7 @@ export default function ViewGroupPage() {
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
         title={group.name}
-        description={`Group details, members, and active loans for ${group.branch} branch.`}
+        description={`Group details, members, and active loans for ${group.branch?.name || "Main"} branch.`}
       >
         <Button variant="outline" onClick={() => router.push("/groups")} className="gap-2">
           <ArrowLeft className="h-4 w-4" /> Back to Groups
@@ -91,7 +91,7 @@ export default function ViewGroupPage() {
                   <p className="text-[10px] text-muted-foreground font-bold uppercase">Branch</p>
                   <p className="text-sm font-bold flex items-center gap-2">
                     <Building className="h-4 w-4 text-primary/60" />
-                    {group.branch}
+                    {group.branch?.name || "Main Branch"}
                   </p>
                 </div>
                 <div className="space-y-1">

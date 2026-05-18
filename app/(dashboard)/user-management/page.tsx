@@ -190,9 +190,9 @@ export default function UserManagementPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {user.branch && user.branch.length > 0 ? (
+                        {user.branch ? (
                           <Badge variant="outline" className="font-black bg-slate-100/80 border-slate-200 text-slate-700 capitalize">
-                            {user.branch[0]}
+                            {user.branch.name}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground/60 italic font-bold">No Branch</span>

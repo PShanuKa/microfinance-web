@@ -22,7 +22,7 @@ type FormValues = {
   email: string;
   role: string;
   status: boolean;
-  branch: string[];
+  branchId?: string;
 };
 
 interface UserFormProps {
@@ -54,18 +54,24 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
     formState: { errors },
     reset,
   } = useForm<FormValues>({
-    defaultValues: initialData || {
+    defaultValues: {
       fullname: "",
       email: "",
       role: "LOAN_OFFICER",
       status: true,
-      branch: [],
+      branchId: "",
     },
   });
 
   useEffect(() => {
     if (initialData) {
-      reset(initialData);
+      reset({
+        fullname: initialData.fullname || "",
+        email: initialData.email || "",
+        role: initialData.role || "LOAN_OFFICER",
+        status: initialData.status !== undefined ? initialData.status : true,
+        branchId: initialData.branchId || initialData.branch?.id || "",
+      });
     }
   }, [initialData, reset]);
 
@@ -102,7 +108,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
 
   const selectedRole = watch("role");
   const selectedStatus = watch("status");
-  const selectedBranch = watch("branch");
+  const selectedBranchId = watch("branchId");
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
@@ -143,16 +149,20 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         <div className="grid gap-2">
           <Label>Branch</Label>
           <Select
-            value={selectedBranch?.[0] || "none"}
-            onValueChange={(value) => setValue("branch", value && value !== "none" ? [value] : [])}
+            value={selectedBranchId || "none"}
+            onValueChange={(value) => setValue("branchId", value && value !== "none" ? value : undefined)}
           >
             <SelectTrigger>
-              <SelectValue placeholder={isLoadingBranches ? "Loading branches..." : "Select branch"} />
+              <SelectValue>
+                {selectedBranchId && selectedBranchId !== "none"
+                  ? (branches.find((b: any) => b.id === selectedBranchId)?.name || "Select branch")
+                  : "None / No Branch"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">None / No Branch</SelectItem>
               {branches.map((b: any) => (
-                <SelectItem key={b.id} value={b.name}>
+                <SelectItem key={b.id} value={b.id}>
                   {b.name}
                 </SelectItem>
               ))}
