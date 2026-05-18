@@ -64,7 +64,6 @@ export default function UserManagementPage() {
   const [resetSuccess, setResetSuccess] = useState(false);
 
   const { data, isLoading } = useUsersQuery({ page, limit: 10, search });
-  const statusMutation = useUpdateUserStatusMutation();
   const resetPasswordMutation = useResetPasswordMutation();
 
   const handleEdit = (user: any) => {
@@ -75,12 +74,6 @@ export default function UserManagementPage() {
   const handleCreate = () => {
     setEditingUser(null);
     setIsFormOpen(true);
-  };
-
-  const handleToggleStatus = (user: any) => {
-    if (confirm(`Are you sure you want to ${user.status ? "deactivate" : "activate"} this user?`)) {
-      statusMutation.mutate({ id: user.id, status: !user.status });
-    }
   };
 
   const handleResetPassword = (user: any) => {
@@ -177,12 +170,12 @@ export default function UserManagementPage() {
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">Loading users...</TableCell>
                   </TableRow>
-                ) : data?.users?.filter((u: any) => u.status === true)?.length === 0 ? (
+                ) : data?.users?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No active users found.</TableCell>
+                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No users found.</TableCell>
                   </TableRow>
                 ) : (
-                  data?.users?.filter((u: any) => u.status === true)?.map((user: any) => (
+                  data?.users?.map((user: any) => (
                     <TableRow key={user.id} className="hover:bg-primary/5 transition-colors group">
                       <TableCell>
                         <div className="flex flex-col">
@@ -227,20 +220,6 @@ export default function UserManagementPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleResetPassword(user)} className="gap-2 cursor-pointer">
                               <KeyRound className="w-4 h-4 text-blue-500" /> Reset Password
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleToggleStatus(user)} 
-                              className={cn(
-                                "gap-2 cursor-pointer",
-                                user.status ? "text-rose-500" : "text-emerald-500"
-                              )}
-                            >
-                              {user.status ? (
-                                <><UserMinus className="w-4 h-4" /> Deactivate User</>
-                              ) : (
-                                <><UserCheck className="w-4 h-4" /> Activate User</>
-                              )}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
