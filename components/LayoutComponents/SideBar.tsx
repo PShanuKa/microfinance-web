@@ -74,7 +74,7 @@ const items: MenuGroup[] = [
     allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"],
     items: [
       { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
-      { icon: FileBarChart, label: "Reports", href: "/reports" },
+      // { icon: FileBarChart, label: "Reports", href: "/reports" },
     ],
   },
   {
@@ -99,7 +99,7 @@ export default function SideBar() {
   return (
     <div className="bg-(--sidebar-bg) h-screen w-full">
       <div className="border-b border-(--sidebar-border) w-full h-[60px] flex items-center justify-between px-4">
-        <h1 className="text-white text-2xl font-bold">Microfinance</h1>
+        <h1 className="text-white text-2xl font-bold">Don and Dons</h1>
         <X className="text-white" size={18} onClick={() => toggleSideBar()} />
       </div>
 
