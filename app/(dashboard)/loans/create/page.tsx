@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/table";
 import { PageHeader } from "@/components/Custom/PageHeader";
 import { useCreateLoanMutation } from "@/services/loanApi";
-import { useGroupsQuery } from "@/services/groupApi";
+import { useGroupsQuery, useGroupQuery } from "@/services/groupApi";
 import { useSettingsQuery } from "@/services/settingsApi";
 import { 
   Save, 
@@ -100,7 +100,9 @@ export default function CreateLoanPage() {
   }, [settings, setValue]);
 
   const selectedGroupId = watch("groupId");
-  const selectedGroup = groupsData?.groups?.find((g: any) => g.id === selectedGroupId);
+  // Fetch full group details including all members when a group is selected
+  const { data: singleGroupData } = useGroupQuery(selectedGroupId);
+  const selectedGroup = singleGroupData?.group;
   const groupLeader = selectedGroup?.members?.find((m: any) => m.isLeader);
 
   const totalWeeks = Number(watch("totalWeeks") || 0);
@@ -108,7 +110,7 @@ export default function CreateLoanPage() {
   const memberLent = Number(watch("memberLentAmount") || 0);
   const leaderWeekly = Number(watch("leaderWeeklyAmount") || 0);
   const memberWeekly = Number(watch("memberWeeklyAmount") || 0);
-  const totalMembers = selectedGroup?._count?.members || 0;
+  const totalMembers = selectedGroup?.members?.length || 0;
 
   // Global Calculations
   const totalLentAmount = selectedGroup 
@@ -147,7 +149,7 @@ export default function CreateLoanPage() {
   const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   return (
-    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 w-full md:px-4 pb-10 ">
       <PageHeader
         title="Create New Loan"
         description="Fill in the group loan details and submit for approval or save as draft"
@@ -428,7 +430,7 @@ export default function CreateLoanPage() {
                  <span className="text-[10px] uppercase font-black text-slate-400 tracking-widest flex items-center gap-1.5">
                     <TrendingUp className="w-3 h-3 text-primary" /> Projected Margin
                  </span>
-                 <span className="text-3xl font-black text-primary">
+                 <span className="text-3xl font-black text-green-600">
                     Rs. {(totalScheduledReceipts - totalLentAmount).toLocaleString()}
                  </span>
               </div>
@@ -437,7 +439,7 @@ export default function CreateLoanPage() {
                     <Receipt className="w-3 h-3 text-amber-400" /> Processing Income
                  </span>
                  <span className="text-3xl font-black text-amber-400">
-                    Rs. {(Number(watch("processingFee") || 0) * totalMembers).toLocaleString()}
+                    Rs. {(Number(watch("processingFee") || 0) ).toLocaleString()}
                  </span>
               </div>
             </div>
