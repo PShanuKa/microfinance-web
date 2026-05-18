@@ -159,6 +159,7 @@ export default function UserManagementPage() {
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
                   <TableHead className="font-bold text-foreground">User Details</TableHead>
                   <TableHead className="font-bold text-foreground">Role</TableHead>
+                  <TableHead className="font-bold text-foreground">Branch</TableHead>
                   <TableHead className="font-bold text-foreground">Status</TableHead>
                   <TableHead className="font-bold text-foreground">Last Login</TableHead>
                   <TableHead className="font-bold text-foreground">Joined Date</TableHead>
@@ -168,11 +169,11 @@ export default function UserManagementPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">Loading users...</TableCell>
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">Loading users...</TableCell>
                   </TableRow>
                 ) : data?.users?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">No users found.</TableCell>
+                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">No users found.</TableCell>
                   </TableRow>
                 ) : (
                   data?.users?.map((user: any) => (
@@ -187,6 +188,15 @@ export default function UserManagementPage() {
                         <Badge variant="outline" className="font-bold capitalize border-primary/20 text-primary">
                           {user.role?.toLowerCase().replace("_", " ")}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.branch && user.branch.length > 0 ? (
+                          <Badge variant="outline" className="font-black bg-slate-100/80 border-slate-200 text-slate-700 capitalize">
+                            {user.branch[0]}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/60 italic font-bold">No Branch</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {getStatusBadge(user.status)}

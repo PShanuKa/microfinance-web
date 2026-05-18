@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateUserMutation, useUpdateUserMutation } from "@/services/userApi";
+import { useBranchesQuery } from "@/services/branchApi";
 import { useState } from "react";
 
 type FormValues = {
@@ -41,6 +42,8 @@ const ROLES = [
 
 export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
+  const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
+  const branches = branchesData?.branches || [];
 
   const {
     register,
@@ -99,6 +102,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
 
   const selectedRole = watch("role");
   const selectedStatus = watch("status");
+  const selectedBranch = watch("branch");
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-4">
@@ -134,6 +138,26 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
           {errors.email && (
             <p className="text-xs text-destructive">{errors.email.message}</p>
           )}
+        </div>
+
+        <div className="grid gap-2">
+          <Label>Branch</Label>
+          <Select
+            value={selectedBranch?.[0] || "none"}
+            onValueChange={(value) => setValue("branch", value && value !== "none" ? [value] : [])}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={isLoadingBranches ? "Loading branches..." : "Select branch"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None / No Branch</SelectItem>
+              {branches.map((b: any) => (
+                <SelectItem key={b.id} value={b.name}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
