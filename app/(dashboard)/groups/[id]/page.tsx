@@ -165,7 +165,14 @@ export default function ViewGroupPage() {
                       className="hover:bg-primary/5 transition-colors border-muted/50 cursor-pointer"
                       onClick={() => router.push(`/clients/${member.clientId}`)}
                     >
-                      <TableCell className="font-bold">{member.client?.fullname}</TableCell>
+                      <TableCell className="font-bold flex items-center gap-2">
+                        {member.client?.fullname}
+                        {member.client?.status === "BLACKLISTED" && (
+                          <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-rose-500/20">
+                            Blacklisted
+                          </Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{member.client?.phone}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">{member.client?.nic}</TableCell>
                       <TableCell>

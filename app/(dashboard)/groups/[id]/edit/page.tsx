@@ -385,6 +385,11 @@ export default function EditGroupPage() {
                                 <Crown className="w-3 h-3 mr-1" /> Leader
                               </Badge>
                             )}
+                            {member.client?.status === "BLACKLISTED" && (
+                              <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-rose-500/20">
+                                Blacklisted
+                              </Badge>
+                            )}
                           </span>
                           <span className="text-xs text-muted-foreground">{member.client?.clientNo}</span>
                         </div>
@@ -447,7 +452,14 @@ export default function EditGroupPage() {
                     className="flex items-center justify-between p-3 rounded-lg border bg-background/50 hover:bg-primary/5 transition-colors"
                   >
                     <div className="flex flex-col">
-                      <span className="font-bold">{client.fullname}</span>
+                      <span className="font-bold flex items-center gap-2">
+                        {client.fullname}
+                        {client.status === "BLACKLISTED" && (
+                          <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-rose-500/20">
+                            Blacklisted
+                          </Badge>
+                        )}
+                      </span>
                       <span className="text-xs text-muted-foreground">{client.nic}</span>
                     </div>
                     {isAlreadyMember ? (

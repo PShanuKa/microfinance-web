@@ -466,6 +466,11 @@ export default function EditLoanSchedulePage() {
                             <span className="font-black text-slate-800 flex items-center gap-1.5">
                               {member.client.fullname}
                               {member.isLeader && <Crown className="w-3.5 h-3.5 text-amber-500" />}
+                              {member.client?.status === "BLACKLISTED" && (
+                                <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-rose-500/20">
+                                  Blacklisted
+                                </Badge>
+                              )}
                             </span>
                             <span className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">{member.client.clientNo}</span>
                           </div>
