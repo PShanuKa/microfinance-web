@@ -458,6 +458,9 @@ export default function EditLoanSchedulePage() {
                     const principal = member.isLeader ? leaderLent : memberLent;
                     const weekly = member.isLeader ? leaderWeekly : memberWeekly;
                     const loanAmount = weekly * totalWeeks;
+                    const hasActiveLoan = member.client?.instalments?.some(
+                      (inst: any) => inst.loan?.status === "APPROVED" || inst.loan?.status === "ACTIVE"
+                    );
 
                     return (
                       <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group border-b last:border-0">
@@ -469,6 +472,11 @@ export default function EditLoanSchedulePage() {
                               {member.client?.status === "BLACKLISTED" && (
                                 <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-rose-500/20">
                                   Blacklisted
+                                </Badge>
+                              )}
+                              {hasActiveLoan && (
+                                <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-emerald-500/20">
+                                  Active Loan
                                 </Badge>
                               )}
                             </span>

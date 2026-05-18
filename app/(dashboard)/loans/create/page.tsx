@@ -69,7 +69,8 @@ export default function CreateLoanPage() {
       router.push(`/loans/${data.loan.id}`);
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.error || "Failed to create loan application");
+      const errorMsg = error.response?.data?.error || "Failed to create loan application";
+      setServerError(errorMsg);
     },
   });
 
@@ -375,6 +376,9 @@ export default function CreateLoanPage() {
                       const principal = member.isLeader ? leaderLent : memberLent;
                       const weekly = member.isLeader ? leaderWeekly : memberWeekly;
                       const loanAmount = weekly * totalWeeks;
+                      const hasActiveLoan = member.client?.instalments?.some(
+                        (inst: any) => inst.loan?.status === "APPROVED" || inst.loan?.status === "ACTIVE"
+                      );
 
                       return (
                         <TableRow key={member.clientId} className="hover:bg-primary/5 transition-colors group border-b last:border-0">
@@ -386,6 +390,11 @@ export default function CreateLoanPage() {
                                 {member.client?.status === "BLACKLISTED" && (
                                   <Badge variant="destructive" className="bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-rose-500/20">
                                     Blacklisted
+                                  </Badge>
+                                )}
+                                {hasActiveLoan && (
+                                  <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] h-5 px-1.5 font-bold hover:bg-emerald-500/20">
+                                    Active Loan
                                   </Badge>
                                 )}
                               </span>
@@ -459,6 +468,11 @@ export default function CreateLoanPage() {
                  Duration must be <strong>{settings.minLoanWeeks} to {settings.maxLoanWeeks} weeks</strong>.
               </div>
            </div>
+        )}
+         {serverError && (
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm font-black p-4 rounded-xl text-center flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 duration-300 shadow-lg shadow-rose-500/5">
+            <AlertCircle className="w-5 h-5" /> {serverError}
+          </div>
         )}
 
         <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t">
