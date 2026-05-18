@@ -88,6 +88,9 @@ export default function EditGroupPage() {
   
   // Delete Dialog State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  // Member Remove Confirmation State
+  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
 
   const { data: groupData, isLoading: groupLoading } = useGroupQuery(id as string);
   const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
@@ -189,9 +192,7 @@ export default function EditGroupPage() {
   };
 
   const handleRemoveMember = (memberId: string) => {
-    if (confirm("Remove this member from the group?")) {
-      removeMemberMutation.mutate(memberId as string);
-    }
+    setMemberToRemove(memberId);
   };
 
   const handleDeleteGroup = () => {
@@ -508,6 +509,36 @@ export default function EditGroupPage() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? "Deleting..." : "Delete Group"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={memberToRemove !== null} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" /> Remove Member from Group?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{group?.members?.find((m: any) => m.id === memberToRemove)?.client?.fullname}</strong> from the group?
+              This will dissolve their member association.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (memberToRemove) {
+                  removeMemberMutation.mutate(memberToRemove);
+                  setMemberToRemove(null);
+                }
+              }}
+              className="bg-destructive hover:bg-destructive/90 text-white font-bold"
+              disabled={removeMemberMutation.isPending}
+            >
+              {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
