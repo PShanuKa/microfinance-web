@@ -96,7 +96,7 @@ export function LoanGuarantorsModal({
   const handleFileUpload = async (type: string, file: File) => {
     setUploadingType(type);
     try {
-      const response = await uploadMutation.mutateAsync(file);
+      const response = await uploadMutation.mutateAsync({ file, category: "guaeantors" });
       const currentDocs = [...(guarantor.documents || [])];
       
       const existingIdx = currentDocs.findIndex(doc => doc.type === type && type !== "OTHER");

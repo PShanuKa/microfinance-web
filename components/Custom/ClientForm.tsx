@@ -113,7 +113,7 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
     setProfilePreview(URL.createObjectURL(file));
 
     try {
-      const response = await uploadMutation.mutateAsync(file);
+      const response = await uploadMutation.mutateAsync({ file, category: "client" });
       setValue("profileImageId", response.id);
     } catch (error) {
       setServerError("Failed to upload profile photo.");
@@ -123,7 +123,7 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
 
   const handleDocumentUpload = async (file: File, type: string) => {
     try {
-      const response = await uploadMutation.mutateAsync(file);
+      const response = await uploadMutation.mutateAsync({ file, category: "client" });
       
       const existingIdx = watchedDocuments.findIndex(doc => doc.type === type && type !== "OTHER");
       

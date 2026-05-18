@@ -2,11 +2,22 @@ import api from "@/lib/axios";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const attachmentService = {
-  upload: async (file: File) => {
+  upload: async (arg: File | { file: File; category?: string }) => {
+    let file: File;
+    let category: string | undefined;
+
+    if (arg instanceof File) {
+      file = arg;
+    } else {
+      file = arg.file;
+      category = arg.category;
+    }
+
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await api.post("/attachments/upload", formData, {
+    const url = category ? `/attachments/upload?category=${category}` : "/attachments/upload";
+    const response = await api.post(url, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

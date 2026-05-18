@@ -67,7 +67,7 @@ export default function RegistryDetailPage() {
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const res = await uploadMutation.mutateAsync(file);
+        const res = await uploadMutation.mutateAsync({ file, category: "long" });
         if (res?.success) {
           setAttachments(prev => [
             ...prev,
