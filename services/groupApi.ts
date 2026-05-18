@@ -2,7 +2,7 @@ import api from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const groupService = {
-  getGroups: async (params: { page?: number; limit?: number; search?: string } = {}) => {
+  getGroups: async (params: any = {}) => {
     const response = await api.get("/groups", { params });
     return response.data;
   },

@@ -17,7 +17,8 @@ import {
   UserCheck,
   User,
   Crown,
-  Phone
+  Phone,
+  Building
 } from "lucide-react";
 import {
   Table,
@@ -75,6 +76,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Clock } from "lucide-react";
 import { useGroupsQuery, useDeleteGroupMutation } from "@/services/groupApi";
+import { useBranchesQuery } from "@/services/branchApi";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -89,6 +91,11 @@ export default function GroupsPage() {
   // URL synced filters
   const statusFilter = searchParams.get("status") || "All";
   const collectionDayFilter = searchParams.get("collectionDay") || "All";
+  const branchFilter = searchParams.get("branchId") || "All";
+
+  // Get branches list
+  const { data: branchesData } = useBranchesQuery();
+  const branches = branchesData?.branches || [];
 
   const [openItem, setOpenItem] = useState<string[]>([]);
   
@@ -115,7 +122,8 @@ export default function GroupsPage() {
     limit: 10, 
     search: searchTerm,
     status: statusFilter,
-    collectionDay: collectionDayFilter
+    collectionDay: collectionDayFilter,
+    branchId: branchFilter
   });
 
   const deleteMutation = useDeleteGroupMutation({
@@ -245,12 +253,39 @@ export default function GroupsPage() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                    <Label className="text-xs text-muted-foreground ml-1">Branch</Label>
+                    <Select
+                      value={branchFilter}
+                      onValueChange={(val) => updateFilters({ branchId: val || "All" })}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                        <div className="flex items-center gap-2">
+                          <Building className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue>
+                            {branchFilter && branchFilter !== "All"
+                              ? (branches.find((b: any) => b.id === branchFilter)?.name || "Select branch")
+                              : "All Branches"}
+                          </SelectValue>
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Branches</SelectItem>
+                        {branches.map((b: any) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   
-                  {(statusFilter !== "All" || collectionDayFilter !== "All") && (
+                  {(statusFilter !== "All" || collectionDayFilter !== "All" || branchFilter !== "All") && (
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => updateFilters({ status: "All", collectionDay: "All" })}
+                      onClick={() => updateFilters({ status: "All", collectionDay: "All", branchId: "All" })}
                       className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
                     >
                       Clear Filters
