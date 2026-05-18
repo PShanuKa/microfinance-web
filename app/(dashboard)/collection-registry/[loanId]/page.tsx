@@ -18,7 +18,7 @@ export default function RegistryDetailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const loanId = params.loanId as string;
-  const date = searchParams.get("date") || "2026-06-07";
+  const date = searchParams.get("date") || new Date().toISOString().split("T")[0];
 
   const [isRecording, setIsRecording] = React.useState(false);
   const [collectedAmounts, setCollectedAmounts] = React.useState<Record<string, string>>({});

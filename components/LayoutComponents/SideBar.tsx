@@ -40,7 +40,7 @@ const items: MenuGroup[] = [
   {
     title: "Modules",
     items: [
-      { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+      { icon: LayoutDashboard, label: "Dashboard", href: "/", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] },
       { icon: Users, label: "Clients", href: "/clients", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] },
     ],
   },
@@ -61,7 +61,7 @@ const items: MenuGroup[] = [
     title: "Collections",
     allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER", "AUDITOR"],
     items: [
-      { icon: Receipt, label: "Collections", href: "/collections" },
+      { icon: Receipt, label: "Collections", href: "/collections", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR"] },
       {
         icon: ClipboardList,
         label: "Collection Registry",

@@ -45,13 +45,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useDailyRegistryQuery } from "@/services/collectionApi";
+import { RoleGate } from "@/components/Custom/RoleGate";
 
 export default function CollectionRegistryPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState(() => {
+    return new Date().toISOString().split("T")[0];
+  });
   
-  // Using the test date 2026-06-07 as per your requirement
-  const { data, isLoading } = useDailyRegistryQuery({ date: "2026-06-07" });
+  const { data, isLoading } = useDailyRegistryQuery({ date: selectedDate });
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -94,13 +97,16 @@ export default function CollectionRegistryPage() {
         title="Collection Registry"
         description="View and manage historical records of all loan collections."
       >
+        
+
         <Button
           onClick={() => router.push("/collections/create")}
           className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
-        >
+          >
           <Plus className="h-4 w-4" />
           New Collection
         </Button>
+          
       </PageHeader>
 
       {/* Summary Stats */}
@@ -201,19 +207,21 @@ export default function CollectionRegistryPage() {
               />
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="pl-10 pr-4 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg font-bold w-full md:w-[180px]"
+                />
+              </div>
               <Button
                 variant="outline"
-                className="gap-2 h-11 rounded-lg font-bold"
+                onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}
+                className="gap-2 h-11 rounded-lg font-bold hover:bg-muted"
               >
-                <Calendar className="h-4 w-4" />
                 Today
-              </Button>
-              <Button
-                variant="outline"
-                className="gap-2 h-11 rounded-lg font-bold"
-              >
-                <Filter className="h-4 w-4" />
-                Filter
               </Button>
             </div>
           </div>
@@ -340,7 +348,7 @@ export default function CollectionRegistryPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() =>
-                                  router.push(`/collection-registry/${col.id}?date=2026-06-07`)
+                                  router.push(`/collection-registry/${col.id}?date=${selectedDate}`)
                                 }
                                 className="gap-2 cursor-pointer"
                               >
