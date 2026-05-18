@@ -21,17 +21,32 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useGetMeQuery } from "@/services/authApi";
 
-const items = [
+interface MenuItem {
+  icon: any;
+  label: string;
+  href: string;
+  allowedRoles?: string[];
+}
+
+interface MenuGroup {
+  title: string;
+  allowedRoles?: string[];
+  items: MenuItem[];
+}
+
+const items: MenuGroup[] = [
   {
     title: "Modules",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-      { icon: Users, label: "Clients", href: "/clients" },
+      { icon: Users, label: "Clients", href: "/clients", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] },
     ],
   },
   {
     title: "Arunodayata Saviyak",
+    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"],
     items: [
       { icon: UsersRound, label: "Groups", href: "/groups" },
       { icon: Wallet, label: "Loans", href: "/loans" },
@@ -39,10 +54,12 @@ const items = [
   },
   {
     title: "Morgage Loans",
+    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"],
     items: [{ icon: Wallet, label: "Loans", href: "/loans" }],
   },
   {
     title: "Collections",
+    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER", "AUDITOR"],
     items: [
       { icon: Receipt, label: "Collections", href: "/collections" },
       {
@@ -54,6 +71,7 @@ const items = [
   },
   {
     title: "Reports",
+    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"],
     items: [
       { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
       { icon: FileBarChart, label: "Reports", href: "/reports" },
@@ -61,6 +79,7 @@ const items = [
   },
   {
     title: "System Settings",
+    allowedRoles: ["ADMIN"],
     items: [
       { icon: ShieldUser, label: "User Management", href: "/user-management" },
       { icon: History, label: "Audit Logs", href: "/audit-logs" },
@@ -74,6 +93,8 @@ const items = [
 export default function SideBar() {
   const pathname = usePathname();
   const { toggleSideBar } = useUiStore();
+  const { data: userData } = useGetMeQuery();
+  const userRole = userData?.user?.role;
 
   return (
     <div className="bg-(--sidebar-bg) h-screen w-full">
@@ -84,26 +105,40 @@ export default function SideBar() {
 
       <div>
         <div className="w-full  flex flex-col gap-1 mt-5 px-2">
-          {items.map((group, index) => (
-            <div key={index}>
-              <p className="text-xs text-muted-foreground mt-1 px-2">
-                {group.title}
-              </p>
-              {group.items.map((item, innerIndex) => (
-                <SideBarButton
-                  href={item.href}
-                  isActive={pathname == item.href}
-                  key={innerIndex}
-                  icon={
-                    <item.icon
-                      className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`}
-                    />
+          {items.map((group, index) => {
+            // Check group-level role access
+            if (group.allowedRoles && (!userRole || !group.allowedRoles.includes(userRole))) {
+              return null;
+            }
+
+            return (
+              <div key={index}>
+                <p className="text-xs text-muted-foreground mt-1 px-2">
+                  {group.title}
+                </p>
+                {group.items.map((item, innerIndex) => {
+                  // Check item-level role access
+                  if (item.allowedRoles && (!userRole || !item.allowedRoles.includes(userRole))) {
+                    return null;
                   }
-                  text={item.label}
-                />
-              ))}
-            </div>
-          ))}
+
+                  return (
+                    <SideBarButton
+                      href={item.href}
+                      isActive={pathname == item.href}
+                      key={innerIndex}
+                      icon={
+                        <item.icon
+                          className={`  ${pathname == item.href ? "text-white" : "text-(--sidebar-text)"} h-5 w-5`}
+                        />
+                      }
+                      text={item.label}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
