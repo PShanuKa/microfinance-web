@@ -473,7 +473,7 @@ export default function LoansPage() {
                               View Details
                             </DropdownMenuItem>
 
-                            {loan.status === "PENDING" && (
+                            {(loan.status === "PENDING" || loan.status === "DRAFT") && (
                               <DropdownMenuItem
                                 className="gap-2 cursor-pointer text-emerald-600"
                                 onClick={() =>
@@ -485,18 +485,8 @@ export default function LoansPage() {
                               </DropdownMenuItem>
                             )}
 
-                            <DropdownMenuItem
-                              className="gap-2 cursor-pointer"
-                              onClick={() => router.push(`/loans/${loan.id}`)}
-                            >
-                              <FileCheck className="h-4 w-4 text-blue-500" />
-                              Approve/Reject Loan
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">
-                              <Trash2 className="h-4 w-4" />
-                              Terminate Loan
-                            </DropdownMenuItem>
+                            
+                            
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

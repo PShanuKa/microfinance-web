@@ -388,13 +388,18 @@ export default function LoanViewPage() {
               </Button>
             </>
           )}
-          <Button
+
+          {(loan.status === "DRAFT" || loan.status === "PENDING") && (
+            
+            
+            <Button
             variant="outline"
             className="gap-2 h-11 px-6 font-bold"
             onClick={() => router.push(`/loans/${id}/edit-schedule`)}
           >
             <FileText className="h-4 w-4" /> Edit Schedule
           </Button>
+          )}
           <Button variant="outline" className="gap-2 h-11 px-6 font-bold">
             <Printer className="h-4 w-4" /> Print
           </Button>
