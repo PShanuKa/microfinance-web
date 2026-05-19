@@ -111,12 +111,12 @@ export function LoginForm() {
               <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
                 Password
               </Label>
-              <a
+              {/* <a
                 href="#"
                 className="text-xs font-medium text-primary hover:underline transition-all"
               >
                 Forgot password?
-              </a>
+              </a> */}
             </div>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -161,12 +161,12 @@ export function LoginForm() {
               "Sign In"
             )}
           </Button>
-          <div className="text-center text-sm text-gray-500">
+          {/* <div className="text-center text-sm text-gray-500">
             Don't have an account?{" "}
             <a href="#" className="font-semibold text-primary hover:underline">
               Contact Admin
             </a>
-          </div>
+          </div> */}
         </CardFooter>
       </form>
     </Card>

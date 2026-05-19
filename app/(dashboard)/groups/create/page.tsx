@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/Custom/PageHeader";
 import { useCreateGroupMutation } from "@/services/groupApi";
 import { useUsersQuery } from "@/services/userApi";
 import { useBranchesQuery } from "@/services/branchApi";
+import { useGetMeQuery } from "@/services/authApi";
 import { Save, ArrowLeft } from "lucide-react";
 
 const DAYS = [
@@ -33,6 +34,10 @@ const DAYS = [
 export default function CreateGroupPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Get current user profile
+  const { data: meData } = useGetMeQuery();
+  const currentUser = meData?.user;
 
   // Get branches
   const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
@@ -56,6 +61,14 @@ export default function CreateGroupPage() {
       officerId: "",
     },
   });
+
+  const isBranchSelectDisabled = currentUser?.role !== "ADMIN" && !!currentUser?.branchId;
+
+  React.useEffect(() => {
+    if (currentUser?.branchId && currentUser?.role !== "ADMIN") {
+      setValue("branchId", currentUser.branchId);
+    }
+  }, [currentUser, setValue]);
 
   const handleApiError = (error: any) => {
     const response = error.response?.data;
@@ -91,7 +104,7 @@ export default function CreateGroupPage() {
     createMutation.mutate({
       ...data,
       collectionDay: Number(data.collectionDay),
-      createdBy: "system", // Should be actual user ID
+      createdBy: currentUser?.id || "system",
     });
   };
 
@@ -136,6 +149,7 @@ export default function CreateGroupPage() {
                   <Select
                     value={selectedBranchId || "none"}
                     onValueChange={(val) => setValue("branchId", val && val !== "none" ? val : "")}
+                    disabled={isBranchSelectDisabled}
                   >
                     <SelectTrigger className={errors.branchId ? "border-destructive" : ""}>
                       <SelectValue>
@@ -153,6 +167,11 @@ export default function CreateGroupPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {isBranchSelectDisabled && (
+                    <p className="text-[10px] text-muted-foreground font-semibold">
+                      Your branch is pre-selected and locked based on your user profile.
+                    </p>
+                  )}
                   {errors.branchId && <p className="text-xs text-destructive">{errors.branchId.message as string}</p>}
                 </div>
 

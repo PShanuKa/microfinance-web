@@ -263,6 +263,7 @@ export default function EditGroupPage() {
                   <Select
                     value={selectedBranchId || "none"}
                     onValueChange={(val) => setValue("branchId", val && val !== "none" ? val : "")}
+                    disabled
                   >
                     <SelectTrigger className={cn("bg-background/50", errors.branchId && "border-destructive")}>
                       <SelectValue>
@@ -280,6 +281,9 @@ export default function EditGroupPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-[10px] text-muted-foreground font-semibold">
+                    Branch association cannot be modified after group creation.
+                  </p>
                   {errors.branchId && <p className="text-xs text-destructive">{errors.branchId.message as string}</p>}
                 </div>
 
