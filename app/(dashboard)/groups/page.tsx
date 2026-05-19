@@ -77,6 +77,7 @@ import { Label } from "@/components/ui/label";
 import { Clock } from "lucide-react";
 import { useGroupsQuery, useDeleteGroupMutation } from "@/services/groupApi";
 import { useBranchesQuery } from "@/services/branchApi";
+import { useGetMeQuery } from "@/services/authApi";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -88,10 +89,20 @@ export default function GroupsPage() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   
+  // Get current user profile for role and branch restriction
+  const { data: meData } = useGetMeQuery();
+  const currentUser = meData?.user;
+
   // URL synced filters
   const statusFilter = searchParams.get("status") || "All";
   const collectionDayFilter = searchParams.get("collectionDay") || "All";
   const branchFilter = searchParams.get("branchId") || "All";
+
+  // Check if branch select filter should be locked/disabled
+  const isBranchSelectDisabled = currentUser?.role !== "ADMIN" && !!currentUser?.branchId;
+  const effectiveBranchFilter = isBranchSelectDisabled
+    ? currentUser.branchId
+    : branchFilter;
 
   // Get branches list
   const { data: branchesData } = useBranchesQuery();
@@ -123,7 +134,7 @@ export default function GroupsPage() {
     search: searchTerm,
     status: statusFilter,
     collectionDay: collectionDayFilter,
-    branchId: branchFilter
+    branchId: effectiveBranchFilter
   });
 
   const deleteMutation = useDeleteGroupMutation({
@@ -257,15 +268,16 @@ export default function GroupsPage() {
                   <div className="flex flex-col gap-1.5 w-full md:w-auto">
                     <Label className="text-xs text-muted-foreground ml-1">Branch</Label>
                     <Select
-                      value={branchFilter}
+                      value={effectiveBranchFilter}
                       onValueChange={(val) => updateFilters({ branchId: val || "All" })}
+                      disabled={isBranchSelectDisabled}
                     >
                       <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
                         <div className="flex items-center gap-2">
                           <Building className="h-4 w-4 text-muted-foreground" />
                           <SelectValue>
-                            {branchFilter && branchFilter !== "All"
-                              ? (branches.find((b: any) => b.id === branchFilter)?.name || "Select branch")
+                            {effectiveBranchFilter && effectiveBranchFilter !== "All"
+                              ? (branches.find((b: any) => b.id === effectiveBranchFilter)?.name || "Select branch")
                               : "All Branches"}
                           </SelectValue>
                         </div>
@@ -281,11 +293,11 @@ export default function GroupsPage() {
                     </Select>
                   </div>
                   
-                  {(statusFilter !== "All" || collectionDayFilter !== "All" || branchFilter !== "All") && (
+                  {(statusFilter !== "All" || collectionDayFilter !== "All" || (!isBranchSelectDisabled && branchFilter !== "All")) && (
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => updateFilters({ status: "All", collectionDay: "All", branchId: "All" })}
+                      onClick={() => updateFilters({ status: "All", collectionDay: "All", branchId: isBranchSelectDisabled ? currentUser?.branchId : "All" })}
                       className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
                     >
                       Clear Filters

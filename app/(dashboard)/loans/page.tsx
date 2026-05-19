@@ -1,5 +1,5 @@
 "use client";
-import { MapPin } from "lucide-react";
+import { MapPin, Building } from "lucide-react";
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ import {
 import TablePagination from "@/components/Custom/TablePagination";
 import { useLoansQuery } from "@/services/loanApi";
 import { Label } from "@/components/ui/label";
+import { useGetMeQuery } from "@/services/authApi";
+import { useBranchesQuery } from "@/services/branchApi";
 
 const DAYS = [
   "Monday",
@@ -78,9 +80,25 @@ export default function LoansPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [openItem, setOpenItem] = useState<string[]>([]);
 
+  // Get current user profile for role and branch restriction
+  const { data: meData } = useGetMeQuery();
+  const currentUser = meData?.user;
+
+  // Get branches list
+  const { data: branchesData } = useBranchesQuery();
+  const branches = branchesData?.branches || [];
+
   // URL synced filters
   const statusFilter = searchParams.get("status") || "All";
   const collectionDayFilter = searchParams.get("collectionDay") || "All";
+  const branchFilter = searchParams.get("branchId") || "All";
+
+  // Check if branch select filter should be locked/disabled
+  // Only ADMIN and AUDITOR are allowed to edit/select branches. BranchManager and LoanOfficer are locked.
+  const isBranchSelectDisabled = currentUser?.role !== "ADMIN" && currentUser?.role !== "AUDITOR" && !!currentUser?.branchId;
+  const effectiveBranchFilter = isBranchSelectDisabled
+    ? currentUser.branchId
+    : branchFilter;
 
   // Function to update URL params
   const updateFilters = (updates: Record<string, string>) => {
@@ -102,6 +120,7 @@ export default function LoansPage() {
     search: searchTerm,
     status: statusFilter === "All" ? undefined : statusFilter,
     collectionDay: collectionDayFilter === "All" ? undefined : parseInt(collectionDayFilter),
+    branchId: effectiveBranchFilter === "All" ? undefined : effectiveBranchFilter,
   });
 
   const getStatusBadge = (status: string) => {
@@ -248,12 +267,39 @@ export default function LoansPage() {
                                 </SelectContent>
                               </Select>
                             </div>
+                            <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                              <Label className="text-xs text-muted-foreground ml-1">Branch</Label>
+                              <Select
+                                value={effectiveBranchFilter}
+                                onValueChange={(val) => updateFilters({ branchId: val || "All" })}
+                                disabled={isBranchSelectDisabled}
+                              >
+                                <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                                  <div className="flex items-center gap-2">
+                                    <Building className="h-4 w-4 text-muted-foreground" />
+                                    <SelectValue>
+                                      {effectiveBranchFilter && effectiveBranchFilter !== "All"
+                                        ? (branches.find((b: any) => b.id === effectiveBranchFilter)?.name || "Select branch")
+                                        : "All Branches"}
+                                    </SelectValue>
+                                  </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="All">All Branches</SelectItem>
+                                  {branches.map((b: any) => (
+                                    <SelectItem key={b.id} value={b.id}>
+                                      {b.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                             
-                            {(statusFilter !== "All" || collectionDayFilter !== "All") && (
+                            {(statusFilter !== "All" || collectionDayFilter !== "All" || (!isBranchSelectDisabled && branchFilter !== "All")) && (
                               <Button 
                                 variant="ghost" 
                                 size="sm"
-                                onClick={() => updateFilters({ status: "All", collectionDay: "All" })}
+                                onClick={() => updateFilters({ status: "All", collectionDay: "All", branchId: isBranchSelectDisabled ? currentUser?.branchId : "All" })}
                                 className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
                               >
                                 Clear Filters
