@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCollectionQuery, useApproveCollectionMutation, useRejectCollectionMutation } from "@/services/collectionApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -59,11 +60,16 @@ export default function CollectionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const collectionId = params.id as string;
+  const queryClient = useQueryClient();
 
   const [conflicts, setConflicts] = useState<any[]>([]);
   const [isOverpaymentDialogOpen, setIsOverpaymentDialogOpen] = useState(false);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const { data, isLoading } = useCollectionQuery(collectionId);
   const collection = data?.collection;
@@ -74,28 +80,44 @@ export default function CollectionDetailPage() {
         setConflicts(res.conflicts || []);
         setIsOverpaymentDialogOpen(true);
       } else {
-        alert("Collection approved successfully!");
+        setSuccessMessage("Collection registry approved and balances updated successfully!");
+        setIsSuccessOpen(true);
+        queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
       }
     },
     onError: (err: any) => {
-      alert(err.response?.data?.error || "Failed to approve collection.");
+      setErrorMessage(err.response?.data?.error || "Failed to approve collection registry.");
+      setIsErrorOpen(true);
     }
   });
 
   const rejectMutation = useRejectCollectionMutation({
     onSuccess: () => {
-      alert("Collection rejected successfully!");
       setIsRejectOpen(false);
       setRejectionReason("");
+      setSuccessMessage("Collection registry has been successfully rejected.");
+      setIsSuccessOpen(true);
+      queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
     },
     onError: (err: any) => {
-      alert(err.response?.data?.error || "Failed to reject collection.");
+      setErrorMessage(err.response?.data?.error || "Failed to reject collection registry.");
+      setIsErrorOpen(true);
     }
   });
 
   const handleConfirmApprove = () => {
     setIsOverpaymentDialogOpen(false);
-    approveMutation.mutate({ id: collectionId, confirmOverpayment: true });
+    approveMutation.mutate({ id: collectionId, confirmOverpayment: true }, {
+      onSuccess: () => {
+        setSuccessMessage("Collection registry approved and balances updated successfully!");
+        setIsSuccessOpen(true);
+        queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
+      },
+      onError: (err: any) => {
+        setErrorMessage(err.response?.data?.error || "Failed to approve collection registry.");
+        setIsErrorOpen(true);
+      }
+    });
   };
 
   const handleRejectConfirm = () => {
@@ -495,6 +517,52 @@ export default function CollectionDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Success Modal */}
+      {isSuccessOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-emerald-500/10 text-center animate-in zoom-in-95 duration-300">
+            <div className="mx-auto w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 mb-6">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 animate-bounce" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
+              Action Successful
+            </h3>
+            <p className="text-slate-500 font-semibold text-xs leading-relaxed mb-6">
+              {successMessage}
+            </p>
+            <Button 
+              onClick={() => setIsSuccessOpen(false)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 font-bold h-11 rounded-xl text-white shadow-lg shadow-emerald-600/20"
+            >
+              Great, Thank you
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {isErrorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-rose-500/10 text-center animate-in zoom-in-95 duration-300">
+            <div className="mx-auto w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center border border-rose-500/20 mb-6">
+              <AlertCircle className="w-8 h-8 text-rose-500 animate-bounce" />
+            </div>
+            <h3 className="text-2xl font-black text-rose-600 tracking-tight mb-2">
+              Action Failed
+            </h3>
+            <p className="text-slate-500 font-semibold text-xs leading-relaxed mb-6">
+              {errorMessage}
+            </p>
+            <Button 
+              onClick={() => setIsErrorOpen(false)}
+              className="w-full bg-rose-600 hover:bg-rose-700 font-bold h-11 rounded-xl text-white shadow-lg shadow-rose-600/20"
+            >
+              Okay, I understand
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
