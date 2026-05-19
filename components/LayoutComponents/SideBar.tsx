@@ -18,6 +18,7 @@ import {
   Cog,
   ClipboardList,
   History,
+  Building,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -82,6 +83,7 @@ const items: MenuGroup[] = [
     allowedRoles: ["ADMIN"],
     items: [
       { icon: ShieldUser, label: "User Management", href: "/user-management" },
+      { icon: Building, label: "Branch Management", href: "/branches" },
       { icon: History, label: "Audit Logs", href: "/audit-logs" },
       { icon: CalendarDays, label: "Non-Collection Weeks", href: "/con-weeks" },
       // { icon: Target, label: "Collection Targets", href: "/col-targets" },

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 // Define route patterns and the roles allowed to access them
 const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
   { pattern: /^\/user-management(\/|$)/, allowedRoles: ["ADMIN"] },
+  { pattern: /^\/branches(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/audit-logs(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/con-weeks(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/settings(\/|$)/, allowedRoles: ["ADMIN"] },

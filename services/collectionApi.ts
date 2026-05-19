@@ -24,8 +24,10 @@ const collectionService = {
     const response = await api.post(`/collections/${id}/approve`, body);
     return response.data;
   },
-  rejectCollection: async (id: string) => {
-    const response = await api.post(`/collections/${id}/reject`);
+  rejectCollection: async (payload: string | { id: string; rejectionReason?: string }) => {
+    const id = typeof payload === "string" ? payload : payload.id;
+    const body = typeof payload === "string" ? {} : { rejectionReason: payload.rejectionReason };
+    const response = await api.post(`/collections/${id}/reject`, body);
     return response.data;
   },
 };
@@ -87,12 +89,14 @@ export const useApproveCollectionMutation = (options: any = {}) => {
 export const useRejectCollectionMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => collectionService.rejectCollection(id),
-    onSuccess: (data, id, ...args) => {
+    mutationFn: (payload: string | { id: string; rejectionReason?: string }) => 
+      collectionService.rejectCollection(payload),
+    onSuccess: (data, variables, ...args) => {
+      const id = typeof variables === "string" ? variables : variables.id;
       queryClient.invalidateQueries({ queryKey: ["Collection", id] });
       queryClient.invalidateQueries({ queryKey: ["Collections"] });
       queryClient.invalidateQueries({ queryKey: ["DailyRegistry"] });
-      if (options.onSuccess) options.onSuccess(data, id, ...args);
+      if (options.onSuccess) options.onSuccess(data, variables, ...args);
     },
     ...options,
   });

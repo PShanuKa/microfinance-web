@@ -401,6 +401,24 @@ export default function LoanViewPage() {
         </div>
       </div>
 
+      {loan.status === "REJECTED" && (
+        <Card className="border-none shadow-xl bg-rose-500/10 border border-rose-500/20 backdrop-blur-md overflow-hidden">
+          <CardContent className="p-5 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30 text-rose-600 shrink-0">
+              <ShieldAlert className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-black uppercase tracking-wider text-rose-800">
+                Loan Application Rejected
+              </h4>
+              <p className="text-sm font-semibold text-rose-700 leading-relaxed">
+                {loan.rejectionReason || "No rejection reason specified."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden border-l-4 border-l-primary">
           <CardContent className="p-6">

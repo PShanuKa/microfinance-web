@@ -7,6 +7,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -53,6 +62,8 @@ export default function CollectionDetailPage() {
 
   const [conflicts, setConflicts] = useState<any[]>([]);
   const [isOverpaymentDialogOpen, setIsOverpaymentDialogOpen] = useState(false);
+  const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const { data, isLoading } = useCollectionQuery(collectionId);
   const collection = data?.collection;
@@ -74,6 +85,8 @@ export default function CollectionDetailPage() {
   const rejectMutation = useRejectCollectionMutation({
     onSuccess: () => {
       alert("Collection rejected successfully!");
+      setIsRejectOpen(false);
+      setRejectionReason("");
     },
     onError: (err: any) => {
       alert(err.response?.data?.error || "Failed to reject collection.");
@@ -83,6 +96,11 @@ export default function CollectionDetailPage() {
   const handleConfirmApprove = () => {
     setIsOverpaymentDialogOpen(false);
     approveMutation.mutate({ id: collectionId, confirmOverpayment: true });
+  };
+
+  const handleRejectConfirm = () => {
+    if (!rejectionReason.trim()) return;
+    rejectMutation.mutate({ id: collectionId, rejectionReason });
   };
 
 
@@ -163,9 +181,9 @@ export default function CollectionDetailPage() {
                 variant="outline" 
                 className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold"
                 disabled={rejectMutation.isPending || approveMutation.isPending}
-                onClick={() => rejectMutation.mutate(collectionId)}
+                onClick={() => setIsRejectOpen(true)}
               >
-                {rejectMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <X className="h-4 w-4 mr-2" />}
+                <X className="h-4 w-4 mr-2" />
                 Reject Collection
               </Button>
               <Button 
@@ -180,6 +198,24 @@ export default function CollectionDetailPage() {
           )}
         </div>
       </div>
+
+      {collection.status === "REJECTED" && (
+        <Card className="border-none shadow-xl bg-rose-500/10 border border-rose-500/20 backdrop-blur-md overflow-hidden">
+          <CardContent className="p-5 flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30 text-rose-600 shrink-0">
+              <AlertCircle className="h-5 w-5 animate-pulse" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-black uppercase tracking-wider text-rose-800">
+                Collection Registry Rejected
+              </h4>
+              <p className="text-sm font-semibold text-rose-700 leading-relaxed">
+                {collection.rejectionReason || "No rejection reason specified."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Collection Summary */}
@@ -420,6 +456,45 @@ export default function CollectionDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Reject Collection Dialog */}
+      <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
+        <DialogContent className="rounded-3xl p-6 border-slate-200 bg-card/95 backdrop-blur-md max-w-md w-full shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              <X className="h-5 w-5 text-rose-500" />
+              Reject Collection Registry
+            </DialogTitle>
+            <DialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
+              Please enter the reason for rejecting this collection registry below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Enter rejection reason here..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="min-h-24 rounded-xl border-slate-200 font-medium"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => setIsRejectOpen(false)}
+              className="font-bold rounded-xl border-slate-200"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRejectConfirm}
+              disabled={!rejectionReason.trim() || rejectMutation.isPending}
+              className="bg-rose-600 hover:bg-rose-700 font-bold rounded-xl text-white shadow-lg shadow-rose-600/20"
+            >
+              {rejectMutation.isPending ? "Rejecting..." : "Confirm Rejection"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
