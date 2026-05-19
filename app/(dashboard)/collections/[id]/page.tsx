@@ -231,7 +231,7 @@ export default function CollectionDetailPage() {
             View Group
           </Button>
 
-          <RoleGate allowedRoles={["ADMIN", "BRANCH_MANAGER", "APPROVED"]}>
+          <RoleGate allowedRoles={["ADMIN", "BRANCH_MANAGER", "APPROVER"]}>
             {collection.status === "SUBMITTED" && (
               <>
                 <Button
@@ -370,10 +370,18 @@ export default function CollectionDetailPage() {
             <div className="space-y-4">
               <div>
                 <p className="text-[10px] font-black uppercase opacity-60">
-                  Collector ID
+                  Collector Information
                 </p>
-                <p className="text-sm font-bold mt-1">
-                  {collection.collectorId}
+                <p className="text-sm font-black mt-1 text-emerald-400">
+                  {collection.collector?.fullname || "System Collector"}
+                </p>
+                {collection.collector?.email && (
+                  <p className="text-xs opacity-75 mt-0.5">
+                    {collection.collector.email}
+                  </p>
+                )}
+                <p className="text-[9px] opacity-40 mt-1 uppercase font-bold tracking-tighter">
+                  ID: {collection.collectorId}
                 </p>
               </div>
               <div>

@@ -11,19 +11,43 @@ import { Button } from "@/components/ui/button";
 
 // Define route patterns and the roles allowed to access them
 const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
+  // Admin & Settings
   { pattern: /^\/user-management(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/branches(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/audit-logs(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/con-weeks(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/settings(\/|$)/, allowedRoles: ["ADMIN"] },
-  { pattern: /^\/collections(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR"] },
-  { pattern: /^\/collection-registry(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER", "AUDITOR"] },
+  
+  // Collections & registries
+  { pattern: /^\/collections(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR" , "APPROVER"] },
+  { pattern: /^\/collection-registry(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER", "AUDITOR", ] },
   { pattern: /^\/blacklist(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"] },
   { pattern: /^\/reports(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"] },
-  { pattern: /^\/clients(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] },
-  { pattern: /^\/groups(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] },
-  { pattern: /^\/loans(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] },
+  
+  // Clients precise routing
+  { pattern: /^\/clients\/new\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
+  { pattern: /^\/clients\/[^\/]+\/edit\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
+  { pattern: /^\/clients\/[^\/]+\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] },
+  { pattern: /^\/clients\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] },
+  
+  // Groups precise routing
+  { pattern: /^\/groups\/create\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
+  { pattern: /^\/groups\/[^\/]+\/edit\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER","LOAN_OFFICER"] },
+  { pattern: /^\/groups\/[^\/]+\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR", "COLLECTION_OFFICER"] }, // Details page is allowed for more roles (e.g. COLLECTION_OFFICER)
+  { pattern: /^\/groups\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] }, // General list page
+
+  // Loans precise routing
+  { pattern: /^\/loans\/create\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
+  { pattern: /^\/loans\/[^\/]+\/edit-schedule\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
+  { pattern: /^\/loans\/[^\/]+\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR", "COLLECTION_OFFICER"] }, // Details page is allowed for more roles
+  { pattern: /^\/loans\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] }, // General list page
 ];
+
+// Define specific home/landing page redirects for roles when they hit the root "/" path
+const ROLE_HOME_REDIRECTS: Record<string, string> = {
+  COLLECTION_OFFICER: "/collection-registry",
+  LOAN_OFFICER: "/loans",
+};
 
 export default function DashboardLayout({
   children,
@@ -69,13 +93,15 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const userRole = data?.user?.role;
 
-  const isRedirecting = userRole === "COLLECTION_OFFICER" && pathname === "/";
+  // Find if there is a specific home redirect for the current role
+  const redirectTarget = pathname === "/" && userRole ? ROLE_HOME_REDIRECTS[userRole] : null;
+  const isRedirecting = !!redirectTarget;
 
   useEffect(() => {
-    if (isRedirecting) {
-      router.push("/collection-registry");
+    if (redirectTarget) {
+      router.push(redirectTarget);
     }
-  }, [isRedirecting, router]);
+  }, [redirectTarget, router]);
 
   // Check if user is allowed to access the current route
   const isAuthorized = (() => {
@@ -88,9 +114,9 @@ export default function DashboardLayout({
     const rule = ROUTE_PERMISSIONS.find((p) => p.pattern.test(pathname));
     
     // If no rule matches, it's public (e.g. Profile "/profile")
-    // Note: root "/" is handled by redirect above, but block COLLECTION_OFFICER from loading actual dashboard page
     if (!rule) {
-      if (pathname === "/" && userRole === "COLLECTION_OFFICER") return false;
+      // If the current role has a home redirect from "/", they are not authorized to view the root "/" page
+      if (pathname === "/" && userRole && ROLE_HOME_REDIRECTS[userRole]) return false;
       return true;
     }
     

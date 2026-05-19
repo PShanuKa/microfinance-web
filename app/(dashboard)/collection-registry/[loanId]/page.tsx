@@ -11,7 +11,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-// import { toast } from "sonner"; 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function RegistryDetailPage() {
   const params = useParams();
@@ -24,6 +32,10 @@ export default function RegistryDetailPage() {
   const [collectedAmounts, setCollectedAmounts] = React.useState<Record<string, string>>({});
   const [attachments, setAttachments] = React.useState<{ attachmentId: string; note: string; fileName: string; fileUrl: string }[]>([]);
   const [isUploading, setIsUploading] = React.useState(false);
+  
+  // Custom Success & Error states for Popup Modals
+  const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   const { data, isLoading } = useDailyRegistryQuery({ loanId, date });
 
@@ -32,12 +44,12 @@ export default function RegistryDetailPage() {
 
   const createCollection = useCreateCollectionMutation({
     onSuccess: () => {
-      alert("Collection created successfully!");
+      setSuccessMessage("Collection created successfully!");
       setIsRecording(false);
       setAttachments([]);
     },
     onError: (err: any) => {
-      alert(err.response?.data?.error || "Failed to save collection.");
+      setErrorMessage(err.response?.data?.error || "Failed to save collection.");
     }
   });
 
@@ -81,7 +93,7 @@ export default function RegistryDetailPage() {
         }
       }
     } catch (error) {
-      alert("Failed to upload file(s).");
+      setErrorMessage("Failed to upload file(s). Please try again.");
     } finally {
       setIsUploading(false);
       e.target.value = "";
@@ -448,6 +460,62 @@ export default function RegistryDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Success Alert Dialog */}
+      <AlertDialog open={!!successMessage} onOpenChange={(open) => !open && setSuccessMessage(null)}>
+        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl rounded-3xl max-w-md p-6">
+          <AlertDialogHeader className="flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 animate-in zoom-in-50 duration-500" />
+            </div>
+            <div>
+              <AlertDialogTitle className="text-2xl font-black text-slate-800 tracking-tighter uppercase">
+                Collection Saved
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-500 font-bold mt-2">
+                The weekly collection has been recorded successfully and is now pending approval.
+              </AlertDialogDescription>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogAction 
+              onClick={() => setSuccessMessage(null)}
+              className="w-full rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black h-12 shadow-lg shadow-emerald-200 transition-all text-center flex items-center justify-center"
+            >
+              Okay, Perfect
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Error Alert Dialog */}
+      <AlertDialog open={!!errorMessage} onOpenChange={(open) => !open && setErrorMessage(null)}>
+        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl rounded-3xl max-w-md p-6">
+          <AlertDialogHeader className="flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center border border-rose-500/20">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-rose-500 animate-pulse">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
+              </svg>
+            </div>
+            <div>
+              <AlertDialogTitle className="text-2xl font-black text-slate-800 tracking-tighter uppercase">
+                Save Failed
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-500 font-bold mt-2">
+                {errorMessage}
+              </AlertDialogDescription>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogAction 
+              onClick={() => setErrorMessage(null)}
+              className="w-full rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black h-12 shadow-lg transition-all text-center flex items-center justify-center"
+            >
+              Close & Try Again
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

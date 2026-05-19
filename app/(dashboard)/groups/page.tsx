@@ -78,6 +78,7 @@ import { Clock } from "lucide-react";
 import { useGroupsQuery, useDeleteGroupMutation } from "@/services/groupApi";
 import { useBranchesQuery } from "@/services/branchApi";
 import { useGetMeQuery } from "@/services/authApi";
+import { RoleGate } from "@/components/Custom/RoleGate";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -179,6 +180,7 @@ export default function GroupsPage() {
         title="Groups"
         description="Manage microfinance groups, their members, and collection schedules"
       >
+         <RoleGate allowedRoles={["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"]}>
         <Button 
           onClick={() => router.push("/groups/create")}
           className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -186,6 +188,7 @@ export default function GroupsPage() {
           <Plus className="h-4 w-4" />
           Create New Group
         </Button>
+      </RoleGate>
       </PageHeader>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">

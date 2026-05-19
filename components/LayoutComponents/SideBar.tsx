@@ -60,13 +60,14 @@ const items: MenuGroup[] = [
   },
   {
     title: "Collections",
-    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER", "AUDITOR"],
+    // allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER", "AUDITOR", "APPROVER"],
     items: [
-      { icon: Receipt, label: "Collections", href: "/collections", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR"] },
+      { icon: Receipt, label: "Collections", href: "/collections", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"] },
       {
         icon: ClipboardList,
         label: "Collection Registry",
         href: "/collection-registry",
+        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR"]
       },
     ],
   },
