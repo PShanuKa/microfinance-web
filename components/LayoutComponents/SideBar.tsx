@@ -47,7 +47,7 @@ const items: MenuGroup[] = [
   },
   {
     title: "Arunodayata Saviyak",
-    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"],
+    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"],
     items: [
       { icon: UsersRound, label: "Groups", href: "/groups" },
       { icon: Wallet, label: "Loans", href: "/loans" },
@@ -55,7 +55,7 @@ const items: MenuGroup[] = [
   },
   {
     title: "Morgage Loans",
-    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"],
+    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER" , "AUDITOR"],
     items: [{ icon: Wallet, label: "Loans", href: "/loans" }],
   },
   {
@@ -67,13 +67,13 @@ const items: MenuGroup[] = [
         icon: ClipboardList,
         label: "Collection Registry",
         href: "/collection-registry",
-        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR"]
+        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER"]
       },
     ],
   },
   {
     title: "Reports",
-    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"],
+    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER" ],
     items: [
       { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
       // { icon: FileBarChart, label: "Reports", href: "/reports" },
@@ -81,14 +81,14 @@ const items: MenuGroup[] = [
   },
   {
     title: "System Settings",
-    allowedRoles: ["ADMIN"],
+    allowedRoles: ["ADMIN", "AUDITOR"],
     items: [
-      { icon: ShieldUser, label: "User Management", href: "/user-management" },
-      { icon: Building, label: "Branch Management", href: "/branches" },
+      { icon: ShieldUser, label: "User Management", href: "/user-management", allowedRoles: ["ADMIN"] },
+      { icon: Building, label: "Branch Management", href: "/branches" , allowedRoles: ["ADMIN"] },
       { icon: History, label: "Audit Logs", href: "/audit-logs" },
       { icon: CalendarDays, label: "Non-Collection Weeks", href: "/con-weeks" },
       // { icon: Target, label: "Collection Targets", href: "/col-targets" },
-      { icon: Cog, label: "Settings", href: "/settings" },
+      { icon: Cog, label: "Settings", href: "/settings" , allowedRoles: ["ADMIN"]},
     ],
   },
 ];

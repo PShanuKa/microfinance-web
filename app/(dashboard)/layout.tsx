@@ -14,8 +14,8 @@ const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
   // Admin & Settings
   { pattern: /^\/user-management(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/branches(\/|$)/, allowedRoles: ["ADMIN"] },
-  { pattern: /^\/audit-logs(\/|$)/, allowedRoles: ["ADMIN"] },
-  { pattern: /^\/con-weeks(\/|$)/, allowedRoles: ["ADMIN"] },
+  { pattern: /^\/audit-logs(\/|$)/, allowedRoles: ["ADMIN" , "AUDITOR"] },
+  { pattern: /^\/con-weeks(\/|$)/, allowedRoles: ["ADMIN", "AUDITOR"] },
   { pattern: /^\/settings(\/|$)/, allowedRoles: ["ADMIN"] },
   
   // Collections & registries
@@ -34,13 +34,13 @@ const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
   { pattern: /^\/groups\/create\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
   { pattern: /^\/groups\/[^\/]+\/edit\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER","LOAN_OFFICER"] },
   { pattern: /^\/groups\/[^\/]+\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR", "COLLECTION_OFFICER"] }, // Details page is allowed for more roles (e.g. COLLECTION_OFFICER)
-  { pattern: /^\/groups\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] }, // General list page
+  { pattern: /^\/groups\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] }, // General list page
 
   // Loans precise routing
   { pattern: /^\/loans\/create\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
   { pattern: /^\/loans\/[^\/]+\/edit-schedule\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
   { pattern: /^\/loans\/[^\/]+\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR", "COLLECTION_OFFICER"] }, // Details page is allowed for more roles
-  { pattern: /^\/loans\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] }, // General list page
+  { pattern: /^\/loans\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] }, // General list page
 ];
 
 // Define specific home/landing page redirects for roles when they hit the root "/" path

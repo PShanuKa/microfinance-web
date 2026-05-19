@@ -56,6 +56,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { RoleGate } from "@/components/Custom/RoleGate";
 
 export default function ConWeeksPage() {
   const [page, setPage] = useState(1);
@@ -117,13 +118,16 @@ export default function ConWeeksPage() {
         title="Non-Collection Weeks"
         description="Manage holiday weeks and scheduled collection pauses"
       >
+        <RoleGate allowedRoles={["ADMIN"]}>
+
         <Button 
           onClick={handleCreate}
           className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
-        >
+          >
           <Plus className="h-4 w-4" />
           New Configuration
         </Button>
+          </RoleGate>
       </PageHeader>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
