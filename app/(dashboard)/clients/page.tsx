@@ -80,6 +80,7 @@ import { ClientForm } from "@/components/Custom/ClientForm";
 import { cn } from "@/lib/utils";
 import TablePagination from "@/components/Custom/TablePagination";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { RoleGate } from "@/components/Custom/RoleGate";
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -196,13 +197,15 @@ export default function ClientsPage() {
         title="Clients"
         description="Manage client profiles, contact information, and registration status"
       >
+        <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
         <Button
           onClick={handleCreate}
           className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
-        >
+          >
           <Plus className="h-4 w-4" />
           New Client
         </Button>
+          </RoleGate>
       </PageHeader>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
@@ -412,20 +415,26 @@ export default function ClientsPage() {
                               <Eye className="w-4 h-4 text-primary" /> View
                               Details
                             </DropdownMenuItem>
+                            <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
+
                             <DropdownMenuItem
                               onClick={() => handleEdit(client)}
                               className="gap-2 cursor-pointer"
-                            >
+                              >
                               <UserPen className="w-4 h-4 text-blue-500" /> Edit
                               Client
                             </DropdownMenuItem>
+                         
+
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => setDeleteConfirmId(client.id)}
                               className="gap-2 cursor-pointer text-rose-500 focus:text-rose-500 focus:bg-rose-500/10"
-                            >
+                              >
                               <Trash2 className="w-4 h-4" /> Delete Client
                             </DropdownMenuItem>
+                          
+                                </RoleGate>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

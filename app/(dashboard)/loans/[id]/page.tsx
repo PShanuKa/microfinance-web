@@ -89,6 +89,7 @@ import { format } from "date-fns";
 import { LoanGuarantorViewModal } from "@/components/Custom/LoanGuarantorViewModal";
 import { AuditHistory } from "@/components/Custom/AuditHistory";
 import TableAuditLogs from "../../audit-logs/Table";
+import { RoleGate } from "@/components/Custom/RoleGate";
 
 export default function LoanViewPage() {
   const router = useRouter();
@@ -115,10 +116,12 @@ export default function LoanViewPage() {
       { id: id as string, status: "PENDING" },
       {
         onSuccess: () => {
-          setSuccessMessage("Loan has been successfully submitted for approval!");
+          setSuccessMessage(
+            "Loan has been successfully submitted for approval!",
+          );
           setIsSuccessOpen(true);
-        }
-      }
+        },
+      },
     );
   };
 
@@ -217,10 +220,12 @@ export default function LoanViewPage() {
       { id: id as string, approvedById: "system" },
       {
         onSuccess: () => {
-          setSuccessMessage("Loan application approved and repayment instalments rescheduled successfully!");
+          setSuccessMessage(
+            "Loan application approved and repayment instalments rescheduled successfully!",
+          );
           setIsSuccessOpen(true);
-        }
-      }
+        },
+      },
     );
   };
 
@@ -234,8 +239,8 @@ export default function LoanViewPage() {
           setSuccessMessage("Loan application has been successfully rejected.");
           setIsSuccessOpen(true);
           setRejectionReason("");
-        }
-      }
+        },
+      },
     );
   };
 
@@ -349,57 +354,64 @@ export default function LoanViewPage() {
             <p className="text-sm text-muted-foreground font-semibold flex items-center gap-2">
               <Users className="w-4 h-4" /> {loan.group?.name}{" "}
               <span className="opacity-40">|</span>{" "}
-              <Building className="w-4 h-4" /> {loan.group?.branch?.name || "Main"} Branch
+              <Building className="w-4 h-4" />{" "}
+              {loan.group?.branch?.name || "Main"} Branch
             </p>
           </div>
         </div>
         <div className="flex gap-2">
-          {loan.status === "DRAFT" && (
-            <Button
-              onClick={() => setIsSendForApprovalOpen(true)}
-              className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 h-11 px-6 font-bold text-white"
-              disabled={statusMutation.isPending}
-            >
-              {statusMutation.isPending ? (
-                <Clock className="h-4 w-4 animate-spin" />
-              ) : (
-                <ShieldCheck className="h-4 w-4" />
-              )}
-              Send for Approval
-            </Button>
-          )}
-          {loan.status === "PENDING" && (
-            <>
+          <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+            {loan.status === "DRAFT" && (
               <Button
-                onClick={() => setIsApproveOpen(true)}
-                variant="default"
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 h-11 px-6 font-bold"
-                disabled={approveMutation.isPending}
+                onClick={() => setIsSendForApprovalOpen(true)}
+                className="gap-2 bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 h-11 px-6 font-bold text-white"
+                disabled={statusMutation.isPending}
               >
-                <FileCheck className="h-4 w-4" /> Approve Loan
+                {statusMutation.isPending ? (
+                  <Clock className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4" />
+                )}
+                Send for Approval
               </Button>
-              <Button
-                onClick={() => setIsRejectOpen(true)}
-                variant="destructive"
-                className="gap-2 shadow-lg shadow-rose-600/20 h-11 px-6 font-bold"
-                disabled={rejectMutation.isPending}
-              >
-                <XCircle className="h-4 w-4" /> Reject
-              </Button>
-            </>
-          )}
+            )}
+          </RoleGate>
+
+          <RoleGate allowedRoles={["APPROVER", "BRANCH_MANAGER", "ADMIN"]}>
+            {loan.status === "PENDING" && (
+              <>
+                <Button
+                  onClick={() => setIsApproveOpen(true)}
+                  variant="default"
+                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 h-11 px-6 font-bold"
+                  disabled={approveMutation.isPending}
+                >
+                  <FileCheck className="h-4 w-4" /> Approve Loan
+                </Button>
+                <Button
+                  onClick={() => setIsRejectOpen(true)}
+                  variant="destructive"
+                  className="gap-2 shadow-lg shadow-rose-600/20 h-11 px-6 font-bold"
+                  disabled={rejectMutation.isPending}
+                >
+                  <XCircle className="h-4 w-4" /> Reject
+                </Button>
+              </>
+            )}
+          </RoleGate>
+          <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
+
 
           {(loan.status === "DRAFT" || loan.status === "PENDING") && (
-            
-            
             <Button
-            variant="outline"
-            className="gap-2 h-11 px-6 font-bold"
-            onClick={() => router.push(`/loans/${id}/edit-schedule`)}
-          >
-            <FileText className="h-4 w-4" /> Edit Schedule
-          </Button>
+              variant="outline"
+              className="gap-2 h-11 px-6 font-bold"
+              onClick={() => router.push(`/loans/${id}/edit-schedule`)}
+            >
+              <FileText className="h-4 w-4" /> Edit Schedule
+            </Button>
           )}
+          </RoleGate>
           <Button variant="outline" className="gap-2 h-11 px-6 font-bold">
             <Printer className="h-4 w-4" /> Print
           </Button>
@@ -666,10 +678,7 @@ export default function LoanViewPage() {
                         <TableCell className="text-center">
                           <DropdownMenu>
                             <DropdownMenuTrigger>
-                              <div
-                            
-                                className="gap-2 font-bold text-primary hover:bg-primary/5 flex items-center cursor-pointer"
-                              >
+                              <div className="gap-2 font-bold text-primary hover:bg-primary/5 flex items-center cursor-pointer">
                                 <ShieldCheck className="w-4 h-4" />
                                 {member.guarantors.length} Guarantors
                                 <ChevronDown className="w-3 h-3 ml-1 opacity-40" />
@@ -769,7 +778,7 @@ export default function LoanViewPage() {
             <CardContent className="p-0">
               <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                 <Table className="relative">
-                  <TableHeader >
+                  <TableHeader>
                     <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
                       <TableHead className="font-bold text-foreground">
                         Week
@@ -813,20 +822,19 @@ export default function LoanViewPage() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell >
+                        <TableCell>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-
-                          {format(new Date(inst.dueDate), "PPP")}
+                            {format(new Date(inst.dueDate), "PPP")}
                           </div>
                         </TableCell>
-                        <TableCell >
+                        <TableCell>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                          Rs. {Number(inst.dueAmount).toLocaleString()}
+                            Rs. {Number(inst.dueAmount).toLocaleString()}
                           </div>
                         </TableCell>
-                        <TableCell >
+                        <TableCell>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                          Rs. {Number(inst.paidAmount).toLocaleString()}
+                            Rs. {Number(inst.paidAmount).toLocaleString()}
                           </div>
                         </TableCell>
                         <TableCell className="text-center py-4">
@@ -871,7 +879,10 @@ export default function LoanViewPage() {
       />
 
       {/* Send for Approval Confirmation AlertDialog */}
-      <AlertDialog open={isSendForApprovalOpen} onOpenChange={setIsSendForApprovalOpen}>
+      <AlertDialog
+        open={isSendForApprovalOpen}
+        onOpenChange={setIsSendForApprovalOpen}
+      >
         <AlertDialogContent className="rounded-3xl p-6 border-slate-200 bg-card/95 backdrop-blur-md max-w-md w-full shadow-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
@@ -879,12 +890,15 @@ export default function LoanViewPage() {
               Send for Approval
             </AlertDialogTitle>
             <AlertDialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
-              Are you sure you want to submit this loan application for manager approval?
+              Are you sure you want to submit this loan application for manager
+              approval?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 pt-4">
-            <AlertDialogCancel className="font-bold rounded-xl border-slate-200">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogCancel className="font-bold rounded-xl border-slate-200">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleSendForApprovalConfirm}
               className="bg-slate-900 hover:bg-slate-800 font-bold rounded-xl text-white"
             >
@@ -903,12 +917,16 @@ export default function LoanViewPage() {
               Approve Loan Application
             </AlertDialogTitle>
             <AlertDialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
-              Are you sure you want to approve this loan? This action will automatically regenerate and reschedule all repayment instalments starting from today.
+              Are you sure you want to approve this loan? This action will
+              automatically regenerate and reschedule all repayment instalments
+              starting from today.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 pt-4">
-            <AlertDialogCancel className="font-bold rounded-xl border-slate-200">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogCancel className="font-bold rounded-xl border-slate-200">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleApproveConfirm}
               className="bg-emerald-600 hover:bg-emerald-700 font-bold rounded-xl text-white shadow-lg shadow-emerald-600/20"
             >
@@ -939,14 +957,14 @@ export default function LoanViewPage() {
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button 
+            <Button
               variant="outline"
               onClick={() => setIsRejectOpen(false)}
               className="font-bold rounded-xl border-slate-200"
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleRejectConfirm}
               disabled={!rejectionReason.trim() || rejectMutation.isPending}
               className="bg-rose-600 hover:bg-rose-700 font-bold rounded-xl text-white shadow-lg shadow-rose-600/20"
@@ -970,7 +988,7 @@ export default function LoanViewPage() {
             <p className="text-slate-500 font-semibold text-xs leading-relaxed mb-6">
               {successMessage}
             </p>
-            <Button 
+            <Button
               onClick={() => setIsSuccessOpen(false)}
               className="w-full bg-emerald-600 hover:bg-emerald-700 font-bold h-11 rounded-xl text-white shadow-lg shadow-emerald-600/20"
             >

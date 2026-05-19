@@ -60,6 +60,7 @@ import { useLoansQuery } from "@/services/loanApi";
 import { Label } from "@/components/ui/label";
 import { useGetMeQuery } from "@/services/authApi";
 import { useBranchesQuery } from "@/services/branchApi";
+import { RoleGate } from "@/components/Custom/RoleGate";
 
 const DAYS = [
   "Monday",
@@ -177,6 +178,8 @@ export default function LoansPage() {
         title="Loans"
         description="Monitor group-based loans, repayment schedules, and processing status"
       >
+        <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
+
         <Button
           onClick={() => router.push("/loans/create")}
           className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -184,6 +187,7 @@ export default function LoansPage() {
           <Plus className="h-4 w-4" />
           New Loan
         </Button>
+          </RoleGate>
       </PageHeader>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
@@ -472,6 +476,8 @@ export default function LoansPage() {
                               <Eye className="h-4 w-4 text-primary" />
                               View Details
                             </DropdownMenuItem>
+                            <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
+
 
                             {(loan.status === "PENDING" || loan.status === "DRAFT") && (
                               <DropdownMenuItem
@@ -484,6 +490,7 @@ export default function LoansPage() {
                                 Edit Schedule
                               </DropdownMenuItem>
                             )}
+                                </RoleGate>
 
                             
                             
