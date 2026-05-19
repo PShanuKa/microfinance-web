@@ -3,7 +3,11 @@
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCollectionQuery, useApproveCollectionMutation, useRejectCollectionMutation } from "@/services/collectionApi";
+import {
+  useCollectionQuery,
+  useApproveCollectionMutation,
+  useRejectCollectionMutation,
+} from "@/services/collectionApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,6 +59,7 @@ import {
   Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RoleGate } from "@/components/Custom/RoleGate";
 
 export default function CollectionDetailPage() {
   const params = useParams();
@@ -80,15 +85,21 @@ export default function CollectionDetailPage() {
         setConflicts(res.conflicts || []);
         setIsOverpaymentDialogOpen(true);
       } else {
-        setSuccessMessage("Collection registry approved and balances updated successfully!");
+        setSuccessMessage(
+          "Collection registry approved and balances updated successfully!",
+        );
         setIsSuccessOpen(true);
-        queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
+        queryClient.invalidateQueries({
+          queryKey: ["Collection", collectionId],
+        });
       }
     },
     onError: (err: any) => {
-      setErrorMessage(err.response?.data?.error || "Failed to approve collection registry.");
+      setErrorMessage(
+        err.response?.data?.error || "Failed to approve collection registry.",
+      );
       setIsErrorOpen(true);
-    }
+    },
   });
 
   const rejectMutation = useRejectCollectionMutation({
@@ -100,31 +111,42 @@ export default function CollectionDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
     },
     onError: (err: any) => {
-      setErrorMessage(err.response?.data?.error || "Failed to reject collection registry.");
+      setErrorMessage(
+        err.response?.data?.error || "Failed to reject collection registry.",
+      );
       setIsErrorOpen(true);
-    }
+    },
   });
 
   const handleConfirmApprove = () => {
     setIsOverpaymentDialogOpen(false);
-    approveMutation.mutate({ id: collectionId, confirmOverpayment: true }, {
-      onSuccess: () => {
-        setSuccessMessage("Collection registry approved and balances updated successfully!");
-        setIsSuccessOpen(true);
-        queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
+    approveMutation.mutate(
+      { id: collectionId, confirmOverpayment: true },
+      {
+        onSuccess: () => {
+          setSuccessMessage(
+            "Collection registry approved and balances updated successfully!",
+          );
+          setIsSuccessOpen(true);
+          queryClient.invalidateQueries({
+            queryKey: ["Collection", collectionId],
+          });
+        },
+        onError: (err: any) => {
+          setErrorMessage(
+            err.response?.data?.error ||
+              "Failed to approve collection registry.",
+          );
+          setIsErrorOpen(true);
+        },
       },
-      onError: (err: any) => {
-        setErrorMessage(err.response?.data?.error || "Failed to approve collection registry.");
-        setIsErrorOpen(true);
-      }
-    });
+    );
   };
 
   const handleRejectConfirm = () => {
     if (!rejectionReason.trim()) return;
     rejectMutation.mutate({ id: collectionId, rejectionReason });
   };
-
 
   if (isLoading) {
     return (
@@ -156,7 +178,12 @@ export default function CollectionDetailPage() {
       REJECTED: "bg-rose-500",
     };
     return (
-      <Badge className={cn("font-bold text-[10px] uppercase border-none text-white", colors[status] || "bg-slate-500")}>
+      <Badge
+        className={cn(
+          "font-bold text-[10px] uppercase border-none text-white",
+          colors[status] || "bg-slate-500",
+        )}
+      >
         {status}
       </Badge>
     );
@@ -166,11 +193,18 @@ export default function CollectionDetailPage() {
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button onClick={() => router.back()} variant="ghost" size="icon" className="rounded-full">
+          <Button
+            onClick={() => router.back()}
+            variant="ghost"
+            size="icon"
+            className="rounded-full"
+          >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h2 className="text-2xl font-black text-foreground tracking-tight">Collection Details</h2>
+            <h2 className="text-2xl font-black text-foreground tracking-tight">
+              Collection Details
+            </h2>
             <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
               ID: {collection.id}
             </p>
@@ -179,8 +213,8 @@ export default function CollectionDetailPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           {collection.loanId && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="font-bold border-slate-200 hover:bg-muted text-slate-800"
               onClick={() => router.push(`/loans/${collection.loanId}`)}
             >
@@ -188,8 +222,8 @@ export default function CollectionDetailPage() {
               View Loan
             </Button>
           )}
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="font-bold border-slate-200 hover:bg-muted text-slate-800"
             onClick={() => router.push(`/groups/${collection.groupId}`)}
           >
@@ -197,27 +231,37 @@ export default function CollectionDetailPage() {
             View Group
           </Button>
 
-          {collection.status === "SUBMITTED" && (
-            <>
-              <Button 
-                variant="outline" 
-                className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold"
-                disabled={rejectMutation.isPending || approveMutation.isPending}
-                onClick={() => setIsRejectOpen(true)}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Reject Collection
-              </Button>
-              <Button 
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20"
-                disabled={approveMutation.isPending || rejectMutation.isPending}
-                onClick={() => approveMutation.mutate(collectionId)}
-              >
-                {approveMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
-                Approve & Update Balances
-              </Button>
-            </>
-          )}
+          <RoleGate allowedRoles={["ADMIN", "BRANCH_MANAGER", "APPROVED"]}>
+            {collection.status === "SUBMITTED" && (
+              <>
+                <Button
+                  variant="outline"
+                  className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold"
+                  disabled={
+                    rejectMutation.isPending || approveMutation.isPending
+                  }
+                  onClick={() => setIsRejectOpen(true)}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Reject Collection
+                </Button>
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20"
+                  disabled={
+                    approveMutation.isPending || rejectMutation.isPending
+                  }
+                  onClick={() => approveMutation.mutate(collectionId)}
+                >
+                  {approveMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4 mr-2" />
+                  )}
+                  Approve & Update Balances
+                </Button>
+              </>
+            )}
+          </RoleGate>
         </div>
       </div>
 
@@ -246,25 +290,37 @@ export default function CollectionDetailPage() {
             <Banknote className="h-16 w-16" />
           </div>
           <CardContent className="p-6">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-4">Collection Summary</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-4">
+              Collection Summary
+            </h3>
             <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-black uppercase opacity-60">Amount Collected</p>
-                <p className="text-3xl font-black mt-1">Rs. {Number(collection.amountCollected).toLocaleString()}</p>
+                <p className="text-[10px] font-black uppercase opacity-60">
+                  Amount Collected
+                </p>
+                <p className="text-3xl font-black mt-1">
+                  Rs. {Number(collection.amountCollected).toLocaleString()}
+                </p>
               </div>
               <div className="flex items-center gap-6">
                 <div>
-                  <p className="text-[10px] font-black uppercase opacity-60">Week / Ins.</p>
-                  <p className="font-bold">#{collection.weekNumber || collection.instalmentNumber}</p>
+                  <p className="text-[10px] font-black uppercase opacity-60">
+                    Week / Ins.
+                  </p>
+                  <p className="font-bold">
+                    #{collection.weekNumber || collection.instalmentNumber}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase opacity-60">Date</p>
-                  <p className="font-bold">{new Date(collection.date).toLocaleDateString()}</p>
+                  <p className="text-[10px] font-black uppercase opacity-60">
+                    Date
+                  </p>
+                  <p className="font-bold">
+                    {new Date(collection.date).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
-              <div className="pt-2">
-                {getStatusBadge(collection.status)}
-              </div>
+              <div className="pt-2">{getStatusBadge(collection.status)}</div>
             </div>
           </CardContent>
         </Card>
@@ -277,7 +333,9 @@ export default function CollectionDetailPage() {
                 <Users className="h-6 w-6 text-emerald-500" />
               </div>
               <div>
-                <h3 className="font-black text-lg leading-tight">{collection.group?.name}</h3>
+                <h3 className="font-black text-lg leading-tight">
+                  {collection.group?.name}
+                </h3>
                 <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">
                   {collection.group?.groupNo || "N/A"}
                 </p>
@@ -286,11 +344,15 @@ export default function CollectionDetailPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-sm">
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{collection.group?.branch} - {collection.group?.location}</span>
+                <span className="font-medium">
+                  {collection.group?.branch} - {collection.group?.location}
+                </span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <Phone className="h-4 w-4 text-primary" />
-                <span className="font-bold">{collection.group?.phone || "N/A"}</span>
+                <span className="font-bold">
+                  {collection.group?.phone || "N/A"}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -302,19 +364,33 @@ export default function CollectionDetailPage() {
             <AlertCircle className="h-16 w-16" />
           </div>
           <CardContent className="p-6">
-            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-4">Metadata & Notes</h3>
+            <h3 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-4">
+              Metadata & Notes
+            </h3>
             <div className="space-y-4">
               <div>
-                <p className="text-[10px] font-black uppercase opacity-60">Collector ID</p>
-                <p className="text-sm font-bold mt-1">{collection.collectorId}</p>
+                <p className="text-[10px] font-black uppercase opacity-60">
+                  Collector ID
+                </p>
+                <p className="text-sm font-bold mt-1">
+                  {collection.collectorId}
+                </p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase opacity-60">Bank Reference</p>
-                <p className="text-sm font-bold mt-1">{collection.bankReference || "None"}</p>
+                <p className="text-[10px] font-black uppercase opacity-60">
+                  Bank Reference
+                </p>
+                <p className="text-sm font-bold mt-1">
+                  {collection.bankReference || "None"}
+                </p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase opacity-60">Notes</p>
-                <p className="text-xs italic opacity-80 mt-1">{collection.breakdownNotes || "No notes provided."}</p>
+                <p className="text-[10px] font-black uppercase opacity-60">
+                  Notes
+                </p>
+                <p className="text-xs italic opacity-80 mt-1">
+                  {collection.breakdownNotes || "No notes provided."}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -328,21 +404,34 @@ export default function CollectionDetailPage() {
             <Receipt className="h-4 w-4 text-primary" />
             Member Repayments
           </h3>
-          <Badge variant="outline" className="font-bold">{collection.items?.length || 0} Records</Badge>
+          <Badge variant="outline" className="font-bold">
+            {collection.items?.length || 0} Records
+          </Badge>
         </div>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-                <TableHead className="font-bold text-foreground">Member Details</TableHead>
-                <TableHead className="font-bold text-foreground text-center">Week</TableHead>
-                <TableHead className="font-bold text-foreground text-right">Amount Paid</TableHead>
-                <TableHead className="font-bold text-foreground text-center">Item Status</TableHead>
+                <TableHead className="font-bold text-foreground">
+                  Member Details
+                </TableHead>
+                <TableHead className="font-bold text-foreground text-center">
+                  Week
+                </TableHead>
+                <TableHead className="font-bold text-foreground text-right">
+                  Amount Paid
+                </TableHead>
+                <TableHead className="font-bold text-foreground text-center">
+                  Item Status
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {collection.items?.map((item: any) => (
-                <TableRow key={item.id} className="hover:bg-primary/5 transition-colors group">
+                <TableRow
+                  key={item.id}
+                  className="hover:bg-primary/5 transition-colors group"
+                >
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-bold text-foreground group-hover:text-primary transition-colors">
@@ -353,7 +442,9 @@ export default function CollectionDetailPage() {
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-center font-bold text-slate-500">#{item.instalment?.weekNumber}</TableCell>
+                  <TableCell className="text-center font-bold text-slate-500">
+                    #{item.instalment?.weekNumber}
+                  </TableCell>
                   <TableCell className="text-right font-black text-emerald-600">
                     Rs. {Number(item.amount).toLocaleString()}
                   </TableCell>
@@ -374,37 +465,45 @@ export default function CollectionDetailPage() {
               <Paperclip className="h-4 w-4 text-primary" />
               Collection Attachments
             </h3>
-            <Badge variant="outline" className="font-bold">{collection.attachments.length} Files</Badge>
+            <Badge variant="outline" className="font-bold">
+              {collection.attachments.length} Files
+            </Badge>
           </div>
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {collection.attachments.map((att: any) => (
-                <div key={att.id} className="flex flex-col border rounded-2xl p-4 bg-white shadow-sm hover:shadow-md transition-shadow relative">
+                <div
+                  key={att.id}
+                  className="flex flex-col border rounded-2xl p-4 bg-white shadow-sm hover:shadow-md transition-shadow relative"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <div className="p-2.5 bg-primary/10 rounded-xl">
                         <Paperclip className="h-6 w-6 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate max-w-[160px] md:max-w-[200px]">{att.attachment?.fileName}</p>
+                        <p className="text-sm font-bold text-slate-800 truncate max-w-[160px] md:max-w-[200px]">
+                          {att.attachment?.fileName}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider font-semibold text-[9px]">
-                          {att.attachment?.fileType?.split("/")[1] || "Document"}
+                          {att.attachment?.fileType?.split("/")[1] ||
+                            "Document"}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <a 
-                        href={att.attachment?.fileUrl} 
-                        target="_blank" 
-                        rel="noreferrer" 
+                      <a
+                        href={att.attachment?.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
                         title="View Document"
                         className="p-2 bg-slate-50 hover:bg-primary hover:text-white rounded-xl text-slate-600 transition-all border shadow-sm"
                       >
                         <Eye className="h-4 w-4" />
                       </a>
-                      <a 
-                        href={att.attachment?.fileUrl} 
+                      <a
+                        href={att.attachment?.fileUrl}
                         download={att.attachment?.fileName}
                         target="_blank"
                         rel="noreferrer"
@@ -418,8 +517,12 @@ export default function CollectionDetailPage() {
 
                   {att.note && (
                     <div className="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                      <p className="text-[10px] font-black uppercase text-muted-foreground">Attachment Note</p>
-                      <p className="text-xs text-slate-700 font-semibold mt-1">{att.note}</p>
+                      <p className="text-[10px] font-black uppercase text-muted-foreground">
+                        Attachment Note
+                      </p>
+                      <p className="text-xs text-slate-700 font-semibold mt-1">
+                        {att.note}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -441,15 +544,20 @@ export default function CollectionDetailPage() {
               Overpayment Detected
             </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-500 font-medium leading-relaxed">
-              Some instalments in this collection have already been paid (or partially paid) by other transactions. 
-              If you proceed, the extra money will automatically cascade and apply to the upcoming unpaid weeks.
+              Some instalments in this collection have already been paid (or
+              partially paid) by other transactions. If you proceed, the extra
+              money will automatically cascade and apply to the upcoming unpaid
+              weeks.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           {/* List of Conflicts */}
           <div className="my-4 max-h-[200px] overflow-y-auto space-y-2 border rounded-xl p-3 bg-rose-50/20 border-rose-100">
             {conflicts.map((conflict, i) => (
-              <div key={i} className="text-xs flex flex-col border-b last:border-0 pb-2 last:pb-0">
+              <div
+                key={i}
+                className="text-xs flex flex-col border-b last:border-0 pb-2 last:pb-0"
+              >
                 <div className="flex justify-between items-center font-bold text-slate-800">
                   <span>{conflict.memberName}</span>
                   <Badge className="bg-rose-500 text-white text-[9px] uppercase px-1.5 font-bold border-none">
@@ -457,8 +565,12 @@ export default function CollectionDetailPage() {
                   </Badge>
                 </div>
                 <div className="flex justify-between text-muted-foreground mt-1 font-semibold">
-                  <span>Payment Amount: Rs. {conflict.itemAmount.toLocaleString()}</span>
-                  <span>Remaining Due: Rs. {conflict.remainingDue.toLocaleString()}</span>
+                  <span>
+                    Payment Amount: Rs. {conflict.itemAmount.toLocaleString()}
+                  </span>
+                  <span>
+                    Remaining Due: Rs. {conflict.remainingDue.toLocaleString()}
+                  </span>
                 </div>
               </div>
             ))}
@@ -473,7 +585,9 @@ export default function CollectionDetailPage() {
               disabled={approveMutation.isPending}
               className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 h-12 shadow-lg shadow-emerald-200 transition-all"
             >
-              {approveMutation.isPending ? "Approving..." : "Yes, Apply & Continue"}
+              {approveMutation.isPending
+                ? "Approving..."
+                : "Yes, Apply & Continue"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -488,7 +602,8 @@ export default function CollectionDetailPage() {
               Reject Collection Registry
             </DialogTitle>
             <DialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
-              Please enter the reason for rejecting this collection registry below.
+              Please enter the reason for rejecting this collection registry
+              below.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -500,14 +615,14 @@ export default function CollectionDetailPage() {
             />
           </div>
           <DialogFooter className="gap-2">
-            <Button 
+            <Button
               variant="outline"
               onClick={() => setIsRejectOpen(false)}
               className="font-bold rounded-xl border-slate-200"
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleRejectConfirm}
               disabled={!rejectionReason.trim() || rejectMutation.isPending}
               className="bg-rose-600 hover:bg-rose-700 font-bold rounded-xl text-white shadow-lg shadow-rose-600/20"
@@ -531,7 +646,7 @@ export default function CollectionDetailPage() {
             <p className="text-slate-500 font-semibold text-xs leading-relaxed mb-6">
               {successMessage}
             </p>
-            <Button 
+            <Button
               onClick={() => setIsSuccessOpen(false)}
               className="w-full bg-emerald-600 hover:bg-emerald-700 font-bold h-11 rounded-xl text-white shadow-lg shadow-emerald-600/20"
             >
@@ -554,7 +669,7 @@ export default function CollectionDetailPage() {
             <p className="text-slate-500 font-semibold text-xs leading-relaxed mb-6">
               {errorMessage}
             </p>
-            <Button 
+            <Button
               onClick={() => setIsErrorOpen(false)}
               className="w-full bg-rose-600 hover:bg-rose-700 font-bold h-11 rounded-xl text-white shadow-lg shadow-rose-600/20"
             >
