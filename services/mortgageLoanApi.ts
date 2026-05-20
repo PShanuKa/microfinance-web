@@ -101,3 +101,17 @@ export const useRejectMortgageLoanMutation = (options: any = {}) => {
   });
 };
 
+export const useSendMortgageLoanForApprovalMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation<any, any, string, any>({
+    mutationFn: mortgageLoanService.sendMortgageLoanForApproval,
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoans"] });
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoan", variables] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+
+

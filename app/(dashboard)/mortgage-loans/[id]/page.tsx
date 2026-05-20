@@ -62,6 +62,7 @@ import {
   useMortgageLoanQuery,
   useApproveMortgageLoanMutation,
   useRejectMortgageLoanMutation,
+  useSendMortgageLoanForApprovalMutation,
 } from "@/services/mortgageLoanApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
 
@@ -73,6 +74,7 @@ export default function MortgageLoanViewPage() {
 
   const approveMutation = useApproveMortgageLoanMutation();
   const rejectMutation = useRejectMortgageLoanMutation();
+  const sendForApprovalMutation = useSendMortgageLoanForApprovalMutation();
 
   const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
@@ -81,6 +83,20 @@ export default function MortgageLoanViewPage() {
   const [successMessage, setSuccessMessage] = useState("");
 
   const loanDetails = data?.mortgage;
+
+  const handleSendForApproval = () => {
+    sendForApprovalMutation.mutate(
+      id as string,
+      {
+        onSuccess: () => {
+          setSuccessMessage(
+            "Mortgage application sent for approval successfully!",
+          );
+          setIsSuccessOpen(true);
+        },
+      },
+    );
+  };
 
   const handleApproveConfirm = () => {
     setIsApproveOpen(false);
@@ -289,6 +305,18 @@ export default function MortgageLoanViewPage() {
                   <XCircle className="h-4 w-4" /> Reject
                 </Button>
               </>
+            )}
+          </RoleGate>
+
+          <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+            {loanDetails.status === "DRAFT" && (
+              <Button
+                onClick={handleSendForApproval}
+                className="gap-2 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 h-11 px-6 font-bold text-white transition-all"
+                disabled={sendForApprovalMutation.isPending}
+              >
+                <CheckCircle2 className="h-4 w-4" /> Send for Approval
+              </Button>
             )}
           </RoleGate>
 
