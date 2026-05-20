@@ -28,6 +28,7 @@ import {
   useUploadAttachmentMutation,
   useDeleteAttachmentMutation
 } from "@/services/attachmentApi";
+import { useCreateMortgageLoanMutation } from "@/services/mortgageLoanApi";
 import { 
   Search, 
   User, 
@@ -112,6 +113,7 @@ export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => vo
   const { data: clientsData, isLoading: isClientsLoading } = useClientsQuery({ limit: 100 });
   const uploadAttachmentMutation = useUploadAttachmentMutation();
   const deleteAttachmentMutation = useDeleteAttachmentMutation();
+  const createMortgageMutation = useCreateMortgageLoanMutation();
 
   const {
     register,
@@ -349,14 +351,20 @@ export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => vo
       titledFiles: titledAttachments.map(f => ({ attachmentId: f.id, title: f.title, name: f.name }))
     };
 
-    console.log("Mortgage Loan Submitted Successfully:", payload);
-    setSuccessMsg(`Mortgage Loan created successfully for ${selectedClient.fullname}! Rs. ${netCashDisbursed.toLocaleString()} is scheduled for disbursement.`);
-    
-    if (onSuccess) {
-      setTimeout(() => {
-        onSuccess();
-      }, 2000);
-    }
+    createMortgageMutation.mutate(payload, {
+      onSuccess: () => {
+        setSuccessMsg(`Mortgage Loan created successfully for ${selectedClient.fullname}! Rs. ${netCashDisbursed.toLocaleString()} is scheduled for disbursement.`);
+        if (onSuccess) {
+          setTimeout(() => {
+            onSuccess();
+          }, 2000);
+        }
+      },
+      onError: (err: any) => {
+        const errorMsg = err.response?.data?.error || err.message || "Failed to submit mortgage loan application";
+        setServerError(errorMsg);
+      }
+    });
   };
 
   return (
@@ -529,7 +537,7 @@ export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => vo
                   <Label className="text-sm font-bold text-slate-700">Asset Type</Label>
                   <Select
                     value={assetType}
-                    onValueChange={(val) => setValue("assetType", val)}
+                    onValueChange={(val) => setValue("assetType", val || "")}
                   >
                     <SelectTrigger className="bg-background/50 h-11 border-input/50 focus:ring-primary/20">
                       <SelectValue placeholder="Select Asset Type" />
@@ -965,10 +973,18 @@ export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => vo
         </Button>
         <Button 
           type="submit" 
-          disabled={uploadAttachmentMutation.isPending}
+          disabled={uploadAttachmentMutation.isPending || createMortgageMutation.isPending}
           className="min-w-[240px] h-14 font-black uppercase tracking-widest text-[11px] shadow-2xl hover:translate-y-[-2px] bg-primary hover:bg-primary/95 text-white transition-all gap-2"
         >
-          <BookmarkCheck className="w-4 h-4 text-white" /> Complete Agreement &amp; Save
+          {createMortgageMutation.isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-white" /> Saving Agreement...
+            </>
+          ) : (
+            <>
+              <BookmarkCheck className="w-4 h-4 text-white" /> Complete Agreement &amp; Save
+            </>
+          )}
         </Button>
       </div>
 
