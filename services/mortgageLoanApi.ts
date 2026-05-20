@@ -18,6 +18,10 @@ const mortgageLoanService = {
     const response = await api.put(`/mortgage-loans/${id}`, data);
     return response.data;
   },
+  sendMortgageLoanForApproval: async (id: string) => {
+    const response = await api.put(`/mortgage-loans/${id}/send-for-approval`);
+    return response.data;
+  },
   approveMortgageLoan: async (id: string) => {
     const response = await api.put(`/mortgage-loans/${id}/approve`);
     return response.data;
