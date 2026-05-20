@@ -54,9 +54,9 @@ const items: MenuGroup[] = [
     ],
   },
   {
-    title: "Morgage Loans",
-    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER" , "AUDITOR"],
-    items: [{ icon: Wallet, label: "Loans", href: "/loans" }],
+    title: "Mortgage Loans",
+    // allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER" , "AUDITOR"],
+    items: [{ icon: Wallet, label: "Mortgage", href: "/mortgage-loans" },{ icon: Wallet, label: "Mortgage Collection", href: "/mortgage-collection" }],
   },
   {
     title: "Collections",

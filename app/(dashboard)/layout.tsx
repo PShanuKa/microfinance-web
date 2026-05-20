@@ -41,6 +41,10 @@ const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
   { pattern: /^\/loans\/[^\/]+\/edit-schedule\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
   { pattern: /^\/loans\/[^\/]+\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR", "COLLECTION_OFFICER"] }, // Details page is allowed for more roles
   { pattern: /^\/loans\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] }, // General list page
+
+  // Mortgage Loans precise routing
+  { pattern: /^\/mortgage-loans(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] },
+  { pattern: /^\/mortgage-collection(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] },
 ];
 
 // Define specific home/landing page redirects for roles when they hit the root "/" path
