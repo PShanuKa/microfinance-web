@@ -28,7 +28,7 @@ import {
   useUploadAttachmentMutation,
   useDeleteAttachmentMutation
 } from "@/services/attachmentApi";
-import { useCreateMortgageLoanMutation } from "@/services/mortgageLoanApi";
+import { useCreateMortgageLoanMutation, useUpdateMortgageLoanMutation } from "@/services/mortgageLoanApi";
 import { 
   Search, 
   User, 
@@ -91,7 +91,17 @@ type FormValues = {
   attachments: Array<{ id: string; name: string; fileUrl: string; size: string; progress: number }>;
 };
 
-export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => void; onCancel?: () => void }) {
+export function MortgageLoanForm({ 
+  onSuccess, 
+  onCancel,
+  loanId,
+  initialData
+}: { 
+  onSuccess?: () => void; 
+  onCancel?: () => void;
+  loanId?: string;
+  initialData?: any;
+}) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   
@@ -114,6 +124,8 @@ export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => vo
   const uploadAttachmentMutation = useUploadAttachmentMutation();
   const deleteAttachmentMutation = useDeleteAttachmentMutation();
   const createMortgageMutation = useCreateMortgageLoanMutation();
+  const updateMortgageMutation = useUpdateMortgageLoanMutation();
+
 
   const {
     register,
@@ -133,6 +145,45 @@ export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => vo
       attachments: [],
     },
   });
+
+  // Pre-populate values for edit mode
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.client) {
+        setSelectedClient(initialData.client);
+        setValue("clientId", initialData.client.id);
+        setSearchQuery(initialData.client.fullname);
+      }
+      setValue("lentAmount", Number(initialData.lentAmount) || 0);
+      setValue("interestRate", Number(initialData.interestRate) || 0);
+      setValue("assetType", initialData.assetType || "VEHICLE");
+      setValue("assetDescription", initialData.assetDescription || "");
+      setValue("estimatedMarketValue", Number(initialData.estimatedMarketValue) || 0);
+      setValue("assessedValue", Number(initialData.assessedValue) || 0);
+
+      if (initialData.collateralFiles) {
+        setUploadedFiles(initialData.collateralFiles.map((file: any) => ({
+          id: file.attachmentId,
+          name: file.name,
+          size: "Uploaded File",
+          progress: 100,
+          success: true
+        })));
+      }
+
+      if (initialData.titledFiles) {
+        setTitledAttachments(initialData.titledFiles.map((file: any) => ({
+          id: file.attachmentId,
+          title: file.title,
+          name: file.name,
+          size: "Uploaded File",
+          progress: 100,
+          success: true
+        })));
+      }
+    }
+  }, [initialData, setValue]);
+
 
   // Watch values for live preview calculation
   const lentAmount = Number(watch("lentAmount") || 0);
@@ -351,20 +402,37 @@ export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => vo
       titledFiles: titledAttachments.map(f => ({ attachmentId: f.id, title: f.title, name: f.name }))
     };
 
-    createMortgageMutation.mutate(payload, {
-      onSuccess: () => {
-        setSuccessMsg(`Mortgage Loan created successfully for ${selectedClient.fullname}! Rs. ${netCashDisbursed.toLocaleString()} is scheduled for disbursement.`);
-        if (onSuccess) {
-          setTimeout(() => {
-            onSuccess();
-          }, 2000);
+    if (loanId) {
+      updateMortgageMutation.mutate({ id: loanId, data: payload }, {
+        onSuccess: () => {
+          setSuccessMsg(`Mortgage Loan updated successfully for ${selectedClient.fullname}!`);
+          if (onSuccess) {
+            setTimeout(() => {
+              onSuccess();
+            }, 2000);
+          }
+        },
+        onError: (err: any) => {
+          const errorMsg = err.response?.data?.error || err.message || "Failed to update mortgage loan application";
+          setServerError(errorMsg);
         }
-      },
-      onError: (err: any) => {
-        const errorMsg = err.response?.data?.error || err.message || "Failed to submit mortgage loan application";
-        setServerError(errorMsg);
-      }
-    });
+      });
+    } else {
+      createMortgageMutation.mutate(payload, {
+        onSuccess: () => {
+          setSuccessMsg(`Mortgage Loan created successfully for ${selectedClient.fullname}! Rs. ${netCashDisbursed.toLocaleString()} is scheduled for disbursement.`);
+          if (onSuccess) {
+            setTimeout(() => {
+              onSuccess();
+            }, 2000);
+          }
+        },
+        onError: (err: any) => {
+          const errorMsg = err.response?.data?.error || err.message || "Failed to submit mortgage loan application";
+          setServerError(errorMsg);
+        }
+      });
+    }
   };
 
   return (
@@ -973,16 +1041,16 @@ export function MortgageLoanForm({ onSuccess, onCancel }: { onSuccess?: () => vo
         </Button>
         <Button 
           type="submit" 
-          disabled={uploadAttachmentMutation.isPending || createMortgageMutation.isPending}
+          disabled={uploadAttachmentMutation.isPending || createMortgageMutation.isPending || updateMortgageMutation.isPending}
           className="min-w-[240px] h-14 font-black uppercase tracking-widest text-[11px] shadow-2xl hover:translate-y-[-2px] bg-primary hover:bg-primary/95 text-white transition-all gap-2"
         >
-          {createMortgageMutation.isPending ? (
+          {createMortgageMutation.isPending || updateMortgageMutation.isPending ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-white" /> Saving Agreement...
             </>
           ) : (
             <>
-              <BookmarkCheck className="w-4 h-4 text-white" /> Complete Agreement &amp; Save
+              <BookmarkCheck className="w-4 h-4 text-white" /> {loanId ? "Update Agreement" : "Complete Agreement & Save"}
             </>
           )}
         </Button>

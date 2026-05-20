@@ -14,6 +14,18 @@ const mortgageLoanService = {
     const response = await api.post("/mortgage-loans", data);
     return response.data;
   },
+  updateMortgageLoan: async ({ id, data }: { id: string; data: any }) => {
+    const response = await api.put(`/mortgage-loans/${id}`, data);
+    return response.data;
+  },
+  approveMortgageLoan: async (id: string) => {
+    const response = await api.put(`/mortgage-loans/${id}/approve`);
+    return response.data;
+  },
+  rejectMortgageLoan: async ({ id, rejectionReason }: { id: string; rejectionReason: string }) => {
+    const response = await api.put(`/mortgage-loans/${id}/reject`, { rejectionReason });
+    return response.data;
+  },
 };
 
 export const useMortgageLoansQuery = (params: any = {}) => {
@@ -44,3 +56,44 @@ export const useCreateMortgageLoanMutation = (options: any = {}) => {
     },
   });
 };
+
+export const useUpdateMortgageLoanMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation<any, any, { id: string; data: any }, any>({
+    mutationFn: mortgageLoanService.updateMortgageLoan,
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoans"] });
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["Clients"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+
+export const useApproveMortgageLoanMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation<any, any, string, any>({
+    mutationFn: mortgageLoanService.approveMortgageLoan,
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoans"] });
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoan", variables] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+
+export const useRejectMortgageLoanMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation<any, any, { id: string; rejectionReason: string }, any>({
+    mutationFn: mortgageLoanService.rejectMortgageLoan,
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoans"] });
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoan", variables.id] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+

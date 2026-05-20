@@ -87,7 +87,6 @@ export default function MortgageLoansPage() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [openItem, setOpenItem] = useState<string[]>([]);
-  const [selectedMortgageId, setSelectedMortgageId] = useState<string | null>(null);
 
   // Get current user profile for role and branch restriction
   const { data: meData } = useGetMeQuery();
@@ -130,12 +129,7 @@ export default function MortgageLoansPage() {
     branchId: effectiveBranchFilter === "All" ? undefined : effectiveBranchFilter,
   });
 
-  // Query for mortgage detail
-  const { data: detailData, isLoading: isDetailLoading } = useMortgageLoanQuery(
-    selectedMortgageId || "",
-    { enabled: !!selectedMortgageId }
-  );
-  const loanDetails = detailData?.mortgage;
+  // Mortgage loans list query
 
   const formatCurrency = (value: number | string | undefined | null) => {
     if (value === undefined || value === null) return "Rs. 0";
@@ -513,11 +507,18 @@ export default function MortgageLoansPage() {
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onClick={() => setSelectedMortgageId(loan.id)}
+                              onClick={() => router.push(`/mortgage-loans/${loan.id}`)}
                               className="gap-2 cursor-pointer"
                             >
                               <Eye className="h-4 w-4 text-primary" />
                               View Full Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => router.push(`/mortgage-loans/${loan.id}/edit`)}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <FileText className="h-4 w-4 text-amber-500" />
+                              Edit Mortgage
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -540,277 +541,6 @@ export default function MortgageLoansPage() {
         </CardContent>
       </Card>
 
-      {/* Detailed Modal Viewer */}
-      <Dialog open={!!selectedMortgageId} onOpenChange={(open) => { if (!open) setSelectedMortgageId(null); }}>
-        <DialogContent className="sm:max-w-2xl bg-card border border-muted p-0 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-          {isDetailLoading ? (
-            <div className="flex flex-col items-center justify-center p-16 gap-3">
-              <Spinner className="h-8 w-8 text-primary" />
-              <p className="text-muted-foreground font-semibold">Fetching complete contract details...</p>
-            </div>
-          ) : loanDetails ? (
-            <div className="flex flex-col">
-              {/* Modal Header banner */}
-              <div className="bg-muted/40 p-6 border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                    {loanDetails.assetType === "VEHICLE" && <Car className="h-6 w-6 text-indigo-400" />}
-                    {loanDetails.assetType === "PROPERTY" && <Building className="h-6 w-6 text-cyan-400" />}
-                    {loanDetails.assetType === "GOLD" && <Gem className="h-6 w-6 text-amber-400" />}
-                    {loanDetails.assetType === "OTHER" && <FileText className="h-6 w-6 text-slate-400" />}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-foreground leading-none">{loanDetails.loanNo}</h3>
-                      {getStatusBadge(loanDetails.status)}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Created on {new Date(loanDetails.createdAt).toLocaleDateString("en-US", { dateStyle: "long" })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-6 flex flex-col gap-6 max-h-[70vh] overflow-y-auto">
-                
-                {/* 3-Column Financial Overview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="border border-muted bg-muted/10">
-                    <CardContent className="p-4 flex flex-col gap-1">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
-                        <DollarSign className="h-3 w-3 text-primary" /> Lent Capital
-                      </span>
-                      <span className="text-lg font-black text-foreground">{formatCurrency(loanDetails.lentAmount)}</span>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-muted bg-muted/10">
-                    <CardContent className="p-4 flex flex-col gap-1">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-emerald-500" /> Net Disbursed
-                      </span>
-                      <span className="text-lg font-black text-emerald-500">{formatCurrency(loanDetails.netCashDisbursed)}</span>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-muted bg-muted/10">
-                    <CardContent className="p-4 flex flex-col gap-1">
-                      <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
-                        <Percent className="h-3 w-3 text-indigo-400" /> Interest Rate
-                      </span>
-                      <span className="text-lg font-black text-indigo-400">{Number(loanDetails.interestRate)}% / Mo</span>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* 2-Column Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  
-                  {/* Left Column: Client & Origin */}
-                  <div className="flex flex-col gap-4">
-                    <h4 className="text-xs uppercase tracking-wider font-extrabold text-primary flex items-center gap-1">
-                      <User className="h-3.5 w-3.5" /> Client & Registration
-                    </h4>
-                    
-                    <div className="flex flex-col gap-3 text-sm bg-muted/5 border border-muted p-4 rounded-xl">
-                      <div className="flex justify-between border-b border-muted/30 pb-2">
-                        <span className="text-muted-foreground">Client Name</span>
-                        <span className="font-bold text-foreground">{loanDetails.client?.fullname}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-muted/30 pb-2">
-                        <span className="text-muted-foreground">Client No</span>
-                        <span className="font-mono font-bold text-foreground">{loanDetails.client?.clientNo}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-muted/30 pb-2">
-                        <span className="text-muted-foreground">Phone Number</span>
-                        <span className="font-medium text-foreground flex items-center gap-1">
-                          <Phone className="h-3 w-3 text-muted-foreground" /> {loanDetails.client?.phone}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-muted/30 pb-2">
-                        <span className="text-muted-foreground">Branch Office</span>
-                        <span className="font-medium text-foreground flex items-center gap-1">
-                          <Building className="h-3 w-3 text-muted-foreground" /> {loanDetails.branch?.name || "Main Branch"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Officer In Charge</span>
-                        <span className="font-medium text-foreground flex items-center gap-1">
-                          <Briefcase className="h-3 w-3 text-muted-foreground" /> {loanDetails.createdBy?.fullname}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Asset Details & Valuation */}
-                  <div className="flex flex-col gap-4">
-                    <h4 className="text-xs uppercase tracking-wider font-extrabold text-primary flex items-center gap-1">
-                      <Building className="h-3.5 w-3.5" /> Asset & Risk Valuation
-                    </h4>
-
-                    <div className="flex flex-col gap-3 text-sm bg-muted/5 border border-muted p-4 rounded-xl">
-                      <div className="flex justify-between border-b border-muted/30 pb-2">
-                        <span className="text-muted-foreground">Asset Type</span>
-                        <span className="font-bold">{getAssetBadge(loanDetails.assetType)}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-muted/30 pb-2">
-                        <span className="text-muted-foreground">Market Value</span>
-                        <span className="font-bold text-foreground">{formatCurrency(loanDetails.estimatedMarketValue)}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-muted/30 pb-2">
-                        <span className="text-muted-foreground">Assessed Value</span>
-                        <span className="font-bold text-foreground">{formatCurrency(loanDetails.assessedValue)}</span>
-                      </div>
-                      <div className="flex flex-col gap-1 pt-1">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Loan-To-Value (LTV)</span>
-                          <span className={cn("font-black text-xs px-2 py-0.5 rounded border", getLTVColor(loanDetails.ltvRatio))}>
-                            {loanDetails.ltvRatio}%
-                          </span>
-                        </div>
-                        {/* LTV Bar */}
-                        <div className="w-full bg-muted h-2 rounded-full mt-1.5 overflow-hidden">
-                          <div 
-                            className={cn("h-full transition-all duration-500", getLTVProgressBarColor(loanDetails.ltvRatio))} 
-                            style={{ width: `${Math.min(100, loanDetails.ltvRatio)}%` }} 
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Collateral Description Banner */}
-                {loanDetails.assetDescription && (
-                  <div className="bg-muted/10 border border-muted p-4 rounded-xl flex flex-col gap-1">
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
-                      <Info className="h-3.5 w-3.5 text-primary" /> Asset Details Description
-                    </span>
-                    <p className="text-sm text-foreground/80 italic leading-relaxed">{loanDetails.assetDescription}</p>
-                  </div>
-                )}
-
-                {/* Full Financial Calculation Breakdown */}
-                <div className="flex flex-col gap-3 bg-muted/10 border border-muted p-4 rounded-xl">
-                  <h4 className="text-xs uppercase tracking-wider font-extrabold text-foreground border-b border-muted/30 pb-2">
-                    Contract Calculations Breakdown
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-1">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Upfront Interest Fee ({Number(loanDetails.interestRate)}%)</span>
-                      <span className="font-bold text-foreground">{formatCurrency(loanDetails.upfrontInterest)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Monthly Due Installment</span>
-                      <span className="font-bold text-emerald-500">{formatCurrency(loanDetails.monthlyDueAmount)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Net Cash Disbursed</span>
-                      <span className="font-bold text-foreground">{formatCurrency(loanDetails.netCashDisbursed)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Daily Late Penalty (1% of monthly)</span>
-                      <span className="font-bold text-rose-500">{formatCurrency(loanDetails.dailyPenaltyAmount)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Document Files Section */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                  
-                  {/* Collateral Files */}
-                  <div className="flex flex-col gap-2.5">
-                    <h5 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
-                      Collateral Documents ({loanDetails.collateralFiles?.length || 0})
-                    </h5>
-                    {loanDetails.collateralFiles && loanDetails.collateralFiles.length > 0 ? (
-                      <div className="flex flex-col gap-2">
-                        {loanDetails.collateralFiles.map((file: any) => (
-                          <div
-                            key={file.id}
-                            className="flex items-center justify-between border border-muted/30 bg-muted/5 rounded-lg p-2.5 hover:bg-muted/15 transition-all text-xs"
-                          >
-                            <span className="font-semibold text-foreground truncate max-w-[180px]" title={file.name}>
-                              {file.name}
-                            </span>
-                            {file.attachment?.fileUrl && (
-                              <a
-                                href={file.attachment.fileUrl}
-                                download={file.name}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="h-7 w-7 rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all flex items-center justify-center text-primary"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                              </a>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground italic border border-dashed border-muted/30 rounded-lg p-3 bg-muted/5 text-center">
-                        No uploaded collateral files
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Titled Supplementary Files */}
-                  <div className="flex flex-col gap-2.5">
-                    <h5 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
-                      Supplementary Verification Files ({loanDetails.titledFiles?.length || 0})
-                    </h5>
-                    {loanDetails.titledFiles && loanDetails.titledFiles.length > 0 ? (
-                      <div className="flex flex-col gap-2">
-                        {loanDetails.titledFiles.map((file: any) => (
-                          <div
-                            key={file.id}
-                            className="flex items-center justify-between border border-muted/30 bg-muted/5 rounded-lg p-2.5 hover:bg-muted/15 transition-all text-xs"
-                          >
-                            <div className="flex flex-col gap-0.5 truncate max-w-[180px]">
-                              <span className="font-black text-[9px] uppercase text-primary tracking-wide">{file.title}</span>
-                              <span className="font-semibold text-foreground truncate" title={file.name}>
-                                {file.name}
-                              </span>
-                            </div>
-                            {file.attachment?.fileUrl && (
-                              <a
-                                href={file.attachment.fileUrl}
-                                download={file.name}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="h-7 w-7 rounded-md bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all flex items-center justify-center text-primary"
-                              >
-                                <Download className="h-3.5 w-3.5" />
-                              </a>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-muted-foreground italic border border-dashed border-muted/30 rounded-lg p-3 bg-muted/5 text-center">
-                        No supplementary verification files
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-
-              </div>
-
-              {/* Modal Footer */}
-              <DialogFooter className="border-t bg-muted/40 p-4 flex justify-end">
-                <Button
-                  onClick={() => setSelectedMortgageId(null)}
-                  className="font-bold border border-muted px-6 h-10 rounded-lg bg-background hover:bg-muted transition-all text-xs uppercase tracking-wider"
-                >
-                  Close Details
-                </Button>
-              </DialogFooter>
-            </div>
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
