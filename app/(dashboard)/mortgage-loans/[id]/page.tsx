@@ -56,6 +56,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
 import { useRouter, useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -131,6 +140,15 @@ export default function MortgageLoanViewPage() {
   const formatCurrency = (value: number | string | undefined | null) => {
     if (value === undefined || value === null) return "Rs. 0";
     return `Rs. ${Number(value).toLocaleString("en-US", { minimumFractionDigits: 0 })}`;
+  };
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "-";
+    try {
+      return format(new Date(dateString), "PPP");
+    } catch (e) {
+      return "-";
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -637,6 +655,128 @@ export default function MortgageLoanViewPage() {
         </Card>
 
       </div>
+
+      {/* Mortgage Instalments / Payment Schedule */}
+      {loanDetails.instalments && loanDetails.instalments.length > 0 ? (
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+          <CardHeader className="bg-muted/10 border-b">
+            <CardTitle className="text-md font-bold flex items-center gap-2 text-slate-800">
+              <Calendar className="w-5 h-5 text-primary" /> Repayment Schedule (Instalments)
+            </CardTitle>
+            <CardDescription className="font-medium text-xs">
+              Track the monthly interest and principal repayment instalments for this agreement
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="border rounded-xl overflow-hidden bg-background/50">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/20">
+                    <TableHead className="font-bold text-foreground w-[100px]">
+                      Month
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground">
+                      Instalment Date
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground">
+                      Due Date
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground text-right">
+                      Due Amount
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground text-right">
+                      Paid Amount
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground text-right">
+                      Remaining Due
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground">
+                      Paid Date
+                    </TableHead>
+                    <TableHead className="text-center font-bold text-foreground w-[120px]">
+                      Status
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loanDetails.instalments.map((inst: any) => (
+                    <TableRow
+                      key={inst.id}
+                      className={cn(
+                        "hover:bg-amber-500/5 transition-colors border-b last:border-0",
+                        inst.status === "PAID" ? "bg-emerald-500/[0.02]" : "",
+                      )}
+                    >
+                      <TableCell className="text-sm font-bold text-slate-700">
+                        Month {String(inst.monthNumber).padStart(2, "0")}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold text-slate-600">
+                        {formatDate(inst.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold text-slate-600">
+                        {formatDate(inst.dueDate)}
+                      </TableCell>
+                      <TableCell className="text-sm font-bold text-slate-800 text-right">
+                        {formatCurrency(inst.dueAmount)}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold text-emerald-600 text-right">
+                        {formatCurrency(inst.paidAmount)}
+                      </TableCell>
+                      <TableCell className={cn(
+                        "text-sm font-semibold text-right",
+                        Number(inst.remainingDue) > 0 ? "text-rose-600 font-bold" : "text-slate-500"
+                      )}>
+                        {formatCurrency(inst.remainingDue)}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold text-slate-600">
+                        {inst.paidAt ? formatDate(inst.paidAt) : "-"}
+                      </TableCell>
+                      <TableCell className="text-center py-4">
+                        <Badge
+                          className={cn(
+                            "font-black px-3 py-1 rounded-full text-[9px] uppercase tracking-wider border-none",
+                            inst.status === "PAID"
+                              ? "bg-emerald-500 text-white shadow-sm shadow-emerald-500/25"
+                              : inst.status === "PARTIAL"
+                                ? "bg-amber-500 text-white shadow-sm shadow-amber-500/25"
+                                : inst.status === "OVERDUE"
+                                  ? "bg-rose-500 text-white animate-pulse shadow-sm shadow-rose-500/25"
+                                  : "bg-slate-200 text-slate-500",
+                          )}
+                        >
+                          {inst.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
+          <CardHeader className="bg-muted/10 border-b">
+            <CardTitle className="text-md font-bold flex items-center gap-2 text-slate-800">
+              <Calendar className="w-5 h-5 text-primary" /> Repayment Schedule (Instalments)
+            </CardTitle>
+            <CardDescription className="font-medium text-xs">
+              Track the monthly interest and principal repayment instalments for this agreement
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 text-center flex flex-col items-center justify-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-700">No Instalments Generated</h4>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto leading-relaxed">
+                The repayment schedule and first month upfront interest payment will be automatically generated once this mortgage loan is approved by an authorized manager.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Confirmation & Rejection Modals */}
       <AlertDialog open={isApproveOpen} onOpenChange={setIsApproveOpen}>
