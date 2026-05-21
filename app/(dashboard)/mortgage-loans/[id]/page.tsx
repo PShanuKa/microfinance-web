@@ -25,7 +25,8 @@ import {
   AlertTriangle,
   Car,
   Gem,
-  Plus
+  Plus,
+  Receipt
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -430,6 +431,11 @@ export default function MortgageLoanViewPage() {
             <span className="text-2xl font-black text-slate-800">
               {formatCurrency(loanDetails.lentAmount)}
             </span>
+            {Number(loanDetails.principalPaid) > 0 && (
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 w-fit px-1.5 py-0.5 rounded border border-emerald-500/20 mt-1">
+                - {formatCurrency(loanDetails.principalPaid)} Settled
+              </span>
+            )}
           </CardContent>
         </Card>
 
@@ -709,14 +715,14 @@ export default function MortgageLoanViewPage() {
               <h3 className="text-lg font-black text-slate-800 tracking-tight">Payment Operations</h3>
               <p className="text-xs text-muted-foreground font-semibold">Perform client collections and track outstanding balances</p>
             </div>
-            <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+            {/* <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
               <Button
                 onClick={() => setIsPaymentOpen(true)}
                 className="gap-2 bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 hover:to-indigo-700 shadow-md shadow-primary/20 text-white font-bold h-11 px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] duration-200"
               >
                 <Plus className="h-5 w-5" /> Record Payment
               </Button>
-            </RoleGate>
+            </RoleGate> */}
           </div>
 
           {/* Premium Payment Cards Grid */}
@@ -921,6 +927,56 @@ export default function MortgageLoanViewPage() {
               <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto leading-relaxed">
                 The repayment schedule and first month upfront interest payment will be automatically generated once this mortgage loan is approved by an authorized manager.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Collections History */}
+      {loanDetails.collections && loanDetails.collections.length > 0 && (
+        <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden mt-6">
+          <CardHeader className="bg-muted/10 border-b">
+            <CardTitle className="text-md font-bold flex items-center gap-2 text-slate-800">
+              <Receipt className="w-5 h-5 text-primary" /> Payment Receipts History
+            </CardTitle>
+            <CardDescription className="font-medium text-xs">
+              History of all payments and principal reductions processed for this mortgage loan.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="border rounded-xl overflow-hidden bg-background/50">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/20">
+                    <TableHead className="font-bold text-foreground">Date & Time</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Total Paid</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Principal Reduced</TableHead>
+                    <TableHead className="font-bold text-foreground text-center">Collected By</TableHead>
+                    <TableHead className="font-bold text-foreground">Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loanDetails.collections.map((col: any) => (
+                    <TableRow key={col.id} className="hover:bg-muted/30 transition-colors border-b last:border-0">
+                      <TableCell className="text-sm font-semibold text-slate-600">
+                        {format(new Date(col.createdAt), "dd MMM yyyy")} <span className="text-[10px] text-muted-foreground uppercase">{format(new Date(col.createdAt), "hh:mm a")}</span>
+                      </TableCell>
+                      <TableCell className="text-sm font-bold text-emerald-600 text-right">
+                        {formatCurrency(col.amount)}
+                      </TableCell>
+                      <TableCell className="text-sm font-bold text-indigo-500 text-right">
+                        {Number(col.principalReduction) > 0 ? formatCurrency(col.principalReduction) : "-"}
+                      </TableCell>
+                      <TableCell className="text-sm font-semibold text-slate-600 text-center">
+                        {col.collectedBy?.fullname || "System"}
+                      </TableCell>
+                      <TableCell className="text-xs font-medium text-slate-500 max-w-[200px] truncate" title={col.notes}>
+                        {col.notes || "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
