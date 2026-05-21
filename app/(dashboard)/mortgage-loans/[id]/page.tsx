@@ -688,6 +688,9 @@ export default function MortgageLoanViewPage() {
                       Paid Amount
                     </TableHead>
                     <TableHead className="font-bold text-foreground text-right">
+                      Penalty
+                    </TableHead>
+                    <TableHead className="font-bold text-foreground text-right">
                       Remaining Due
                     </TableHead>
                     <TableHead className="font-bold text-foreground">
@@ -703,12 +706,13 @@ export default function MortgageLoanViewPage() {
                     <TableRow
                       key={inst.id}
                       className={cn(
-                        "hover:bg-amber-500/5 transition-colors border-b last:border-0",
-                        inst.status === "PAID" ? "bg-emerald-500/[0.02]" : "",
+                        "hover:bg-muted/30 transition-colors border-b last:border-0",
+                        inst.status === "PAID"    && "bg-emerald-500/[0.02]",
+                        inst.status === "OVERDUE" && "bg-rose-500/[0.03]",
                       )}
                     >
                       <TableCell className="text-sm font-bold text-slate-700">
-                        Month {String(inst.monthNumber).padStart(2, "0")}
+                        Month {String(inst.monthNumber).padStart(2, "00")}
                       </TableCell>
                       <TableCell className="text-sm font-semibold text-slate-600">
                         {formatDate(inst.createdAt)}
@@ -723,13 +727,23 @@ export default function MortgageLoanViewPage() {
                         {formatCurrency(inst.paidAmount)}
                       </TableCell>
                       <TableCell className={cn(
+                        "text-sm font-bold text-right",
+                        Number(inst.penaltyAmount) > 0
+                          ? "text-rose-600"
+                          : "text-slate-400"
+                      )}>
+                        {Number(inst.penaltyAmount) > 0
+                          ? formatCurrency(inst.penaltyAmount)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className={cn(
                         "text-sm font-semibold text-right",
                         Number(inst.remainingDue) > 0 ? "text-rose-600 font-bold" : "text-slate-500"
                       )}>
                         {formatCurrency(inst.remainingDue)}
                       </TableCell>
                       <TableCell className="text-sm font-semibold text-slate-600">
-                        {inst.paidAt ? formatDate(inst.paidAt) : "-"}
+                        {inst.paidAt ? formatDate(inst.paidAt) : "—"}
                       </TableCell>
                       <TableCell className="text-center py-4">
                         <Badge
