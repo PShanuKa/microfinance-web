@@ -72,6 +72,7 @@ import {
   useApproveMortgageLoanMutation,
   useRejectMortgageLoanMutation,
   useSendMortgageLoanForApprovalMutation,
+  useRecordMortgagePaymentMutation,
 } from "@/services/mortgageLoanApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
 
@@ -84,12 +85,17 @@ export default function MortgageLoanViewPage() {
   const approveMutation = useApproveMortgageLoanMutation();
   const rejectMutation = useRejectMortgageLoanMutation();
   const sendForApprovalMutation = useSendMortgageLoanForApprovalMutation();
+  const recordPaymentMutation = useRecordMortgagePaymentMutation();
 
   const [isApproveOpen, setIsApproveOpen] = useState(false);
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentNotes, setPaymentNotes] = useState("");
 
   const loanDetails = data?.mortgage;
 
@@ -134,6 +140,31 @@ export default function MortgageLoanViewPage() {
           setRejectionReason("");
         },
       },
+    );
+  };
+
+  const handlePaymentConfirm = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amountNum = Number(paymentAmount);
+    if (isNaN(amountNum) || amountNum <= 0) return;
+
+    recordPaymentMutation.mutate(
+      {
+        id: id as string,
+        amount: amountNum,
+        notes: paymentNotes || undefined,
+      },
+      {
+        onSuccess: (res) => {
+          setIsPaymentOpen(false);
+          setPaymentAmount("");
+          setPaymentNotes("");
+          setSuccessMessage(
+            `Payment of ${formatCurrency(amountNum)} successfully recorded! Excess principal reduction: ${formatCurrency(res.principalReduction || 0)}.`
+          );
+          setIsSuccessOpen(true);
+        },
+      }
     );
   };
 
@@ -270,6 +301,19 @@ export default function MortgageLoanViewPage() {
       </div>
     );
   }
+
+  // Calculate values for Payment Summary Cards
+  const instalments = loanDetails?.instalments || [];
+  const totalRemainingDue = instalments.reduce((sum: number, inst: any) => sum + Number(inst.remainingDue || 0), 0);
+  const totalPaidDues = instalments.reduce((sum: number, inst: any) => sum + Number(inst.paidAmount || 0), 0);
+  
+  // Calculate outstanding penalty: for each instalment, penaltyAmount minus sum(penaltyPaid in collectionItems)
+  const totalOutstandingPenalty = instalments.reduce((sum: number, inst: any) => {
+    const penaltyPaid = (inst.collectionItems || []).reduce((subSum: number, item: any) => subSum + Number(item.penaltyPaid || 0), 0);
+    return sum + Math.max(0, Number(inst.penaltyAmount || 0) - penaltyPaid);
+  }, 0);
+
+  const principalPaid = Number(loanDetails?.principalPaid || 0);
 
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
@@ -656,6 +700,96 @@ export default function MortgageLoanViewPage() {
 
       </div>
 
+      {/* Payment Action & Summary Cards */}
+      {(loanDetails.status === "APPROVED" || loanDetails.status === "COMPLETED") && (
+        <div className="flex flex-col gap-4 mt-2">
+          {/* Action Header with Payment Button */}
+          <div className="flex items-center justify-between border-b pb-3">
+            <div className="text-left">
+              <h3 className="text-lg font-black text-slate-800 tracking-tight">Payment Operations</h3>
+              <p className="text-xs text-muted-foreground font-semibold">Perform client collections and track outstanding balances</p>
+            </div>
+            <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+              <Button
+                onClick={() => setIsPaymentOpen(true)}
+                className="gap-2 bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 hover:to-indigo-700 shadow-md shadow-primary/20 text-white font-bold h-11 px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] duration-200"
+              >
+                <Plus className="h-5 w-5" /> Record Payment
+              </Button>
+            </RoleGate>
+          </div>
+
+          {/* Premium Payment Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {/* Total Remaining Dues Card */}
+            <Card className="border border-rose-500/10 shadow-lg bg-gradient-to-br from-rose-500/[0.02] to-card overflow-hidden hover:shadow-xl transition-all group duration-300">
+              <CardContent className="p-5 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 text-rose-600 transition-transform group-hover:scale-110 duration-300">
+                  <Wallet className="h-5 w-5" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Outstanding Dues</span>
+                  <span className="text-2xl font-black text-rose-600 tracking-tight mt-1">
+                    {formatCurrency(totalRemainingDue)}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground font-bold mt-0.5">Base dues + outstanding penalty</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Total Paid Dues Card */}
+            <Card className="border border-emerald-500/10 shadow-lg bg-gradient-to-br from-emerald-500/[0.02] to-card overflow-hidden hover:shadow-xl transition-all group duration-300">
+              <CardContent className="p-5 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-600 transition-transform group-hover:scale-110 duration-300">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Paid Dues</span>
+                  <span className="text-2xl font-black text-emerald-600 tracking-tight mt-1">
+                    {formatCurrency(totalPaidDues)}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground font-bold mt-0.5">Base dues settled so far</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Outstanding Penalty Card */}
+            <Card className="border border-amber-500/10 shadow-lg bg-gradient-to-br from-amber-500/[0.02] to-card overflow-hidden hover:shadow-xl transition-all group duration-300">
+              <CardContent className="p-5 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 text-amber-600 transition-transform group-hover:scale-110 duration-300">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Outstanding Penalty</span>
+                  <span className={cn("text-2xl font-black tracking-tight mt-1", totalOutstandingPenalty > 0 ? "text-amber-600" : "text-slate-500")}>
+                    {formatCurrency(totalOutstandingPenalty)}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground font-bold mt-0.5">Unpaid accumulated penalty</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Principal Paid Card */}
+            <Card className="border border-indigo-500/10 shadow-lg bg-gradient-to-br from-indigo-500/[0.02] to-card overflow-hidden hover:shadow-xl transition-all group duration-300">
+              <CardContent className="p-5 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 text-indigo-600 transition-transform group-hover:scale-110 duration-300">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Principal Reduced</span>
+                  <span className={cn("text-2xl font-black tracking-tight mt-1", principalPaid > 0 ? "text-indigo-600" : "text-slate-500")}>
+                    {formatCurrency(principalPaid)}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground font-bold mt-0.5">Reduction from excess payments</span>
+                </div>
+              </CardContent>
+            </Card>
+
+          </div>
+        </div>
+      )}
+
       {/* Mortgage Instalments / Payment Schedule */}
       {loanDetails.instalments && loanDetails.instalments.length > 0 ? (
         <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
@@ -845,6 +979,72 @@ export default function MortgageLoanViewPage() {
               Reject Contract
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Record Mortgage Payment Dialog */}
+      <Dialog open={isPaymentOpen} onOpenChange={setIsPaymentOpen}>
+        <DialogContent className="bg-card border max-w-md p-6 shadow-2xl">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-lg font-black text-slate-800 flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-primary" /> Record Mortgage Payment
+            </DialogTitle>
+            <DialogDescription className="text-xs font-semibold text-slate-500 mt-1 leading-relaxed">
+              Enter the collected payment amount. Payments are prioritized to settle the oldest months first, paying off outstanding penalties before base interest dues. Any excess settles the loan principal.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePaymentConfirm} className="space-y-4 py-4 text-left">
+            <div className="space-y-1.5">
+              <label htmlFor="amount" className="text-xs font-black uppercase tracking-wider text-slate-500">
+                Payment Amount (Rs.)
+              </label>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Rs.</span>
+                <input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  placeholder="0.00"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-background border border-input rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-800 font-bold text-sm transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="notes" className="text-xs font-black uppercase tracking-wider text-slate-500">
+                Collector Notes / Reference (Optional)
+              </label>
+              <Textarea
+                id="notes"
+                placeholder="Provide transaction details, e.g. Cash payment at the branch, Bank transfer reference code..."
+                value={paymentNotes}
+                onChange={(e) => setPaymentNotes(e.target.value)}
+                className="min-h-[100px] bg-background border-input focus:ring-primary/20 text-slate-800 font-semibold"
+              />
+            </div>
+
+            <DialogFooter className="flex gap-2 justify-end pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsPaymentOpen(false)}
+                className="font-bold uppercase tracking-wider text-[10px] border h-11 px-4 rounded-xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={recordPaymentMutation.isPending || !paymentAmount}
+                className="font-bold uppercase tracking-wider text-[10px] bg-primary hover:bg-primary/95 text-white h-11 px-5 rounded-xl shadow-md shadow-primary/10 transition-all"
+              >
+                {recordPaymentMutation.isPending ? "Recording..." : "Settle Payment"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

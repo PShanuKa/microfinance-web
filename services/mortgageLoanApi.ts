@@ -30,6 +30,10 @@ const mortgageLoanService = {
     const response = await api.put(`/mortgage-loans/${id}/reject`, { rejectionReason });
     return response.data;
   },
+  recordMortgagePayment: async ({ id, amount, notes }: { id: string; amount: number; notes?: string }) => {
+    const response = await api.post(`/mortgage-loans/${id}/payment`, { amount, notes });
+    return response.data;
+  },
 };
 
 export const useMortgageLoansQuery = (params: any = {}) => {
@@ -109,6 +113,20 @@ export const useSendMortgageLoanForApprovalMutation = (options: any = {}) => {
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["MortgageLoans"] });
       queryClient.invalidateQueries({ queryKey: ["MortgageLoan", variables] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+
+export const useRecordMortgagePaymentMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation<any, any, { id: string; amount: number; notes?: string }, any>({
+    mutationFn: mortgageLoanService.recordMortgagePayment,
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoans"] });
+      queryClient.invalidateQueries({ queryKey: ["MortgageLoan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["Clients"] });
       if (options.onSuccess) options.onSuccess(data, variables, context);
     },
   });
