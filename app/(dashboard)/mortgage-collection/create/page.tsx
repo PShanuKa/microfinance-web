@@ -8,12 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Table,
   TableBody,
@@ -37,7 +43,9 @@ import {
   FileText,
   BadgePercent,
   CheckCircle2,
-  CalendarDays
+  CalendarDays,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -49,6 +57,7 @@ export default function CreateMortgageCollectionPage() {
   const [paymentAmountStr, setPaymentAmountStr] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [serverError, setServerError] = useState<string | null>(null);
+  const [openLoanSelect, setOpenLoanSelect] = useState(false);
 
   // Fetch loans for dropdown
   const { data: loansData, isLoading: loansLoading } = useMortgageLoansQuery({ limit: 500 });
@@ -151,6 +160,24 @@ export default function CreateMortgageCollectionPage() {
     });
   };
 
+  const { totalUnpaidPenalty, totalUnpaidBaseDue } = useMemo(() => {
+    let totalPenalty = 0;
+    let totalBase = 0;
+    
+    if (mortgage && mortgage.instalments) {
+      mortgage.instalments.forEach((inst: any) => {
+        const totalPenaltyPaid = inst.collectionItems?.reduce((sum: number, item: any) => sum + Number(item.penaltyPaid || 0), 0) || 0;
+        const outstandingPenalty = Math.max(0, Number(inst.penaltyAmount || 0) - totalPenaltyPaid);
+        const outstandingBaseDue = Math.max(0, Number(inst.dueAmount || 0) - Number(inst.paidAmount || 0));
+        
+        totalPenalty += outstandingPenalty;
+        totalBase += outstandingBaseDue;
+      });
+    }
+    
+    return { totalUnpaidPenalty: totalPenalty, totalUnpaidBaseDue: totalBase };
+  }, [mortgage]);
+
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
@@ -179,24 +206,62 @@ export default function CreateMortgageCollectionPage() {
             <CardContent className="space-y-6">
               <div className="grid gap-2">
                 <Label>Select Mortgage Loan</Label>
-                <Select onValueChange={(val: string | null) => {
-                  setSelectedLoanId(val || "");
-                  setPaymentAmountStr("");
-                }}>
-                  <SelectTrigger className="bg-background/50 h-11">
-                    <SelectValue placeholder={loansLoading ? "Loading..." : "Choose Loan No"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeLoans.map((loan: any) => (
-                      <SelectItem key={loan.id} value={loan.id}>
-                        <div className="flex justify-between w-full pr-4">
-                          <span className="font-bold">{loan.loanNo}</span>
-                          <span className="text-muted-foreground ml-4">{loan.client?.fullname}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={openLoanSelect} onOpenChange={setOpenLoanSelect}>
+                  <PopoverTrigger
+                    aria-expanded={openLoanSelect}
+                    className="flex w-full items-center justify-between rounded-md border border-input bg-background/50 h-11 px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring hover:bg-background/80"
+                  >
+                    {loansLoading ? (
+                      <span className="text-muted-foreground">Loading...</span>
+                    ) : selectedLoanId ? (
+                      <div className="flex justify-between w-full pr-4">
+                        <span className="font-bold">
+                          {activeLoans.find((l: any) => l.id === selectedLoanId)?.loanNo}
+                        </span>
+                        <span className="text-muted-foreground ml-4 truncate max-w-[200px]">
+                          {activeLoans.find((l: any) => l.id === selectedLoanId)?.client?.fullname}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">Search and choose Loan No...</span>
+                    )}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search loan no or client name..." />
+                      <CommandList>
+                        <CommandEmpty>No mortgage loans found.</CommandEmpty>
+                        <CommandGroup>
+                          {activeLoans.map((loan: any) => (
+                            <CommandItem
+                              key={loan.id}
+                              value={`${loan.loanNo} ${loan.client?.fullname || ""}`}
+                              onSelect={() => {
+                                setSelectedLoanId(loan.id);
+                                setPaymentAmountStr("");
+                                setOpenLoanSelect(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedLoanId === loan.id ? "opacity-100 text-primary" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex justify-between w-full">
+                                <span className="font-bold">{loan.loanNo}</span>
+                                <span className="text-muted-foreground ml-4 truncate max-w-[200px]">
+                                  {loan.client?.fullname}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {mortgage && (
@@ -212,6 +277,19 @@ export default function CreateMortgageCollectionPage() {
                   <div>
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Principal Paid So Far</p>
                     <p className="font-bold text-emerald-600">Rs. {Number(mortgage.principalPaid || 0).toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-border/50">
+                    <p className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Total Unpaid Penalty</p>
+                    <p className="font-bold text-rose-500">Rs. {totalUnpaidPenalty.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Total Unpaid Instalments</p>
+                    <p className="font-bold text-amber-600">Rs. {totalUnpaidBaseDue.toLocaleString()}</p>
+                  </div>
+                  <div className="pt-2 border-t border-border/50">
+                    <p className="text-[11px] font-black text-primary uppercase tracking-widest">Total Due (Penalty + Instalments)</p>
+                    <p className="text-xl font-black text-primary">Rs. {(totalUnpaidPenalty + totalUnpaidBaseDue).toLocaleString()}</p>
                   </div>
                 </div>
               )}
