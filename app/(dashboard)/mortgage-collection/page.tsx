@@ -56,6 +56,7 @@ import {
 import { useMortgageCollectionsQuery, useMortgageCollectionQuery } from "@/services/mortgageLoanApi";
 import TablePagination from "@/components/Custom/TablePagination";
 import { format } from "date-fns";
+import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
 
 export default function MortgageCollectionsPage() {
   const router = useRouter();
@@ -140,29 +141,14 @@ export default function MortgageCollectionsPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row items-center justify-between p-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-full max-md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by loan no or client name..."
-                className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <Button
-                variant="outline"
-                className="gap-2 h-11 rounded-lg font-bold"
-              >
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
-            </div>
-          </div>
+          <SearchFilterPanel
+            searchTerm={searchTerm}
+            onSearchChange={(val) => {
+              setSearchTerm(val);
+              setPage(1);
+            }}
+            searchPlaceholder="Search by loan no or client name..."
+          />
 
           <div className="overflow-x-auto">
             <Table>

@@ -46,6 +46,7 @@ import {
 
 import { useDailyRegistryQuery } from "@/services/collectionApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
+import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
 
 export default function CollectionRegistryPage() {
   const router = useRouter();
@@ -225,37 +226,37 @@ export default function CollectionRegistryPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row items-center justify-between p-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-full max-md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by group or collector..."
-                className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="pl-10 pr-4 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg font-bold w-full md:w-[180px]"
-                />
+          <SearchFilterPanel
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search by group or collector..."
+          >
+            <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <span className="text-xs text-muted-foreground ml-1">Date</span>
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="pl-10 pr-4 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg font-bold w-full md:w-[180px]"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      setSelectedDate(new Date().toISOString().split("T")[0])
+                    }
+                    className="gap-2 h-11 rounded-lg font-bold hover:bg-muted"
+                  >
+                    Today
+                  </Button>
+                </div>
               </div>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setSelectedDate(new Date().toISOString().split("T")[0])
-                }
-                className="gap-2 h-11 rounded-lg font-bold hover:bg-muted"
-              >
-                Today
-              </Button>
             </div>
-          </div>
+          </SearchFilterPanel>
 
           <div className="overflow-x-auto">
             <Table>

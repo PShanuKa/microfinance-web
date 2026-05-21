@@ -78,6 +78,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
 
 export default function MortgageLoansPage() {
   const router = useRouter();
@@ -86,7 +87,6 @@ export default function MortgageLoansPage() {
 
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [openItem, setOpenItem] = useState<string[]>([]);
 
   // Get current user profile for role and branch restriction
   const { data: meData } = useGetMeQuery();
@@ -228,7 +228,7 @@ export default function MortgageLoansPage() {
         <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
           <Button
             onClick={() => router.push("/mortgage-loans/Create")}
-            className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300 h-10 px-5 rounded-xl font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
           >
             <Plus className="h-4 w-4" />
             New Mortgage Loan
@@ -238,45 +238,17 @@ export default function MortgageLoansPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          {/* Top Control Bar */}
-          <div className="flex flex-col md:flex-row items-center p-4 border-b bg-muted/20 gap-4 justify-between">
-            <div className="relative flex-1 w-full md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by ID, Client Name, Client No..."
-                className="pl-10 h-10 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={() =>
-                setOpenItem((prev) =>
-                  prev.includes("item-1") ? [] : ["item-1"]
-                )
-              }
-              className="gap-2 border-primary/20 hover:bg-primary/5 h-10 px-4 rounded-lg font-semibold text-xs uppercase tracking-wider transition-all w-full md:w-auto"
-            >
-              <Filter className="h-4 w-4" /> Filters
-            </Button>
-          </div>
-
-          {/* Filtering Accordion */}
-          <Accordion
-            value={openItem}
-            onValueChange={setOpenItem}
-            className="w-full border-none"
+          <SearchFilterPanel
+            searchTerm={searchTerm}
+            onSearchChange={(val) => {
+              setSearchTerm(val);
+              setPage(1);
+            }}
+            searchPlaceholder="Search by ID, Client Name, Client No..."
           >
-            <AccordionItem value="item-1" className="border-none">
-              <AccordionContent className="px-4 py-4 border-b bg-muted/20">
-                <div className="flex flex-col md:flex-row items-end gap-4">
-                  {/* Status Filter */}
-                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+            <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+              {/* Status Filter */}
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
                     <Label className="text-xs text-muted-foreground ml-1">Status</Label>
                     <Select
                       value={statusFilter}
@@ -344,9 +316,7 @@ export default function MortgageLoansPage() {
                     </Button>
                   )}
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          </SearchFilterPanel>
 
           {/* Table Area */}
           <div className="overflow-x-auto">

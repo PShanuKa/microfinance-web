@@ -88,7 +88,7 @@ export default function DashboardPage() {
         <PageHeader
           title="Dashboard Overview"
           description="Real-time summary of portfolio performance and daily collections."
-          className="py-0 md:py-0"
+        
         />
         
         <div className="flex flex-wrap items-center gap-3">

@@ -61,6 +61,8 @@ import { Label } from "@/components/ui/label";
 import { useGetMeQuery } from "@/services/authApi";
 import { useBranchesQuery } from "@/services/branchApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
+import { useGroupsQuery } from "@/services/groupApi";
+import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
 
 const DAYS = [
   "Monday",
@@ -79,7 +81,6 @@ export default function LoansPage() {
 
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [openItem, setOpenItem] = useState<string[]>([]);
 
   // Get current user profile for role and branch restriction
   const { data: meData } = useGetMeQuery();
@@ -192,41 +193,16 @@ export default function LoansPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row items-center  p-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-[80px] md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by ID, Name, Officer or Leader..."
-                className="pl-10 h-10 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-
-            <div
-              className="flex items-center gap-3 w-full md:w-auto cursor-pointer "
-              onClick={() =>
-                setOpenItem((prev) =>
-                  prev.includes("item-1") ? [] : ["item-1"],
-                )
-              }
-            >
-              filters
-            </div>
-          </div>
-
-          <Accordion
-                      value={openItem}
-                      onValueChange={setOpenItem}
-                      className="w-full border-none"
-                    >
-                      <AccordionItem value="item-1" className="border-none">
-                        <AccordionContent className="px-4 py-4 border-b bg-muted/20">
-                          <div className="flex flex-col md:flex-row items-end gap-4">
-                            <div className="flex flex-col gap-1.5 w-full md:w-auto">
+          <SearchFilterPanel
+            searchTerm={searchTerm}
+            onSearchChange={(val) => {
+              setSearchTerm(val);
+              setPage(1);
+            }}
+            searchPlaceholder="Search by ID, Name, Officer or Leader..."
+          >
+            <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
                               <Label className="text-xs text-muted-foreground ml-1">Status</Label>
                               <Select
                                 value={statusFilter}
@@ -309,10 +285,8 @@ export default function LoansPage() {
                                 Clear Filters
                               </Button>
                             )}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
+            </div>
+          </SearchFilterPanel>
 
           <div className="overflow-x-auto">
             <Table>

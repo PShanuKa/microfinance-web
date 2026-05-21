@@ -35,6 +35,7 @@ import { Accordion, AccordionContent, AccordionItem } from "@/components/ui/acco
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import TablePagination from "@/components/Custom/TablePagination";
+import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
 
 const TableAuditLogs = ({ id }: { id?: string }) => {
   const [page, setPage] = useState(1);
@@ -50,7 +51,6 @@ const TableAuditLogs = ({ id }: { id?: string }) => {
   });
   
   const [isOpen, setIsOpen] = useState(false);
-  const [openItem, setOpenItem] = useState<string[]>([]);
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -87,101 +87,71 @@ const TableAuditLogs = ({ id }: { id?: string }) => {
         <CardContent>
           <div>
             {!id && (
-              <>
-                <div className="flex flex-col md:flex-row items-center p-4 border-b bg-muted/20 gap-4">
-                  <div className="relative flex-1 w-[80px] md:max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search by User, Target ID, or Action..."
-                      className="pl-10 h-10 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setPage(1);
-                      }}
-                    />
+              <SearchFilterPanel
+                searchTerm={searchTerm}
+                onSearchChange={(val) => {
+                  setSearchTerm(val);
+                  setPage(1);
+                }}
+                searchPlaceholder="Search by User, Target ID, or Action..."
+              >
+                <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                    <Label className="text-xs text-muted-foreground ml-1">Module (Entity)</Label>
+                    <Select
+                      value={entityFilter}
+                      onValueChange={(val) => updateFilters({ entity: val || "All" })}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="All Modules" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Modules</SelectItem>
+                        <SelectItem value="CLIENT">Client</SelectItem>
+                        <SelectItem value="GROUP">Group</SelectItem>
+                        <SelectItem value="LOAN">Loan</SelectItem>
+                        <SelectItem value="SETTINGS">Settings</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <div
-                    className="flex items-center gap-3 w-full md:w-auto cursor-pointer"
-                    onClick={() =>
-                      setOpenItem((prev) => (prev.includes("item-1") ? [] : ["item-1"]))
-                    }
-                  >
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background/50 border hover:bg-muted/50 transition-colors">
-                      <Filter className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">Filters</span>
-                    </div>
+                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                    <Label className="text-xs text-muted-foreground ml-1">Action</Label>
+                    <Select
+                      value={actionFilter}
+                      onValueChange={(val) => updateFilters({ action: val || "All" })}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="All Actions" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All">All Actions</SelectItem>
+                        <SelectItem value="CREATE">Create</SelectItem>
+                        <SelectItem value="UPDATE">Update</SelectItem>
+                        <SelectItem value="DELETE">Delete</SelectItem>
+                        <SelectItem value="APPROVE">Approve</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
+
+                  {(actionFilter !== "All" || entityFilter !== "All") && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => updateFilters({ action: "All", entity: "All" })}
+                      className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
                 </div>
-
-                <Accordion
-                  value={openItem}
-                  onValueChange={setOpenItem}
-                  className="w-full border-none"
-                >
-                  <AccordionItem value="item-1" className="border-none">
-                    <AccordionContent className="px-4 py-4 border-b bg-muted/20">
-                      <div className="flex flex-col md:flex-row items-end gap-4">
-                        <div className="flex flex-col gap-1.5 w-full md:w-auto">
-                          <Label className="text-xs text-muted-foreground ml-1">Module (Entity)</Label>
-                          <Select
-                            value={entityFilter}
-                            onValueChange={(val) => updateFilters({ entity: val || "All" })}
-                          >
-                            <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
-                              <div className="flex items-center gap-2">
-                                <Filter className="h-4 w-4 text-muted-foreground" />
-                                <SelectValue placeholder="All Modules" />
-                              </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="All">All Modules</SelectItem>
-                              <SelectItem value="CLIENT">Client</SelectItem>
-                              <SelectItem value="GROUP">Group</SelectItem>
-                              <SelectItem value="LOAN">Loan</SelectItem>
-                              <SelectItem value="SETTINGS">Settings</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5 w-full md:w-auto">
-                          <Label className="text-xs text-muted-foreground ml-1">Action</Label>
-                          <Select
-                            value={actionFilter}
-                            onValueChange={(val) => updateFilters({ action: val || "All" })}
-                          >
-                            <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
-                              <div className="flex items-center gap-2">
-                                <Filter className="h-4 w-4 text-muted-foreground" />
-                                <SelectValue placeholder="All Actions" />
-                              </div>
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="All">All Actions</SelectItem>
-                              <SelectItem value="CREATE">Create</SelectItem>
-                              <SelectItem value="UPDATE">Update</SelectItem>
-                              <SelectItem value="DELETE">Delete</SelectItem>
-                              <SelectItem value="APPROVE">Approve</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        {(actionFilter !== "All" || entityFilter !== "All") && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => updateFilters({ action: "All", entity: "All" })}
-                            className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
-                          >
-                            Clear Filters
-                          </Button>
-                        )}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </>
+              </SearchFilterPanel>
             )}
             <div className="overflow-x-auto">
               <Table>
