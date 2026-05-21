@@ -6,6 +6,14 @@ const mortgageLoanService = {
     const response = await api.get("/mortgage-loans", { params });
     return response.data;
   },
+  getMortgageCollections: async (params: { page?: number; limit?: number; search?: string } = {}) => {
+    const response = await api.get("/mortgage-loans/collections", { params });
+    return response.data;
+  },
+  getMortgageCollection: async (id: string) => {
+    const response = await api.get(`/mortgage-loans/collections/${id}`);
+    return response.data;
+  },
   getMortgageLoan: async (id: string) => {
     const response = await api.get(`/mortgage-loans/${id}`);
     return response.data;
@@ -40,6 +48,22 @@ export const useMortgageLoansQuery = (params: any = {}) => {
   return useQuery({
     queryKey: ["MortgageLoans", params],
     queryFn: () => mortgageLoanService.getMortgageLoans(params),
+  });
+};
+
+export const useMortgageCollectionsQuery = (params: any = {}) => {
+  return useQuery({
+    queryKey: ["MortgageCollections", params],
+    queryFn: () => mortgageLoanService.getMortgageCollections(params),
+  });
+};
+
+export const useMortgageCollectionQuery = (id: string, options = {}) => {
+  return useQuery({
+    queryKey: ["MortgageCollection", id],
+    queryFn: () => mortgageLoanService.getMortgageCollection(id),
+    enabled: !!id,
+    ...options,
   });
 };
 
