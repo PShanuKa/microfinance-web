@@ -81,6 +81,7 @@ import { cn } from "@/lib/utils";
 import TablePagination from "@/components/Custom/TablePagination";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { RoleGate } from "@/components/Custom/RoleGate";
+import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -96,7 +97,6 @@ export default function ClientsPage() {
   const endDate = searchParams.get("endDate") || "";
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [openItem, setOpenItem] = useState<string[]>([]);
 
   // Function to update URL params
   const updateFilters = (updates: Record<string, string>) => {
@@ -210,95 +210,70 @@ export default function ClientsPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row items-center  py-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-[80px] md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, ID, or NIC..."
-                className="pl-10 h-10 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-
-            <div
-              className="flex items-center gap-3 w-full md:w-auto cursor-pointer "
-              onClick={() =>
-                setOpenItem((prev) => (prev.includes("item-1") ? [] : ["item-1"]))
-              }
-            >
-              filters
-            </div>
-          </div>
-
-          <Accordion
-            value={openItem}
-            onValueChange={setOpenItem}
-            className="w-full border-none"
+          <SearchFilterPanel
+            searchTerm={search}
+            onSearchChange={(val) => {
+              setSearch(val);
+              setPage(1);
+            }}
+            searchPlaceholder="Search by name, ID, or NIC..."
           >
-            <AccordionItem value="item-1" className="border-none">
-              <AccordionContent className="px-4 py-4 border-b bg-muted/20">
-                <div className="flex flex-col md:flex-row items-end gap-4">
-                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
-                    <Label className="text-xs text-muted-foreground ml-1">Status</Label>
-                    <Select
-                      value={statusFilter}
-                      onValueChange={(val) => updateFilters({ status: val || "All" })}
-                    >
-                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Filter Status" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Statuses</SelectItem>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="INACTIVE">Inactive</SelectItem>
-                        <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">Status</Label>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(val) => updateFilters({ status: val || "All" })}
+                >
+                  <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Filter Status" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                    <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
-                    <Label className="text-xs text-muted-foreground ml-1">Start Date</Label>
-                    <Input
-                      type="date"
-                      placeholder="Start Date"
-                      value={startDate}
-                      onChange={(e) => updateFilters({ startDate: e.target.value })}
-                      className="w-full md:w-[180px] h-10 bg-background/50"
-                    />
-                  </div>
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">Start Date</Label>
+                <Input
+                  type="date"
+                  placeholder="Start Date"
+                  value={startDate}
+                  onChange={(e) => updateFilters({ startDate: e.target.value })}
+                  className="w-full md:w-[180px] h-10 bg-background/50"
+                />
+              </div>
 
-                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
-                    <Label className="text-xs text-muted-foreground ml-1">End Date</Label>
-                    <Input
-                      type="date"
-                      placeholder="End Date"
-                      value={endDate}
-                      onChange={(e) => updateFilters({ endDate: e.target.value })}
-                      className="w-full md:w-[180px] h-10 bg-background/50"
-                    />
-                  </div>
-                  
-                  {(startDate || endDate) && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => updateFilters({ startDate: "", endDate: "" })}
-                      className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
-                    >
-                      Clear Dates
-                    </Button>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">End Date</Label>
+                <Input
+                  type="date"
+                  placeholder="End Date"
+                  value={endDate}
+                  onChange={(e) => updateFilters({ endDate: e.target.value })}
+                  className="w-full md:w-[180px] h-10 bg-background/50"
+                />
+              </div>
+              
+              {(startDate || endDate) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => updateFilters({ startDate: "", endDate: "" })}
+                  className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
+                >
+                  Clear Dates
+                </Button>
+              )}
+            </div>
+          </SearchFilterPanel>
 
           <div className="overflow-x-auto">
             <Table>

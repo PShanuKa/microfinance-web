@@ -49,6 +49,7 @@ import { useUsersQuery, useUpdateUserStatusMutation, useResetPasswordMutation } 
 import { UserForm } from "@/components/Custom/UserForm";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
 
 export default function UserManagementPage() {
   const [page, setPage] = useState(1);
@@ -138,20 +139,14 @@ export default function UserManagementPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row items-center justify-between p-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-full max-md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search users by name or email..."
-                className="pl-10 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-          </div>
+          <SearchFilterPanel
+            searchTerm={search}
+            onSearchChange={(val) => {
+              setSearch(val);
+              setPage(1);
+            }}
+            searchPlaceholder="Search users by name or email..."
+          />
 
           <div className="overflow-x-auto">
             <Table>

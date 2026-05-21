@@ -79,6 +79,7 @@ import { useGroupsQuery, useDeleteGroupMutation } from "@/services/groupApi";
 import { useBranchesQuery } from "@/services/branchApi";
 import { useGetMeQuery } from "@/services/authApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
+import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -105,11 +106,8 @@ export default function GroupsPage() {
     ? currentUser.branchId
     : branchFilter;
 
-  // Get branches list
   const { data: branchesData } = useBranchesQuery();
   const branches = branchesData?.branches || [];
-
-  const [openItem, setOpenItem] = useState<string[]>([]);
   
   // Delete Dialog State
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -193,123 +191,98 @@ export default function GroupsPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row items-center  p-4 border-b bg-muted/20 gap-4">
-            <div className="relative flex-1 w-[80px] md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by ID, Name, Officer or Leader..."
-                className="pl-10 h-10 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setPage(1);
-                }}
-              />
-            </div>
-
-            <div
-              className="flex items-center gap-3 w-full md:w-auto cursor-pointer "
-              onClick={() =>
-                setOpenItem((prev) => (prev.includes("item-1") ? [] : ["item-1"]))
-              }
-            >
-              filters
-            </div>
-          </div>
-
-          <Accordion
-            value={openItem}
-            onValueChange={setOpenItem}
-            className="w-full border-none"
+          <SearchFilterPanel
+            searchTerm={searchTerm}
+            onSearchChange={(val) => {
+              setSearchTerm(val);
+              setPage(1);
+            }}
+            searchPlaceholder="Search by ID, Name, Officer or Leader..."
           >
-            <AccordionItem value="item-1" className="border-none">
-              <AccordionContent className="px-4 py-4 border-b bg-muted/20">
-                <div className="flex flex-col md:flex-row items-end gap-4">
-                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
-                    <Label className="text-xs text-muted-foreground ml-1">Status</Label>
-                    <Select
-                      value={statusFilter}
-                      onValueChange={(val) => updateFilters({ status: val || "All" })}
-                    >
-                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Filter Status" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Statuses</SelectItem>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">Status</Label>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(val) => updateFilters({ status: val || "All" })}
+                >
+                  <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Filter Status" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Statuses</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
-                    <Label className="text-xs text-muted-foreground ml-1">Collection Day</Label>
-                    <Select
-                      value={collectionDayFilter}
-                      onValueChange={(val) => updateFilters({ collectionDay: val || "All" })}
-                    >
-                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Collection Day" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Days</SelectItem>
-                        {DAYS.map((day, idx) => (
-                          <SelectItem key={day} value={(idx + 1).toString()}>
-                            {day}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">Collection Day</Label>
+                <Select
+                  value={collectionDayFilter}
+                  onValueChange={(val) => updateFilters({ collectionDay: val || "All" })}
+                >
+                  <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Collection Day" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Days</SelectItem>
+                    {DAYS.map((day, idx) => (
+                      <SelectItem key={day} value={(idx + 1).toString()}>
+                        {day}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  <div className="flex flex-col gap-1.5 w-full md:w-auto">
-                    <Label className="text-xs text-muted-foreground ml-1">Branch</Label>
-                    <Select
-                      value={effectiveBranchFilter}
-                      onValueChange={(val) => updateFilters({ branchId: val || "All" })}
-                      disabled={isBranchSelectDisabled}
-                    >
-                      <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue>
-                            {effectiveBranchFilter && effectiveBranchFilter !== "All"
-                              ? (branches.find((b: any) => b.id === effectiveBranchFilter)?.name || "Select branch")
-                              : "All Branches"}
-                          </SelectValue>
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="All">All Branches</SelectItem>
-                        {branches.map((b: any) => (
-                          <SelectItem key={b.id} value={b.id}>
-                            {b.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {(statusFilter !== "All" || collectionDayFilter !== "All" || (!isBranchSelectDisabled && branchFilter !== "All")) && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => updateFilters({ status: "All", collectionDay: "All", branchId: isBranchSelectDisabled ? currentUser?.branchId : "All" })}
-                      className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
-                    >
-                      Clear Filters
-                    </Button>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">Branch</Label>
+                <Select
+                  value={effectiveBranchFilter}
+                  onValueChange={(val) => updateFilters({ branchId: val || "All" })}
+                  disabled={isBranchSelectDisabled}
+                >
+                  <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue>
+                        {effectiveBranchFilter && effectiveBranchFilter !== "All"
+                          ? (branches.find((b: any) => b.id === effectiveBranchFilter)?.name || "Select branch")
+                          : "All Branches"}
+                      </SelectValue>
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Branches</SelectItem>
+                    {branches.map((b: any) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {(statusFilter !== "All" || collectionDayFilter !== "All" || (!isBranchSelectDisabled && branchFilter !== "All")) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => updateFilters({ status: "All", collectionDay: "All", branchId: isBranchSelectDisabled ? currentUser?.branchId : "All" })}
+                  className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          </SearchFilterPanel>
 
           <div className="overflow-x-auto">
             <Table>
