@@ -26,7 +26,8 @@ import {
   Car,
   Gem,
   Plus,
-  Receipt
+  Receipt,
+  MoreVertical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,6 +59,15 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Table,
   TableBody,
   TableCell,
@@ -74,6 +84,7 @@ import {
   useRejectMortgageLoanMutation,
   useSendMortgageLoanForApprovalMutation,
   useRecordMortgagePaymentMutation,
+  useMortgageCollectionQuery,
 } from "@/services/mortgageLoanApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
 
@@ -97,6 +108,12 @@ export default function MortgageLoanViewPage() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentNotes, setPaymentNotes] = useState("");
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+
+  const { data: detailsData, isLoading: detailsLoading } = useMortgageCollectionQuery(selectedCollectionId || "", {
+    enabled: !!selectedCollectionId,
+  });
+  const selectedCollection = detailsData?.collection;
 
   const loanDetails = data?.mortgage;
 
@@ -952,26 +969,51 @@ export default function MortgageLoanViewPage() {
                     <TableHead className="font-bold text-foreground text-right">Total Paid</TableHead>
                     <TableHead className="font-bold text-foreground text-right">Principal Reduced</TableHead>
                     <TableHead className="font-bold text-foreground text-center">Collected By</TableHead>
-                    <TableHead className="font-bold text-foreground">Notes</TableHead>
+                    <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loanDetails.collections.map((col: any) => (
-                    <TableRow key={col.id} className="hover:bg-muted/30 transition-colors border-b last:border-0">
-                      <TableCell className="text-sm font-semibold text-slate-600">
-                        {format(new Date(col.createdAt), "dd MMM yyyy")} <span className="text-[10px] text-muted-foreground uppercase">{format(new Date(col.createdAt), "hh:mm a")}</span>
+                    <TableRow 
+                      key={col.id} 
+                      className="hover:bg-primary/5 transition-colors group cursor-pointer border-b last:border-0"
+                      onClick={() => setSelectedCollectionId(col.id)}
+                    >
+                      <TableCell className="font-medium text-slate-600">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-foreground">{format(new Date(col.createdAt), "dd MMM yyyy")}</span>
+                          <span className="text-[10px] uppercase text-muted-foreground">{format(new Date(col.createdAt), "hh:mm a")}</span>
+                        </div>
                       </TableCell>
-                      <TableCell className="text-sm font-bold text-emerald-600 text-right">
+                      <TableCell className="text-right font-bold text-emerald-600">
                         {formatCurrency(col.amount)}
                       </TableCell>
-                      <TableCell className="text-sm font-bold text-indigo-500 text-right">
+                      <TableCell className="text-right font-bold text-indigo-500">
                         {Number(col.principalReduction) > 0 ? formatCurrency(col.principalReduction) : "-"}
                       </TableCell>
-                      <TableCell className="text-sm font-semibold text-slate-600 text-center">
+                      <TableCell className="text-center font-medium text-sm text-slate-600">
                         {col.collectedBy?.fullname || "System"}
                       </TableCell>
-                      <TableCell className="text-xs font-medium text-slate-500 max-w-[200px] truncate" title={col.notes}>
-                        {col.notes || "-"}
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger onClick={(e) => e.stopPropagation()}>
+                            <div className="rounded-full opacity-50 group-hover:opacity-100 transition-opacity p-2 hover:bg-muted cursor-pointer inline-block">
+                              <MoreVertical className="h-4 w-4" />
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md">
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel>Collection Actions</DropdownMenuLabel>
+                            </DropdownMenuGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setSelectedCollectionId(col.id)}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <FileText className="h-4 w-4 text-primary" /> View Details Breakdown
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1130,6 +1172,100 @@ export default function MortgageLoanViewPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Collection Details Dialog */}
+      <Dialog open={!!selectedCollectionId} onOpenChange={(open: boolean) => !open && setSelectedCollectionId(null)}>
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary" />
+              Receipt Details
+            </DialogTitle>
+            <DialogDescription>
+              Breakdown of how this payment was distributed.
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailsLoading ? (
+            <div className="p-8 text-center text-muted-foreground animate-pulse">Loading breakdown...</div>
+          ) : selectedCollection ? (
+            <div className="mt-6 space-y-6">
+              {/* Core summary */}
+              <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Loan Number</p>
+                  <p className="font-black text-primary">{selectedCollection.mortgage?.loanNo}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Date & Time</p>
+                  <p className="font-bold">{format(new Date(selectedCollection.createdAt), "dd MMM yyyy, HH:mm")}</p>
+                </div>
+                <div className="col-span-2 pt-2 border-t">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Paid Amount</p>
+                  <p className="text-3xl font-black text-emerald-600">Rs. {Number(selectedCollection.amount).toLocaleString()}</p>
+                </div>
+                {Number(selectedCollection.principalReduction) > 0 && (
+                  <div className="col-span-2 pt-2 border-t bg-indigo-50/50 -mx-4 px-4 pb-2">
+                    <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest pt-2">Excess Applied to Principal</p>
+                    <p className="text-xl font-black text-indigo-600">Rs. {Number(selectedCollection.principalReduction).toLocaleString()}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Items Breakdown Table */}
+              <div>
+                <h4 className="font-bold text-sm mb-3 flex items-center gap-2 text-slate-700 dark:text-slate-300">
+                  <FileText className="h-4 w-4" /> Settlement Breakdown by Month
+                </h4>
+                {selectedCollection.items && selectedCollection.items.length > 0 ? (
+                  <div className="border rounded-xl overflow-hidden">
+                    <Table>
+                      <TableHeader className="bg-muted/30">
+                        <TableRow>
+                          <TableHead className="text-xs font-bold w-[60px] text-center">Mth</TableHead>
+                          <TableHead className="text-xs font-bold text-right text-rose-500">Penalty</TableHead>
+                          <TableHead className="text-xs font-bold text-right">Base Due</TableHead>
+                          <TableHead className="text-xs font-bold text-right text-emerald-600">Total Paid</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedCollection.items.map((item: any) => (
+                          <TableRow key={item.id} className="text-sm">
+                            <TableCell className="font-bold text-center">
+                              #{item.instalment?.monthNumber}
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-rose-500">
+                              {Number(item.penaltyPaid) > 0 ? `Rs. ${Number(item.penaltyPaid).toLocaleString()}` : "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {Number(item.duePaid) > 0 ? `Rs. ${Number(item.duePaid).toLocaleString()}` : "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-emerald-600">
+                              Rs. {Number(item.totalPaid).toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground italic border rounded-xl p-4 bg-muted/10">
+                    This entire payment was applied directly as a principal reduction.
+                  </div>
+                )}
+              </div>
+
+              {selectedCollection.notes && (
+                <div className="bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200 p-4 rounded-xl text-sm border border-amber-200 dark:border-amber-900/50">
+                  <p className="font-bold mb-1 text-[10px] uppercase tracking-widest opacity-70">Payment Notes</p>
+                  <p className="font-medium">{selectedCollection.notes}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-muted-foreground">Error loading details.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
