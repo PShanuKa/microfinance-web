@@ -10,6 +10,7 @@ const auditService = {
     entityId?: string;
     action?: string; 
     userId?: string; 
+    search?: string;
   }) => {
     const response = await api.get("/audit", { params });
     return response.data;
@@ -28,6 +29,7 @@ export const useAuditLogsQuery = (params: {
   entityId?: string;
   action?: string; 
   userId?: string; 
+  search?: string;
 }, options = {}) => {
   return useQuery({
     queryKey: ["AuditLogs", params],

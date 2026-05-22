@@ -41,18 +41,19 @@ const TableAuditLogs = ({ id }: { id?: string }) => {
   const [page, setPage] = useState(1);
   const [actionFilter, setActionFilter] = useState("All");
   const [entityFilter, setEntityFilter] = useState("All");
+  const [searchTerm, setSearchTerm] = useState("");
   
   const { data, isLoading } = useAuditLogsQuery({
-    page: 1,
-    limit: 200,
+    page: page,
+    limit: 20,
     ...(id && { entityId: id }),
     ...(actionFilter !== "All" && { action: actionFilter }),
     ...(entityFilter !== "All" && { entity: entityFilter }),
+    ...(searchTerm && { search: searchTerm }),
   });
   
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<any>(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
   const onClose = () => {
     setIsOpen(false);
@@ -65,20 +66,8 @@ const TableAuditLogs = ({ id }: { id?: string }) => {
     setPage(1);
   };
 
-  const filteredLogs = data?.logs?.filter((log: any) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      log.user?.fullname?.toLowerCase().includes(term) ||
-      log.entityId?.toLowerCase().includes(term) ||
-      log.action?.toLowerCase().includes(term) ||
-      log.details?.message?.toLowerCase().includes(term)
-    );
-  }) || [];
-
-  const ITEMS_PER_PAGE = 20;
-  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / ITEMS_PER_PAGE));
-  const paginatedLogs = filteredLogs.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const logsToDisplay = data?.logs || [];
+  const totalPages = data?.pagination?.totalPages || 1;
 
   return (
     <>
@@ -184,14 +173,14 @@ const TableAuditLogs = ({ id }: { id?: string }) => {
                         Loading audit logs...
                       </TableCell>
                     </TableRow>
-                  ) : paginatedLogs.length === 0 ? (
+                  ) : logsToDisplay.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center h-24">
                         No audit logs found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    paginatedLogs.map((log: any) => (
+                    logsToDisplay.map((log: any) => (
                       <TableRow
                         key={log.id}
                         className="hover:bg-primary/5 transition-colors group"

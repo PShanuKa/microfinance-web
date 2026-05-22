@@ -90,7 +90,7 @@ export default function MortgageCollectionsPage() {
       </PageHeader>
 
       {/* Summary Stats Placeholder for UI consistency */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-none shadow-lg bg-emerald-600 text-white relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
             <Banknote className="h-12 w-12" />
@@ -137,7 +137,7 @@ export default function MortgageCollectionsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
