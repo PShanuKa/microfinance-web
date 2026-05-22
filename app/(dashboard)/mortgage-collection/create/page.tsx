@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,9 +52,12 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-export default function CreateMortgageCollectionPage() {
+function CreateMortgageCollectionForm() {
   const router = useRouter();
-  const [selectedLoanId, setSelectedLoanId] = useState<string>("");
+  const searchParams = useSearchParams();
+  const loanIdParam = searchParams.get("loanId");
+
+  const [selectedLoanId, setSelectedLoanId] = useState<string>(loanIdParam || "");
   const [paymentAmountStr, setPaymentAmountStr] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [serverError, setServerError] = useState<string | null>(null);
@@ -517,5 +521,13 @@ export default function CreateMortgageCollectionPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function CreateMortgageCollectionPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-muted-foreground animate-pulse">Loading...</div>}>
+      <CreateMortgageCollectionForm />
+    </Suspense>
   );
 }

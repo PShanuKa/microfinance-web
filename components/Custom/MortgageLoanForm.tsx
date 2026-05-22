@@ -456,7 +456,7 @@ export function MortgageLoanForm({
         <div className="lg:col-span-8 space-y-6">
           
           {/* Card 1: Client Selection */}
-          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-visible">
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-visible relative z-50">
             <CardHeader className="bg-muted/10 border-b">
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-800">
                 <User className="w-5 h-5 text-primary" /> Client Identification
@@ -489,7 +489,7 @@ export function MortgageLoanForm({
 
                 {/* Combobox Dropdown Panel */}
                 {isOpenDropdown && (
-                  <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-card/95 backdrop-blur-xl border rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="absolute  top-[calc(100%+4px)] left-0 w-full bg-card/95 backdrop-blur-xl border rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200">
                     {isClientsLoading ? (
                       <div className="p-4 text-center text-xs text-muted-foreground font-black flex items-center justify-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin text-primary" /> Loading clients...
@@ -545,7 +545,7 @@ export function MortgageLoanForm({
           </Card>
 
           {/* Card 2: Loan Terms Inputs (Duration is completely removed) */}
-          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
+          <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md ">
             <CardHeader className="bg-muted/10 border-b">
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-800">
                 <Coins className="w-5 h-5 text-primary" /> Mortgage Loan Terms

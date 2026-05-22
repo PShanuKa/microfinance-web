@@ -412,6 +412,17 @@ export default function MortgageLoanViewPage() {
             )}
           </RoleGate>
           
+          <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+            {(loanDetails.status === "APPROVED" || loanDetails.status === "COMPLETED") && (
+              <Button
+                onClick={() => router.push(`/mortgage-collection/create?loanId=${loanDetails.id}`)}
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 h-11 px-6 font-bold text-white transition-all"
+              >
+                <Plus className="h-4 w-4" /> New Collection
+              </Button>
+            )}
+          </RoleGate>
+
           <Button variant="outline" className="gap-2 h-11 px-6 font-bold border-slate-200">
             <Printer className="h-4 w-4" /> Print
           </Button>
