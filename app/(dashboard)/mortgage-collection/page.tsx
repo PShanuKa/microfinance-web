@@ -199,7 +199,7 @@ export default function MortgageCollectionsPage() {
                       <TableRow
                         key={col.id}
                         className="hover:bg-primary/5 transition-colors group cursor-pointer"
-                        onClick={() => setSelectedCollectionId(col.id)}
+                        // onClick={() => setSelectedCollectionId(col.id)}
                       >
                         <TableCell className="font-medium text-slate-600">
                           <div className="flex flex-col">
@@ -244,6 +244,12 @@ export default function MortgageCollectionsPage() {
                                 className="gap-2 cursor-pointer"
                               >
                                 <FileText className="h-4 w-4 text-primary" /> View Details Breakdown
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/mortgage-loans/${col.mortgageId || col.mortgage?.id}`)}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <ArrowUpRight className="h-4 w-4 text-indigo-500" /> View Loan Details
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
