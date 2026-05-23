@@ -4,6 +4,8 @@ interface UiState {
     sideBarOpen: boolean;
     toggleSideBar: () => void;
     setSideBar: (value: boolean) => void;
+
+    
 }
 
 export const useUiStore = create<UiState>((set) => ({

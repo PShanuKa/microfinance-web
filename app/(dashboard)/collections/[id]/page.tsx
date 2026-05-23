@@ -60,6 +60,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RoleGate } from "@/components/Custom/RoleGate";
+import { CommonButton } from "@/components/common/Button";
+import { useDialogStore } from "@/store/useDialogStore";
 
 export default function CollectionDetailPage() {
   const params = useParams();
@@ -67,85 +69,125 @@ export default function CollectionDetailPage() {
   const collectionId = params.id as string;
   const queryClient = useQueryClient();
 
-  const [conflicts, setConflicts] = useState<any[]>([]);
-  const [isOverpaymentDialogOpen, setIsOverpaymentDialogOpen] = useState(false);
-  const [isRejectOpen, setIsRejectOpen] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isErrorOpen, setIsErrorOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const { setOpen } = useDialogStore();
 
   const { data, isLoading } = useCollectionQuery(collectionId);
   const collection = data?.collection;
 
-  const approveMutation = useApproveCollectionMutation({
-    onSuccess: (res: any) => {
-      if (res?.success === false && res?.code === "OVERPAYMENT_DETECTED") {
-        setConflicts(res.conflicts || []);
-        setIsOverpaymentDialogOpen(true);
-      } else {
-        setSuccessMessage(
-          "Collection registry approved and balances updated successfully!",
-        );
-        setIsSuccessOpen(true);
-        queryClient.invalidateQueries({
-          queryKey: ["Collection", collectionId],
-        });
-      }
-    },
-    onError: (err: any) => {
-      setErrorMessage(
-        err.response?.data?.error || "Failed to approve collection registry.",
-      );
-      setIsErrorOpen(true);
-    },
-  });
-
-  const rejectMutation = useRejectCollectionMutation({
-    onSuccess: () => {
-      setIsRejectOpen(false);
-      setRejectionReason("");
-      setSuccessMessage("Collection registry has been successfully rejected.");
-      setIsSuccessOpen(true);
-      queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
-    },
-    onError: (err: any) => {
-      setErrorMessage(
-        err.response?.data?.error || "Failed to reject collection registry.",
-      );
-      setIsErrorOpen(true);
-    },
-  });
-
   const handleConfirmApprove = () => {
-    setIsOverpaymentDialogOpen(false);
     approveMutation.mutate(
       { id: collectionId, confirmOverpayment: true },
       {
         onSuccess: () => {
-          setSuccessMessage(
-            "Collection registry approved and balances updated successfully!",
-          );
-          setIsSuccessOpen(true);
-          queryClient.invalidateQueries({
-            queryKey: ["Collection", collectionId],
+          setOpen({
+            open: true,
+            type: "success",
+            title: "Action Complete",
+            message: "Collection registry approved and balances updated successfully!",
+            onConfirm: () => {
+              queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
+            }
           });
         },
         onError: (err: any) => {
-          setErrorMessage(
-            err.response?.data?.error ||
-              "Failed to approve collection registry.",
-          );
-          setIsErrorOpen(true);
+          setOpen({
+            open: true,
+            type: "error",
+            title: "Action Failed",
+            message: err.response?.data?.error || "Failed to approve collection registry."
+          });
         },
       },
     );
   };
 
-  const handleRejectConfirm = () => {
-    if (!rejectionReason.trim()) return;
-    rejectMutation.mutate({ id: collectionId, rejectionReason });
+  const approveMutation = useApproveCollectionMutation({
+    onSuccess: (res: any) => {
+      if (res?.success === false && res?.code === "OVERPAYMENT_DETECTED") {
+        const conflictsList = res.conflicts || [];
+        setOpen({
+          open: true,
+          type: "info",
+          title: "Overpayment Detected",
+          message: "Some instalments in this collection have already been paid (or partially paid) by other transactions. If you proceed, the extra money will automatically cascade and apply to the upcoming unpaid weeks.",
+          onConfirm: handleConfirmApprove,
+          content: (
+            <div className="my-4 max-h-[200px] overflow-y-auto space-y-2 border rounded-xl p-3 bg-rose-50/20 border-rose-100 w-full text-left">
+              {conflictsList.map((conflict: any, i: number) => (
+                <div key={i} className="text-xs flex flex-col border-b last:border-0 pb-2 last:pb-0">
+                  <div className="flex justify-between items-center font-bold text-slate-800">
+                    <span>{conflict.memberName}</span>
+                    <Badge className="bg-rose-500 text-white text-[9px] uppercase px-1.5 font-bold border-none">
+                      Week #{conflict.weekNumber} ({conflict.status})
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground mt-1 font-semibold">
+                    <span>Payment Amount: Rs. {conflict.itemAmount.toLocaleString()}</span>
+                    <span>Remaining Due: Rs. {conflict.remainingDue.toLocaleString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        });
+      } else {
+        setOpen({
+          open: true,
+          type: "success",
+          title: "Action Complete",
+          message: "Collection registry approved and balances updated successfully!",
+          onConfirm: () => {
+            queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
+          }
+        });
+      }
+    },
+    onError: (err: any) => {
+      setOpen({
+        open: true,
+        type: "error",
+        title: "Action Failed",
+        message: err.response?.data?.error || "Failed to approve collection registry."
+      });
+    },
+  });
+
+  const rejectMutation = useRejectCollectionMutation();
+
+  const openRejectDialog = () => {
+    setOpen({
+      open: true,
+      type: "confirmation",
+      title: "Reject Collection Registry",
+      message: "Please enter the reason for rejecting this collection registry below.",
+      onConfirm: (reason) => {
+        if (!reason?.trim()) return;
+        rejectMutation.mutate(
+          { id: collectionId, rejectionReason: reason },
+          {
+            onSuccess: () => {
+              setOpen({
+                open: true,
+                type: "success",
+                title: "Action Complete",
+                message: "Collection registry has been successfully rejected.",
+                onConfirm: () => {
+                  queryClient.invalidateQueries({ queryKey: ["Collection", collectionId] });
+                }
+              });
+            },
+            onError: (err: any) => {
+              setOpen({
+                open: true,
+                type: "error",
+                title: "Action Failed",
+                message: err.response?.data?.error || "Failed to reject collection registry."
+              });
+            }
+          }
+        );
+      }
+    });
   };
 
   if (isLoading) {
@@ -164,9 +206,9 @@ export default function CollectionDetailPage() {
         <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">
           Collection Not Found.
         </p>
-        <Button onClick={() => router.back()} variant="outline">
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Collections
-        </Button>
+        <CommonButton onClick={() => router.back()} variant="outline" leftIcon={<ArrowLeft className="h-4 w-4 mr-2" />}>
+          Back to Collections
+        </CommonButton>
       </div>
     );
   }
@@ -193,14 +235,13 @@ export default function CollectionDetailPage() {
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button
+          <CommonButton
             onClick={() => router.back()}
             variant="ghost"
             size="icon"
             className="rounded-full"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+            leftIcon={<ArrowLeft className="h-5 w-5" />}
+          />
           <div>
             <h2 className="text-2xl font-black text-foreground tracking-tight">
               Collection Details
@@ -213,52 +254,44 @@ export default function CollectionDetailPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           {collection.loanId && (
-            <Button
+            <CommonButton
               variant="outline"
               className="font-bold border-slate-200 hover:bg-muted text-slate-800"
               onClick={() => router.push(`/loans/${collection.loanId}`)}
+              leftIcon={<Banknote className="h-4 w-4 mr-2 text-primary" />}
             >
-              <Banknote className="h-4 w-4 mr-2 text-primary" />
               View Loan
-            </Button>
+            </CommonButton>
           )}
-          <Button
+          <CommonButton
             variant="outline"
             className="font-bold border-slate-200 hover:bg-muted text-slate-800"
             onClick={() => router.push(`/groups/${collection.groupId}`)}
+            leftIcon={<Users className="h-4 w-4 mr-2 text-emerald-500" />}
           >
-            <Users className="h-4 w-4 mr-2 text-emerald-500" />
             View Group
-          </Button>
+          </CommonButton>
 
           <RoleGate allowedRoles={["ADMIN", "BRANCH_MANAGER", "APPROVER"]}>
             {collection.status === "SUBMITTED" && (
               <>
-                <Button
+                <CommonButton
                   variant="outline"
                   className="border-rose-200 text-rose-600 hover:bg-rose-50 font-bold"
-                  disabled={
-                    rejectMutation.isPending || approveMutation.isPending
-                  }
-                  onClick={() => setIsRejectOpen(true)}
+                  isLoading={rejectMutation.isPending || approveMutation.isPending}
+                  onClick={openRejectDialog}
+                  leftIcon={<X className="h-4 w-4 mr-2" />}
                 >
-                  <X className="h-4 w-4 mr-2" />
                   Reject Collection
-                </Button>
-                <Button
+                </CommonButton>
+                <CommonButton
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20"
-                  disabled={
-                    approveMutation.isPending || rejectMutation.isPending
-                  }
+                  isLoading={approveMutation.isPending || rejectMutation.isPending}
                   onClick={() => approveMutation.mutate(collectionId)}
+                  leftIcon={<Check className="h-4 w-4 mr-2" />}
                 >
-                  {approveMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Check className="h-4 w-4 mr-2" />
-                  )}
                   Approve & Update Balances
-                </Button>
+                </CommonButton>
               </>
             )}
           </RoleGate>
@@ -540,152 +573,7 @@ export default function CollectionDetailPage() {
         </Card>
       )}
 
-      {/* Overpayment Warning Dialog */}
-      <AlertDialog
-        open={isOverpaymentDialogOpen}
-        onOpenChange={setIsOverpaymentDialogOpen}
-      >
-        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl rounded-3xl sm:max-w-[500px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-black text-rose-600 uppercase flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-rose-500" />
-              Overpayment Detected
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-500 font-medium leading-relaxed">
-              Some instalments in this collection have already been paid (or
-              partially paid) by other transactions. If you proceed, the extra
-              money will automatically cascade and apply to the upcoming unpaid
-              weeks.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
 
-          {/* List of Conflicts */}
-          <div className="my-4 max-h-[200px] overflow-y-auto space-y-2 border rounded-xl p-3 bg-rose-50/20 border-rose-100">
-            {conflicts.map((conflict, i) => (
-              <div
-                key={i}
-                className="text-xs flex flex-col border-b last:border-0 pb-2 last:pb-0"
-              >
-                <div className="flex justify-between items-center font-bold text-slate-800">
-                  <span>{conflict.memberName}</span>
-                  <Badge className="bg-rose-500 text-white text-[9px] uppercase px-1.5 font-bold border-none">
-                    Week #{conflict.weekNumber} ({conflict.status})
-                  </Badge>
-                </div>
-                <div className="flex justify-between text-muted-foreground mt-1 font-semibold">
-                  <span>
-                    Payment Amount: Rs. {conflict.itemAmount.toLocaleString()}
-                  </span>
-                  <span>
-                    Remaining Due: Rs. {conflict.remainingDue.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <AlertDialogFooter className="gap-3">
-            <AlertDialogCancel className="rounded-xl border-slate-200 font-bold px-6 h-12">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmApprove}
-              disabled={approveMutation.isPending}
-              className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 h-12 shadow-lg shadow-emerald-200 transition-all"
-            >
-              {approveMutation.isPending
-                ? "Approving..."
-                : "Yes, Apply & Continue"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Reject Collection Dialog */}
-      <Dialog open={isRejectOpen} onOpenChange={setIsRejectOpen}>
-        <DialogContent className="rounded-3xl p-6 border-slate-200 bg-card/95 backdrop-blur-md max-w-md w-full shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <X className="h-5 w-5 text-rose-500" />
-              Reject Collection Registry
-            </DialogTitle>
-            <DialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
-              Please enter the reason for rejecting this collection registry
-              below.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Textarea
-              placeholder="Enter rejection reason here..."
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              className="min-h-24 rounded-xl border-slate-200 font-medium"
-            />
-          </div>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsRejectOpen(false)}
-              className="font-bold rounded-xl border-slate-200"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleRejectConfirm}
-              disabled={!rejectionReason.trim() || rejectMutation.isPending}
-              className="bg-rose-600 hover:bg-rose-700 font-bold rounded-xl text-white shadow-lg shadow-rose-600/20"
-            >
-              {rejectMutation.isPending ? "Rejecting..." : "Confirm Rejection"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Success Modal */}
-      {isSuccessOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-card rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-emerald-500/10 text-center animate-in zoom-in-95 duration-300">
-            <div className="mx-auto w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 mb-6">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500 animate-bounce" />
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">
-              Action Successful
-            </h3>
-            <p className="text-slate-500 font-semibold text-xs leading-relaxed mb-6">
-              {successMessage}
-            </p>
-            <Button
-              onClick={() => setIsSuccessOpen(false)}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 font-bold h-11 rounded-xl text-white shadow-lg shadow-emerald-600/20"
-            >
-              Great, Thank you
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Error Modal */}
-      {isErrorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-card rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl border border-rose-500/10 text-center animate-in zoom-in-95 duration-300">
-            <div className="mx-auto w-16 h-16 bg-rose-500/10 rounded-full flex items-center justify-center border border-rose-500/20 mb-6">
-              <AlertCircle className="w-8 h-8 text-rose-500 animate-bounce" />
-            </div>
-            <h3 className="text-2xl font-black text-rose-600 tracking-tight mb-2">
-              Action Failed
-            </h3>
-            <p className="text-slate-500 font-semibold text-xs leading-relaxed mb-6">
-              {errorMessage}
-            </p>
-            <Button
-              onClick={() => setIsErrorOpen(false)}
-              className="w-full bg-rose-600 hover:bg-rose-700 font-bold h-11 rounded-xl text-white shadow-lg shadow-rose-600/20"
-            >
-              Okay, I understand
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

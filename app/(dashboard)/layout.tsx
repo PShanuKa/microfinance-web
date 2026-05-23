@@ -8,6 +8,7 @@ import { useGetMeQuery } from "@/services/authApi";
 import { useRouter, usePathname } from "next/navigation";
 import { PremiumLoading } from "@/components/Custom/PremiumLoading";
 import { Button } from "@/components/ui/button";
+import { CommonDialog } from "@/components/common/Dialog";
 
 // Define route patterns and the roles allowed to access them
 const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
@@ -193,6 +194,8 @@ export default function DashboardLayout({
           </div>
         </main>
       </div>
+
+      <CommonDialog />
     </div>
   );
 }
