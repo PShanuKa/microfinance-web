@@ -55,17 +55,8 @@ import {
   Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useDialogStore } from "@/store/useDialogStore";
 
 const DAYS = [
   { id: 1, name: "Monday" },
@@ -86,12 +77,7 @@ export default function EditGroupPage() {
   
   // Delete Dialog State
   const [isEditingInfo, setIsEditingInfo] = useState(false);
-  
-  // Delete Dialog State
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
-  // Member Remove Confirmation State
-  const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
+  const { setOpen } = useDialogStore();
 
   const { data: groupData, isLoading: groupLoading } = useGroupQuery(id as string);
   const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
@@ -131,12 +117,7 @@ export default function EditGroupPage() {
     onSuccess: () => setIsEditingInfo(false),
     onError: (error: any) => toast.error(error.response?.data?.error || "Failed to remove member."),
   });
-  const deleteMutation = useDeleteGroupMutation({
-    onSuccess: () => {
-      router.push("/groups");
-    },
-    onError: (error: any) => toast.error(error.response?.data?.error || "Failed to delete group."),
-  });
+  const deleteMutation = useDeleteGroupMutation();
 
   const {
     register,
@@ -192,12 +173,63 @@ export default function EditGroupPage() {
     updateMemberMutation.mutate({ memberId, isLeader: true });
   };
 
-  const handleRemoveMember = (memberId: string) => {
-    setMemberToRemove(memberId);
+  const handleRemoveMember = (member: any) => {
+    setOpen({
+      open: true,
+      type: "delete",
+      title: "Remove Member",
+      message: `Are you sure you want to remove ${member.client?.fullname} from the group? This will dissolve their member association.`,
+      onConfirm: () => {
+        removeMemberMutation.mutate(member.id, {
+          onSuccess: () => {
+            setOpen({
+              open: true,
+              type: "success",
+              title: "Action Complete",
+              message: "Member removed successfully."
+            });
+          },
+          onError: (err: any) => {
+            setOpen({
+              open: true,
+              type: "error",
+              title: "Remove Failed",
+              message: err.response?.data?.error || "Failed to remove member."
+            });
+          }
+        });
+      }
+    });
   };
 
-  const handleDeleteGroup = () => {
-    deleteMutation.mutate(id as string);
+  const handleDeleteGroupClick = () => {
+    setOpen({
+      open: true,
+      type: "delete",
+      title: "Delete Group",
+      message: `This will permanently delete the group ${group?.name} and remove all member associations. Warning: This group cannot be deleted if it has ANY associated loan applications.`,
+      onConfirm: () => {
+        deleteMutation.mutate(id as string, {
+          onSuccess: () => {
+            setOpen({
+              open: true,
+              type: "success",
+              title: "Action Complete",
+              message: "Group deleted successfully."
+            });
+            setTimeout(() => router.push("/groups"), 1500);
+          },
+          onError: (err: any) => {
+            setOpen({
+              open: true,
+              type: "error",
+              title: "Delete Failed",
+              message: err.response?.data?.error || "Failed to delete group."
+            });
+          }
+        });
+      }
+    });
   };
 
   if (groupLoading) return <div className="p-10 text-center">Loading group data...</div>;
@@ -224,7 +256,7 @@ export default function EditGroupPage() {
           </Button>
           <Button 
             variant="destructive" 
-            onClick={() => setIsDeleteDialogOpen(true)}
+            onClick={handleDeleteGroupClick}
             className="gap-2 shadow-lg shadow-destructive/20"
           >
             <Trash2 className="h-4 w-4" /> Delete Group
@@ -406,9 +438,13 @@ export default function EditGroupPage() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-muted-foreground hover:text-amber-600"
+                            className="text-muted-foreground hover:text-amber-600 gap-2"
                             onClick={() => handleSetLeader(member.id)}
+                            disabled={updateMemberMutation.isPending && updateMemberMutation.variables?.memberId === member.id}
                           >
+                            {updateMemberMutation.isPending && updateMemberMutation.variables?.memberId === member.id && (
+                              <Spinner className="w-3 h-3" />
+                            )}
                             Make Leader
                           </Button>
                         ) : (
@@ -419,7 +455,7 @@ export default function EditGroupPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleRemoveMember(member.id)}>
+                          <Button variant="ghost" size="icon" onClick={() => handleRemoveMember(member)}>
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
                         </div>
@@ -504,61 +540,6 @@ export default function EditGroupPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" /> Are you absolutely sure?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the group <strong>{group?.name}</strong> and remove all member associations.
-              <br /><br />
-              <span className="text-xs font-bold text-rose-600 uppercase">Warning: This group cannot be deleted if it has ANY associated loan applications (Draft, Pending, or Active).</span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteGroup}
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete Group"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Remove Member Confirmation Dialog */}
-      <AlertDialog open={memberToRemove !== null} onOpenChange={(open) => !open && setMemberToRemove(null)}>
-        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" /> Remove Member from Group?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to remove <strong>{group?.members?.find((m: any) => m.id === memberToRemove)?.client?.fullname}</strong> from the group?
-              This will dissolve their member association.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => {
-                if (memberToRemove) {
-                  removeMemberMutation.mutate(memberToRemove);
-                  setMemberToRemove(null);
-                }
-              }}
-              className="bg-destructive hover:bg-destructive/90 text-white font-bold"
-              disabled={removeMemberMutation.isPending}
-            >
-              {removeMemberMutation.isPending ? "Removing..." : "Remove Member"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

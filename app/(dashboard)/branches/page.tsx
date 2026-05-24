@@ -45,18 +45,16 @@ import { useBranchesQuery, useDeleteBranchMutation } from "@/services/branchApi"
 import { BranchForm } from "@/components/Custom/BranchForm";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useDialogStore } from "@/store/useDialogStore";
 
 export default function BranchManagementPage() {
   const [search, setSearch] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingBranch, setEditingBranch] = useState<any>(null);
   
-  // Delete Dialog states
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [deletingBranch, setDeletingBranch] = useState<any>(null);
-
   const { data, isLoading } = useBranchesQuery();
   const deleteMutation = useDeleteBranchMutation();
+  const { setOpen } = useDialogStore();
 
   const handleEdit = (branch: any) => {
     setEditingBranch(branch);
@@ -69,23 +67,30 @@ export default function BranchManagementPage() {
   };
 
   const handleDeleteClick = (branch: any) => {
-    setDeletingBranch(branch);
-    setIsDeleteOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!deletingBranch) return;
-
-    deleteMutation.mutate(deletingBranch.id, {
-      onSuccess: () => {
-        toast.success("Branch deleted successfully!");
-        setIsDeleteOpen(false);
-        setDeletingBranch(null);
-      },
-      onError: (err: any) => {
-        toast.error(err.response?.data?.error || "Failed to delete branch. Ensure no groups or users are assigned to this branch.");
-        setIsDeleteOpen(false);
-        setDeletingBranch(null);
+    setOpen({
+      open: true,
+      type: "delete",
+      title: "Confirm Delete",
+      message: `Are you absolutely sure you want to delete branch ${branch.name}? This action is permanent and cannot be undone.`,
+      onConfirm: () => {
+        deleteMutation.mutate(branch.id, {
+          onSuccess: () => {
+            setOpen({
+              open: true,
+              type: "success",
+              title: "Action Complete",
+              message: "Branch deleted successfully.",
+            });
+          },
+          onError: (err: any) => {
+            setOpen({
+              open: true,
+              type: "error",
+              title: "Delete Failed",
+              message: err.response?.data?.error || "Failed to delete branch. Ensure no groups or users are assigned to this branch.",
+            });
+          }
+        });
       }
     });
   };
@@ -219,39 +224,7 @@ export default function BranchManagementPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="rounded-3xl p-6 border-slate-200 bg-card/95 backdrop-blur-md max-w-md w-full shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-rose-500 animate-pulse" />
-              Confirm Delete
-            </DialogTitle>
-            <DialogDescription className="font-semibold text-slate-500 text-sm leading-relaxed pt-2">
-              Are you absolutely sure you want to delete branch <strong className="text-slate-800 font-black">{deletingBranch?.name}</strong>?
-              <br />
-              <span className="text-xs text-rose-500 font-black uppercase tracking-widest mt-1 block">This action is permanent and cannot be undone.</span>
-            </DialogDescription>
-          </DialogHeader>
 
-          <DialogFooter className="gap-2 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteOpen(false)}
-              className="font-bold rounded-xl border-slate-200"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleDeleteConfirm}
-              disabled={deleteMutation.isPending}
-              className="bg-rose-600 hover:bg-rose-700 font-bold rounded-xl text-white shadow-lg shadow-rose-600/20"
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Confirm Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

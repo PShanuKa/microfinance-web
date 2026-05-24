@@ -57,11 +57,13 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { RoleGate } from "@/components/Custom/RoleGate";
+import { useDialogStore } from "@/store/useDialogStore";
 
 export default function ConWeeksPage() {
   const [page, setPage] = useState(1);
   const { data, isLoading } = useNonCollectionWeeksQuery();
   const deleteMutation = useDeleteNonCollectionWeekMutation();
+  const { setOpen } = useDialogStore();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState<any>(null);
@@ -87,9 +89,32 @@ export default function ConWeeksPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this non-collection week?")) {
-      deleteMutation.mutate(id);
-    }
+    setOpen({
+      open: true,
+      type: "delete",
+      title: "Delete Configuration",
+      message: "Are you sure you want to delete this non-collection week? This action cannot be undone.",
+      onConfirm: () => {
+        deleteMutation.mutate(id, {
+          onSuccess: () => {
+            setOpen({
+              open: true,
+              type: "success",
+              title: "Action Complete",
+              message: "Non-collection week configuration deleted successfully.",
+            });
+          },
+          onError: (err: any) => {
+            setOpen({
+              open: true,
+              type: "error",
+              title: "Delete Failed",
+              message: err?.response?.data?.error || "Failed to delete the configuration.",
+            });
+          }
+        });
+      }
+    });
   };
 
   const filteredWeeks = data?.weeks?.filter((week: any) => 

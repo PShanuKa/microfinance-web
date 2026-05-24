@@ -80,6 +80,7 @@ import { useBranchesQuery } from "@/services/branchApi";
 import { useGetMeQuery } from "@/services/authApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
+import { useDialogStore } from "@/store/useDialogStore";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -107,11 +108,11 @@ export default function GroupsPage() {
     : branchFilter;
 
   const { data: branchesData } = useBranchesQuery();
+
+  
   const branches = branchesData?.branches || [];
   
-  // Delete Dialog State
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [groupToDelete, setGroupToDelete] = useState<any>(null);
+  const { setOpen } = useDialogStore();
 
   // Function to update URL params
   const updateFilters = (updates: Record<string, string>) => {
@@ -136,22 +137,35 @@ export default function GroupsPage() {
     branchId: effectiveBranchFilter
   });
 
-  const deleteMutation = useDeleteGroupMutation({
-    onSuccess: () => {
-      setIsDeleteDialogOpen(false);
-      setGroupToDelete(null);
-    }
-  });
+  const deleteMutation = useDeleteGroupMutation();
 
   const handleDeleteClick = (group: any) => {
-    setGroupToDelete(group);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (groupToDelete) {
-      deleteMutation.mutate(groupToDelete.id);
-    }
+    setOpen({
+      open: true,
+      type: "delete",
+      title: "Confirm Delete",
+      message: `This will permanently delete the group ${group.name} and remove all member associations. Warning: This group cannot be deleted if it has ANY associated loan applications.`,
+      onConfirm: () => {
+        deleteMutation.mutate(group.id, {
+          onSuccess: () => {
+            setOpen({
+              open: true,
+              type: "success",
+              title: "Action Complete",
+              message: "Group deleted successfully."
+            });
+          },
+          onError: (err: any) => {
+            setOpen({
+              open: true,
+              type: "error",
+              title: "Delete Failed",
+              message: err.response?.data?.error || "Failed to delete group."
+            });
+          }
+        });
+      }
+    });
   };
 
   const highlightText = (text: string, term: string) => {
@@ -449,31 +463,7 @@ export default function GroupsPage() {
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-card/95 backdrop-blur-xl border-none shadow-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <Trash2 className="h-5 w-5" /> Are you absolutely sure?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the group <strong>{groupToDelete?.name}</strong> and remove all member associations.
-              <br /><br />
-              <span className="text-xs font-bold text-rose-600 uppercase">Warning: This group cannot be deleted if it has ANY associated loan applications (Draft, Pending, or Active).</span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete Group"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
     </div>
   );
 }

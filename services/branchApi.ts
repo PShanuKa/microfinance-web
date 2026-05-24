@@ -39,35 +39,38 @@ export const useBranchQuery = (id: string) => {
   });
 };
 
-export const useCreateBranchMutation = (options = {}) => {
+export const useCreateBranchMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
+    ...options,
     mutationFn: branchService.createBranch,
-    onSuccess: () => {
+    onSuccess: (...args) => {
       queryClient.invalidateQueries({ queryKey: ["Branches"] });
+      if (options.onSuccess) options.onSuccess(...args);
     },
-    ...options,
   });
 };
 
-export const useUpdateBranchMutation = (options = {}) => {
+export const useUpdateBranchMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
+    ...options,
     mutationFn: branchService.updateBranch,
-    onSuccess: () => {
+    onSuccess: (...args) => {
       queryClient.invalidateQueries({ queryKey: ["Branches"] });
+      if (options.onSuccess) options.onSuccess(...args);
     },
-    ...options,
   });
 };
 
-export const useDeleteBranchMutation = (options = {}) => {
+export const useDeleteBranchMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: branchService.deleteBranch,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["Branches"] });
-    },
     ...options,
+    mutationFn: branchService.deleteBranch,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({ queryKey: ["Branches"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };

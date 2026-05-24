@@ -42,19 +42,19 @@ export function NonCollectionWeekForm({ initialData, onSuccess, onCancel, isRead
       endDate: "",
       reason: "",
     },
+    values: initialData ? {
+      startDate: format(new Date(initialData.startDate), "yyyy-MM-dd"),
+      endDate: format(new Date(initialData.endDate), "yyyy-MM-dd"),
+      reason: initialData.reason || "",
+    } : {
+      startDate: "",
+      endDate: "",
+      reason: "",
+    }
   });
 
   const watchStartDate = watch("startDate");
 
-  useEffect(() => {
-    if (initialData) {
-      reset({
-        startDate: format(new Date(initialData.startDate), "yyyy-MM-dd"),
-        endDate: format(new Date(initialData.endDate), "yyyy-MM-dd"),
-        reason: initialData.reason || "",
-      });
-    }
-  }, [initialData, reset]);
 
   useEffect(() => {
     if (watchStartDate && !isReadOnly) {

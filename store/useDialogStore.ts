@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import React from 'react';
 
-export type DialogType = "success" | "error" | "info" | "confirmation" | "approve";
+export type DialogType = "success" | "error" | "info" | "confirmation" | "approve" | "delete";
 
 interface DialogState {
     open: boolean;

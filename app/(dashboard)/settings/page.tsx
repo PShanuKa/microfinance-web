@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { CommonButton } from "@/components/common/Button";
 import { 
   Save, 
   ShieldAlert, 
@@ -28,10 +28,12 @@ import {
 } from "@/components/ui/tooltip";
 import { useSettingsQuery, useUpdateSettingsMutation } from "@/services/settingsApi";
 import { useForm } from "react-hook-form";
+import { useDialogStore } from "@/store/useDialogStore";
 
 export default function SettingsPage() {
   const { data: settingsData, isLoading } = useSettingsQuery();
   const updateMutation = useUpdateSettingsMutation();
+  const { setOpen } = useDialogStore();
   
   const { register, handleSubmit, reset, watch, setValue } = useForm();
 
@@ -51,7 +53,24 @@ export default function SettingsPage() {
       defaultLoanWeeks: Number(data.defaultLoanWeeks),
       maxActiveLoansGroup: Number(data.maxActiveLoansGroup),
     };
-    updateMutation.mutate(payload);
+    updateMutation.mutate(payload, {
+      onSuccess: () => {
+        setOpen({
+          open: true,
+          type: "success",
+          title: "Configuration Saved",
+          message: "System settings have been successfully updated.",
+        });
+      },
+      onError: (err: any) => {
+        setOpen({
+          open: true,
+          type: "error",
+          title: "Update Failed",
+          message: err?.response?.data?.error || "Failed to save configurations. Please try again.",
+        });
+      }
+    });
   };
 
   if (isLoading) return <div className="p-10 text-center animate-pulse font-bold text-primary">Loading System Configurations...</div>;
@@ -203,25 +222,25 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
-           <Button type="button" variant="ghost" size="lg" onClick={() => reset(settingsData?.settings)} className="font-bold">
-              <RefreshCcw className="h-4 w-4 mr-2" /> Reset
-           </Button>
-           <Button 
+           <CommonButton 
+              type="button" 
+              variant="ghost" 
+              size="lg" 
+              onClick={() => reset(settingsData?.settings)} 
+              className="font-bold"
+              leftIcon={<RefreshCcw className="h-4 w-4 mr-2" />}
+           >
+              Reset
+           </CommonButton>
+           <CommonButton 
              type="submit"
              size="lg" 
-             disabled={updateMutation.isPending}
-             className="px-12 shadow-xl shadow-primary/30 gap-2 h-14 font-black text-lg bg-primary hover:bg-primary/90"
+             isLoading={updateMutation.isPending}
+             
+             leftIcon={<Save className="h-5 w-5" />}
            >
-             {updateMutation.isPending ? (
-               <div className="flex items-center gap-2">
-                  <RefreshCcw className="h-5 w-5 animate-spin" /> Saving...
-               </div>
-             ) : (
-               <>
-                 <Save className="h-5 w-5" /> Save Configuration
-               </>
-             )}
-           </Button>
+             Save Configuration
+           </CommonButton>
         </div>
       </form>
     </div>

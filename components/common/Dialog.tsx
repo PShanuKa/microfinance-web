@@ -9,7 +9,7 @@ import {
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { useDialogStore } from "@/store/useDialogStore";
-import { ShieldCheck, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, AlertCircle, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 
 export const CommonDialog = () => {
   const { open, type, setClose, message, onConfirm, title, content } = useDialogStore();
@@ -18,6 +18,7 @@ export const CommonDialog = () => {
   const isError = type === "error";
   const isConfirmation = type === "confirmation";
   const isApprove = type === "approve";
+  const isDelete = type === "delete";
 
   // Reset input when dialog closes
   useEffect(() => {
@@ -37,6 +38,7 @@ export const CommonDialog = () => {
     if (isError) return <AlertCircle className="w-8 h-8" />;
     if (isConfirmation) return <AlertTriangle className="w-8 h-8" />;
     if (isApprove) return <CheckCircle2 className="w-8 h-8" />;
+    if (isDelete) return <Trash2 className="w-8 h-8" />;
     return <ShieldCheck className="w-8 h-8" />;
   };
 
@@ -44,6 +46,7 @@ export const CommonDialog = () => {
     if (isError) return "bg-red-100 border-red-200 text-red-600";
     if (isConfirmation) return "bg-amber-100 border-amber-200 text-amber-600";
     if (isApprove) return "bg-emerald-100 border-emerald-200 text-emerald-600";
+    if (isDelete) return "bg-red-100 border-red-200 text-red-600";
     return "bg-emerald-100 border-emerald-200 text-emerald-600";
   };
 
@@ -51,6 +54,7 @@ export const CommonDialog = () => {
     if (isError) return "Action Failed";
     if (isConfirmation) return "Confirmation";
     if (isApprove) return "Approve Request";
+    if (isDelete) return "Delete Record";
     return "Action Complete";
   };
 
@@ -88,8 +92,8 @@ export const CommonDialog = () => {
             </div>
           )}
         </div>
-        <DialogFooter className={`w-full  ${(isConfirmation || isApprove) ? "grid grid-cols-2 gap-2" : "flex-col"}   gap-2 sm:justify-between mt-2`}>
-          {(isConfirmation || isApprove) && (
+        <DialogFooter className={`w-full  ${(isConfirmation || isApprove || isDelete) ? "grid grid-cols-2 gap-2" : "flex-col"}   gap-2 sm:justify-between mt-2`}>
+          {(isConfirmation || isApprove || isDelete) && (
             <Button
               variant="outline"
               onClick={setClose}
@@ -100,9 +104,9 @@ export const CommonDialog = () => {
           )}
           <Button
             onClick={handleAction}
-            className={`w-full font-bold uppercase tracking-wider text-[10px] ${isConfirmation ? "bg-red-600 hover:bg-red-700" : isError ? "bg-red-600 hover:bg-red-700" : isApprove ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-800"}  text-white h-11 rounded-lg`}
+            className={`w-full font-bold uppercase tracking-wider text-[10px] ${isConfirmation ? "bg-amber-600 hover:bg-amber-700" : (isError || isDelete) ? "bg-red-600 hover:bg-red-700" : isApprove ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-900 hover:bg-slate-800"}  text-white h-11 rounded-lg`}
           >
-            {isError ? "Close" : isConfirmation ? "Confirm" : isApprove ? "Approve" : "Done"}
+            {isError ? "Close" : isConfirmation ? "Confirm" : isDelete ? "Delete" : isApprove ? "Approve" : "Done"}
           </Button>
         </DialogFooter>
       </DialogContent>
