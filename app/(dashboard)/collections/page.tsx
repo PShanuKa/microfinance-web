@@ -52,7 +52,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { useCollectionsQuery } from "@/services/collectionApi";
+import { useCollectionsQuery, useDailyRegistryQuery } from "@/services/collectionApi";
 import TablePagination from "@/components/Custom/TablePagination";
 import { format } from "date-fns";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
@@ -64,6 +64,16 @@ export default function CollectionsPage() {
   
   const { data, isLoading } = useCollectionsQuery();
   const collections = data?.collections || [];
+
+  const { data: registryData } = useDailyRegistryQuery();
+  const dailyRegistry = registryData?.registry || [];
+  
+  const todaysExpected = dailyRegistry.reduce((acc: number, curr: any) => acc + Number(curr.expected || 0) + Number(curr.arrears || 0), 0);
+  const todaysCollected = dailyRegistry.reduce((acc: number, curr: any) => acc + Number(curr.collected || 0), 0);
+  const scheduleGroupsCount = dailyRegistry.length;
+  const recoveryRate = todaysExpected > 0 ? ((todaysCollected / todaysExpected) * 100).toFixed(1) : "0.0";
+  const outstandingAmount = Math.max(0, todaysExpected - todaysCollected);
+  const groupsWithOutstanding = dailyRegistry.filter((g: any) => g.status !== "PAID").length;
 
   const filteredData = collections.filter((col: any) => 
     col.groupName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -117,10 +127,10 @@ export default function CollectionsPage() {
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
               Today's Expected Collection
             </p>
-            <p className="text-2xl font-black mt-2">Rs. 56,250</p>
+            <p className="text-2xl font-black mt-2">Rs. {todaysExpected.toLocaleString()}</p>
             <div className="mt-4 flex items-center gap-2">
               <Badge className="bg-white/20 border-none text-[9px] font-black uppercase">
-                Schedule: 12 Groups
+                Schedule: {scheduleGroupsCount} Groups
               </Badge>
             </div>
           </CardContent>
@@ -134,12 +144,12 @@ export default function CollectionsPage() {
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
               Today's Collected Amount
             </p>
-            <p className="text-2xl font-black mt-2">Rs. 43,750</p>
+            <p className="text-2xl font-black mt-2">Rs. {todaysCollected.toLocaleString()}</p>
             <div className="mt-4 flex items-center gap-2">
               <div className="h-1 w-24 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full bg-white w-[77%]" />
+                <div className="h-full bg-white" style={{ width: `${recoveryRate}%` }} />
               </div>
-              <span className="text-[10px] font-black">77% Recovered</span>
+              <span className="text-[10px] font-black">{recoveryRate}% Recovered</span>
             </div>
           </CardContent>
         </Card>
@@ -152,11 +162,11 @@ export default function CollectionsPage() {
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
               My Total Outstanding
             </p>
-            <p className="text-2xl font-black mt-2">Rs. 12,500</p>
+            <p className="text-2xl font-black mt-2">Rs. {outstandingAmount.toLocaleString()}</p>
             <div className="mt-4 flex items-center gap-2 text-white/60">
               <Clock className="h-3.5 w-3.5" />
               <span className="text-[10px] font-bold uppercase tracking-tighter">
-                Due from 3 members
+                Due from {groupsWithOutstanding} groups
               </span>
             </div>
           </CardContent>
@@ -170,7 +180,7 @@ export default function CollectionsPage() {
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
               Collection Efficiency
             </p>
-            <p className="text-4xl font-black mt-2 tracking-tighter">77.8%</p>
+            <p className="text-4xl font-black mt-2 tracking-tighter">{recoveryRate}%</p>
             <div className="mt-2 flex items-center gap-2">
               <span className="text-[9px] font-black uppercase bg-primary/20 text-primary-foreground px-2 py-0.5 rounded-full tracking-widest">
                 Performance Tag

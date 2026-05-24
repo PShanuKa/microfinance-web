@@ -208,7 +208,7 @@ export default function EditGroupPage() {
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
         title={`Manage Group: ${group?.name}`}
-        description={`Branch: ${group?.branch} | Location: ${group?.location || "N/A"} | Collection Day: ${DAYS[(group?.collectionDay || 1) - 1].name}`}
+        description={`Branch: ${group?.branch?.name || "N/A"} | Location: ${group?.location || "N/A"} | Collection Day: ${DAYS[(group?.collectionDay || 1) - 1].name}`}
       >
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push("/groups")} className="gap-2">
