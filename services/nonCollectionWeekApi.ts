@@ -27,35 +27,38 @@ export const useNonCollectionWeeksQuery = () => {
   });
 };
 
-export const useCreateNonCollectionWeekMutation = (options = {}) => {
+export const useCreateNonCollectionWeekMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
+    ...options,
     mutationFn: nonCollectionWeekService.createWeek,
-    onSuccess: () => {
+    onSuccess: (...args) => {
       queryClient.invalidateQueries({ queryKey: ["NonCollectionWeeks"] });
+      if (options.onSuccess) options.onSuccess(...args);
     },
-    ...options,
   });
 };
 
-export const useUpdateNonCollectionWeekMutation = (options = {}) => {
+export const useUpdateNonCollectionWeekMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
+    ...options,
     mutationFn: nonCollectionWeekService.updateWeek,
-    onSuccess: () => {
+    onSuccess: (...args) => {
       queryClient.invalidateQueries({ queryKey: ["NonCollectionWeeks"] });
+      if (options.onSuccess) options.onSuccess(...args);
     },
-    ...options,
   });
 };
 
-export const useDeleteNonCollectionWeekMutation = (options = {}) => {
+export const useDeleteNonCollectionWeekMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: nonCollectionWeekService.deleteWeek,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["NonCollectionWeeks"] });
-    },
     ...options,
+    mutationFn: nonCollectionWeekService.deleteWeek,
+    onSuccess: (...args) => {
+      queryClient.invalidateQueries({ queryKey: ["NonCollectionWeeks"] });
+      if (options.onSuccess) options.onSuccess(...args);
+    },
   });
 };
