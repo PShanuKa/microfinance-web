@@ -90,6 +90,7 @@ import {
 import { RoleGate } from "@/components/Custom/RoleGate";
 import { CommonButton }  from "@/components/common/Button";
 import { useDialogStore } from "@/store/useDialogStore";
+import api from "@/lib/axios";
 
 export default function MortgageLoanViewPage() {
   const router = useRouter();
@@ -131,6 +132,19 @@ export default function MortgageLoanViewPage() {
         });
       },
     });
+  };
+
+  const handlePrintVoucher = async () => {
+    try {
+      const response = await api.get(`/mortgage-loans/${id}/voucher`);
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(response.data);
+        printWindow.document.close();
+      }
+    } catch (error) {
+      console.error("Failed to generate voucher:", error);
+    }
   };
 
   const openApproveDialog = () => {
@@ -509,12 +523,19 @@ export default function MortgageLoanViewPage() {
                 }
                 variant="success"
                 leftIcon={<Plus className="h-4 w-4" />}
-                className="shadow-lg shadow-emerald-600/20 h-11 px-6 font-bold transition-all"
+                // className="shadow-lg shadow-emerald-600/20 h-11 px-6 font-bold transition-all"
               >
                 New Collection
               </CommonButton>
             )}
           </RoleGate>
+          <CommonButton
+            variant="outline"
+            leftIcon={<Printer className="h-4 w-4" />}
+            onClick={handlePrintVoucher}
+          >
+            Print Payment Voucher
+          </CommonButton>
 
           <CommonButton
             variant="outline"
