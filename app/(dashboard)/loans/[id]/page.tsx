@@ -22,6 +22,7 @@ import {
   Receipt,
   LayoutList,
   Crown,
+  Grid,
   Phone,
   CalendarDays,
   ShieldCheck,
@@ -131,6 +132,29 @@ export default function LoanViewPage() {
 
   const loan = data?.loan;
   const instalments = instalmentsData?.instalments;
+
+  const [scheduleView, setScheduleView] = useState<"table" | "matrix">("table");
+
+  const matrixData = useMemo(() => {
+    if (!instalments) return { weeks: [], clients: [] };
+    const weeksSet = new Set<number>();
+    const clientsMap = new Map<string, any>();
+    
+    instalments.forEach((inst: any) => {
+      weeksSet.add(inst.weekNumber);
+      if (!clientsMap.has(inst.clientId)) {
+        clientsMap.set(inst.clientId, inst.client);
+      }
+    });
+    
+    const weeks = Array.from(weeksSet).sort((a, b) => a - b);
+    const clients = Array.from(clientsMap.entries()).map(([clientId, client]) => ({
+      ...client,
+      clientId
+    }));
+    
+    return { weeks, clients };
+  }, [instalments]);
 
   const stats = useMemo(() => {
     if (!loan || !instalments) return null;
@@ -770,93 +794,167 @@ export default function LoanViewPage() {
             <CardHeader className="flex flex-row items-center justify-between border-b bg-muted/10">
               <div>
                 <CardTitle className="font-bold text-xl flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-amber-600" /> Full Repayment
-                  Schedule
+                  <Calendar className="w-5 h-5 text-amber-600" /> Full Repayment Schedule
                 </CardTitle>
+              </div>
+              <div className="flex bg-muted/50 rounded-lg p-1 border">
+                <button
+                  onClick={() => setScheduleView("table")}
+                  className={cn(
+                    "px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1",
+                    scheduleView === "table"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <LayoutList className="w-3 h-3" /> Table
+                </button>
+                <button
+                  onClick={() => setScheduleView("matrix")}
+                  className={cn(
+                    "px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1",
+                    scheduleView === "matrix"
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Grid className="w-3 h-3" /> Grid
+                </button>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-                <Table className="relative">
-                  <TableHeader>
-                    <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
-                      <TableHead className="font-bold text-foreground">
-                        Week
-                      </TableHead>
-                      <TableHead className="font-bold text-foreground">
-                        Client
-                      </TableHead>
-                      <TableHead className="font-bold text-foreground">
-                        Due Date
-                      </TableHead>
-                      <TableHead className="font-bold text-foreground">
-                        Target
-                      </TableHead>
-                      <TableHead className="font-bold text-foreground">
-                        Collected
-                      </TableHead>
-                      <TableHead className="text-center font-bold text-foreground">
-                        Status
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {instalments.map((inst: any) => (
-                      <TableRow
-                        key={inst.id}
-                        className={cn(
-                          "hover:bg-amber-500/5 transition-colors border-b last:border-0",
-                          inst.status === "PAID" ? "bg-emerald-500/[0.02]" : "",
-                        )}
-                      >
-                        <TableCell className="text-sm font-semibold text-slate-600">
-                          #{inst.weekNumber}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-foreground group-hover:text-primary transition-colors">
-                              {inst.client?.fullname}
-                            </span>
-                            <span className="text-xs text-muted-foreground font-mono">
-                              {inst.client?.clientNo}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                            {format(new Date(inst.dueDate), "PPP")}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                            Rs. {Number(inst.dueAmount).toLocaleString()}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
-                            Rs. {Number(inst.paidAmount).toLocaleString()}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center py-4">
-                          <Badge
-                            className={cn(
-                              "font-black px-3 py-1 rounded-full text-[9px] uppercase tracking-tighter border-none",
-                              inst.status === "PAID"
-                                ? "bg-emerald-500 text-white"
-                                : inst.status === "PARTIAL"
-                                  ? "bg-amber-500 text-white"
-                                  : inst.status === "OVERDUE"
-                                    ? "bg-rose-500 text-white animate-pulse"
-                                    : "bg-slate-200 text-slate-500",
-                            )}
-                          >
-                            {inst.status}
-                          </Badge>
-                        </TableCell>
+                {scheduleView === "table" ? (
+                  <Table className="relative">
+                    <TableHeader>
+                      <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
+                        <TableHead className="font-bold text-foreground">
+                          Week
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground">
+                          Client
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground">
+                          Due Date
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground">
+                          Target
+                        </TableHead>
+                        <TableHead className="font-bold text-foreground">
+                          Collected
+                        </TableHead>
+                        <TableHead className="text-center font-bold text-foreground">
+                          Status
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {instalments.map((inst: any) => (
+                        <TableRow
+                          key={inst.id}
+                          className={cn(
+                            "hover:bg-amber-500/5 transition-colors border-b last:border-0",
+                            inst.status === "PAID" ? "bg-emerald-500/[0.02]" : "",
+                          )}
+                        >
+                          <TableCell className="text-sm font-semibold text-slate-600">
+                            #{inst.weekNumber}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-bold text-foreground group-hover:text-primary transition-colors">
+                                {inst.client?.fullname}
+                              </span>
+                              <span className="text-xs text-muted-foreground font-mono">
+                                {inst.client?.clientNo}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                              {format(new Date(inst.dueDate), "PPP")}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                              Rs. {Number(inst.dueAmount).toLocaleString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                              Rs. {Number(inst.paidAmount).toLocaleString()}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-4">
+                            <Badge
+                              className={cn(
+                                "font-black px-3 py-1 rounded-full text-[9px] uppercase tracking-tighter border-none",
+                                inst.status === "PAID"
+                                  ? "bg-emerald-500 text-white"
+                                  : inst.status === "PARTIAL"
+                                    ? "bg-amber-500 text-white"
+                                    : inst.status === "OVERDUE"
+                                      ? "bg-rose-500 text-white animate-pulse"
+                                      : "bg-slate-200 text-slate-500",
+                              )}
+                            >
+                              {inst.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <Table className="relative">
+                    <TableHeader>
+                      <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
+                        <TableHead className="font-bold text-foreground sticky left-0 bg-muted/30 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Client</TableHead>
+                        {matrixData.weeks.map(w => (
+                          <TableHead key={w} className="font-bold text-foreground text-center whitespace-nowrap min-w-[120px]">Week {w}</TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {matrixData.clients.map(c => (
+                        <TableRow key={c.clientId} className="hover:bg-amber-500/5 transition-colors border-b">
+                          <TableCell className="font-bold text-foreground sticky left-0 bg-background z-10 whitespace-nowrap shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                            {c.fullname}
+                          </TableCell>
+                          {matrixData.weeks.map(w => {
+                            const inst = instalments.find((i: any) => i.clientId === c.clientId && i.weekNumber === w);
+                            return (
+                              <TableCell key={w} className="text-center font-medium border-l border-muted/30">
+                                {inst ? (
+                                  <div className="flex flex-col items-center gap-1.5">
+                                    <span className="text-sm font-bold text-emerald-600">Rs. {Number(inst.paidAmount).toLocaleString()}</span>
+                                    <span className="text-[10px] text-muted-foreground">Target: Rs. {Number(inst.dueAmount).toLocaleString()}</span>
+                                    <Badge
+                                      className={cn(
+                                        "font-black px-2 py-0.5 rounded-full text-[8px] uppercase tracking-tighter border-none mt-1",
+                                        inst.status === "PAID"
+                                          ? "bg-emerald-500 text-white"
+                                          : inst.status === "PARTIAL"
+                                            ? "bg-amber-500 text-white"
+                                            : inst.status === "OVERDUE"
+                                              ? "bg-rose-500 text-white animate-pulse"
+                                              : "bg-slate-200 text-slate-500"
+                                      )}
+                                    >
+                                      {inst.status}
+                                    </Badge>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </div>
             </CardContent>
           </Card>
