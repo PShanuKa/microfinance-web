@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { CommonButton } from "@/components/common/Button";
  
 import {
   AlertDialog,
@@ -69,6 +70,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { LoanGuarantorsModal } from "@/components/Custom/LoanGuarantorsModal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useDialogStore } from "@/store/useDialogStore";
 
 export default function EditLoanSchedulePage() {
   const router = useRouter();
@@ -81,6 +83,8 @@ export default function EditLoanSchedulePage() {
   const [activeMember, setActiveMember] = useState<any>(null);
   const [activeGuarantorIndex, setActiveGuarantorIndex] = useState<number>(0);
   const [deleteConfirm, setDeleteConfirm] = useState<{ clientId: string, index: number } | null>(null);
+
+  const { setOpen } = useDialogStore();
 
   const { data: groupsData } = useGroupsQuery({ limit: 100 });
   const { data: loanData, isLoading: loanLoading } = useLoanQuery(id as string);
@@ -114,10 +118,21 @@ export default function EditLoanSchedulePage() {
 
   const updateMutation = useUpdateLoanScheduleMutation({
     onSuccess: () => {
-      router.push(`/loans/${id}`);
+      setOpen({
+        open: true,
+        type: "success",
+        title: "Action Complete",
+        message: "Loan schedule updated successfully."
+      });
+      setTimeout(() => router.push(`/loans/${id}`), 1500);
     },
     onError: (error: any) => {
-      setServerError(error.response?.data?.error || "Failed to update loan schedule");
+      setOpen({
+        open: true,
+        type: "error",
+        title: "Update Failed",
+        message: error.response?.data?.error || "Failed to update loan schedule"
+      });
     },
   });
 
@@ -633,18 +648,16 @@ export default function EditLoanSchedulePage() {
         )}
 
         <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t">
-          <Button 
+          <CommonButton 
             type="submit" 
             size="lg" 
-            disabled={updateMutation.isPending || !selectedGroupId}
+            isLoading={updateMutation.isPending}
+            disabled={!selectedGroupId}
+            leftIcon={<Save className="h-4 w-4" />}
             className="gap-2 px-10 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 h-12 font-black"
           >
-            {updateMutation.isPending ? "Restructuring..." : (
-              <>
-                <Save className="h-4 w-4" /> Save & Update All Schedules
-              </>
-            )}
-          </Button>
+            Save & Update All Schedules
+          </CommonButton>
         </div>
       </form>
 
