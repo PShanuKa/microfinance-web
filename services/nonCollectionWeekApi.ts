@@ -29,7 +29,7 @@ export const useNonCollectionWeeksQuery = () => {
 
 export const useCreateNonCollectionWeekMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, Error, any>({
     ...options,
     mutationFn: nonCollectionWeekService.createWeek,
     onSuccess: (...args) => {
@@ -41,7 +41,7 @@ export const useCreateNonCollectionWeekMutation = (options: any = {}) => {
 
 export const useUpdateNonCollectionWeekMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, Error, { id: string; data: any }>({
     ...options,
     mutationFn: nonCollectionWeekService.updateWeek,
     onSuccess: (...args) => {
@@ -53,7 +53,7 @@ export const useUpdateNonCollectionWeekMutation = (options: any = {}) => {
 
 export const useDeleteNonCollectionWeekMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, Error, string>({
     ...options,
     mutationFn: nonCollectionWeekService.deleteWeek,
     onSuccess: (...args) => {
