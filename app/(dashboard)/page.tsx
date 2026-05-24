@@ -96,13 +96,17 @@ export default function DashboardPage() {
             <SelectTrigger className="w-[200px] bg-card/60 backdrop-blur-md border-none shadow-sm h-10 font-bold">
               <div className="flex items-center gap-2">
                 <Building className="h-4 w-4 text-primary" />
-                <SelectValue placeholder="Select Branch" />
+                <SelectValue>
+                  {selectedBranchId && selectedBranchId !== "all" 
+                    ? (branches.find((b: any) => b.id.toString() === selectedBranchId)?.name || "Select Branch")
+                    : "All Branches"}
+                </SelectValue>
               </div>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all" className="font-bold">All Branches</SelectItem>
               {branches.map((b: any) => (
-                <SelectItem key={b.id} value={b.id} className="font-medium">
+                <SelectItem key={b.id} value={b.id.toString()} className="font-medium">
                   {b.name}
                 </SelectItem>
               ))}
