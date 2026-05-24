@@ -1,4 +1,6 @@
 import { LoginForm } from "@/components/Custom/LoginForm";
+import Image from "next/image";
+import logo from "../../../assets/logo.png";
 
 export default function LoginPage() {
   return (
@@ -10,10 +12,12 @@ export default function LoginPage() {
       
       <div className="w-full flex flex-col items-center gap-8 animate-in fade-in zoom-in duration-500">
         <div className="flex flex-col items-center gap-2">
-            <h1 className="text-4xl font-extrabold text-primary tracking-tight">
+            {/* <h1 className="text-4xl font-extrabold text-primary tracking-tight">
                Don and Dons
             </h1>
-            <p className="text-gray-500 font-medium">Secure Banking Solution</p>
+            <p className="text-gray-500 font-medium">Secure Banking Solution</p> */}
+
+            <Image src={logo} alt="Logo" width={200} height={200} />
         </div>
         
         <LoginForm />
