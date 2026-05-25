@@ -175,6 +175,7 @@ export default function MortgageLoanViewPage() {
       type: "confirmation",
       title: "Reject Mortgage Loan Application",
       message: "Please enter the reason for rejecting this application. This updates the status back to DRAFT so the officer can modify and resubmit.",
+      showInput: true,
       onConfirm: (reason) => {
         if (!reason?.trim()) return;
         rejectMutation.mutate(

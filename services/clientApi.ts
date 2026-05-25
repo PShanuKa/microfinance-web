@@ -22,6 +22,10 @@ const clientService = {
     const response = await api.delete(`/clients/${id}`);
     return response.data;
   },
+  restoreClient: async (id: string) => {
+    const response = await api.put(`/clients/${id}/restore`);
+    return response.data;
+  },
 };
 
 export const useClientsQuery = (params: any = {}, options = {}) => {
@@ -70,6 +74,19 @@ export const useDeleteClientMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
   return useMutation<any, any, string>({
     mutationFn: clientService.deleteClient,
+    ...options,
+    onSuccess: (data: any, variables: string, context: any) => {
+      queryClient.invalidateQueries({ queryKey: ["Client", variables] });
+      queryClient.invalidateQueries({ queryKey: ["Clients"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+
+export const useRestoreClientMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation<any, any, string>({
+    mutationFn: clientService.restoreClient,
     ...options,
     onSuccess: (data: any, variables: string, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Client", variables] });

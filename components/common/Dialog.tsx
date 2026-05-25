@@ -12,7 +12,7 @@ import { useDialogStore } from "@/store/useDialogStore";
 import { ShieldCheck, AlertCircle, AlertTriangle, CheckCircle2, Trash2 } from "lucide-react";
 
 export const CommonDialog = () => {
-  const { open, type, setClose, message, onConfirm, title, content } = useDialogStore();
+  const { open, type, setClose, message, onConfirm, title, content, showInput } = useDialogStore();
   const [inputValue, setInputValue] = useState("");
 
   const isError = type === "error";
@@ -80,7 +80,7 @@ export const CommonDialog = () => {
             </div>
           )}
           
-          {isConfirmation && !content && (
+          {isConfirmation && !content && showInput && (
             <div className="mt-4 text-left">
               <label className="text-xs font-bold text-slate-700 mb-1 block">Reason for Rejection</label>
               <Textarea 

@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useCreateClientMutation, useUpdateClientMutation } from "@/services/clientApi";
+import { useCreateClientMutation, useUpdateClientMutation, useRestoreClientMutation } from "@/services/clientApi";
+import { useDialogStore } from "@/store/useDialogStore";
+import { useRouter } from "next/navigation";
 import { useUploadAttachmentMutation } from "@/services/attachmentApi";
 import { 
   X, 
@@ -51,6 +53,9 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
   const [serverError, setServerError] = useState<string | null>(null);
   const [profilePreview, setProfilePreview] = useState<string | null>(initialData?.profileImage?.fileUrl || null);
   const profileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const { setOpen } = useDialogStore();
+  const restoreMutation = useRestoreClientMutation();
 
   const {
     register,
@@ -168,6 +173,25 @@ export function ClientForm({ initialData, onSuccess, onCancel }: ClientFormProps
   const handleApiError = (error: any) => {
     const response = error.response?.data;
     
+    // Check if it's a deleted client conflict
+    if (response?.fields?.isDeleted && response?.fields?.clientId) {
+      setOpen({
+        open: true,
+        type: "confirmation",
+        title: "Reactivate Client",
+        message: "A deactivated account with this NIC already exists. Would you like to reactivate it?",
+        onConfirm: async () => {
+          try {
+            await restoreMutation.mutateAsync(response.fields.clientId);
+            router.push(`/clients/${response.fields.clientId}/edit`);
+          } catch (e) {
+            setServerError("Failed to reactivate client.");
+          }
+        }
+      });
+      return;
+    }
+
     // Always show the top-level error message if it exists
     if (response?.error) {
       setServerError(response.error);

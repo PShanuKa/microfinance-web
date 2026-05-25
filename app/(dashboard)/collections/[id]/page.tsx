@@ -160,6 +160,7 @@ export default function CollectionDetailPage() {
       type: "confirmation",
       title: "Reject Collection Registry",
       message: "Please enter the reason for rejecting this collection registry below.",
+      showInput: true,
       onConfirm: (reason) => {
         if (!reason?.trim()) return;
         rejectMutation.mutate(
