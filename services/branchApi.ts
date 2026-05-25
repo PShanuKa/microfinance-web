@@ -41,7 +41,7 @@ export const useBranchQuery = (id: string) => {
 
 export const useCreateBranchMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, any>({
     ...options,
     mutationFn: branchService.createBranch,
     onSuccess: (...args) => {
@@ -53,7 +53,7 @@ export const useCreateBranchMutation = (options: any = {}) => {
 
 export const useUpdateBranchMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, any>({
     ...options,
     mutationFn: branchService.updateBranch,
     onSuccess: (...args) => {
@@ -65,7 +65,7 @@ export const useUpdateBranchMutation = (options: any = {}) => {
 
 export const useDeleteBranchMutation = (options: any = {}) => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<any, any, any>({
     ...options,
     mutationFn: branchService.deleteBranch,
     onSuccess: (...args) => {
