@@ -26,10 +26,26 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useBranchesQuery } from "@/services/branchApi";
 import { useDashboardStatsQuery } from "@/services/dashboardApi";
+import { useGetMeQuery } from "@/services/authApi";
 import { Spinner } from "@/components/ui/spinner";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
-  const [selectedBranchId, setSelectedBranchId] = useState<string>("all");
+  const { data: currentUserData } = useGetMeQuery();
+  const user = currentUserData?.user;
+
+  // If user is not admin and has a branch, use that branch
+  const isNonAdminWithBranch = user && user.role !== "ADMIN" && user.branchId;
+  const initialBranchId = isNonAdminWithBranch ? user.branchId : "all";
+
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(initialBranchId);
+
+  // Effect to update selectedBranchId when user data loads if it was initially unknown
+  useEffect(() => {
+    if (isNonAdminWithBranch && selectedBranchId !== user.branchId) {
+      setSelectedBranchId(user.branchId);
+    }
+  }, [isNonAdminWithBranch, user?.branchId, selectedBranchId]);
 
   const { data: branchesData } = useBranchesQuery();
   const { data: statsData, isLoading } = useDashboardStatsQuery(
@@ -92,8 +108,12 @@ export default function DashboardPage() {
         />
         
         <div className="flex flex-wrap items-center gap-3">
-          <Select value={selectedBranchId} onValueChange={(val) => setSelectedBranchId(val || "all")}>
-            <SelectTrigger className="w-[200px] bg-card/60 backdrop-blur-md border-none shadow-sm h-10 font-bold">
+          <Select 
+            value={selectedBranchId} 
+            onValueChange={(val) => setSelectedBranchId(val || "all")}
+            disabled={isNonAdminWithBranch}
+          >
+            <SelectTrigger className="w-[200px] bg-card/60 backdrop-blur-md border-none shadow-sm h-10 font-bold disabled:opacity-70 disabled:cursor-not-allowed">
               <div className="flex items-center gap-2">
                 <Building className="h-4 w-4 text-primary" />
                 <SelectValue>

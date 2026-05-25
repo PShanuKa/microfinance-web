@@ -23,6 +23,7 @@ type FormValues = {
   role: string;
   status: boolean;
   branchId?: string;
+  password?: string;
 };
 
 interface UserFormProps {
@@ -101,8 +102,8 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
     if (initialData?.id) {
       updateMutation.mutate({ id: initialData.id, ...data });
     } else {
-      // For creation, we also need a default password if not provided
-      createMutation.mutate({ ...data, password: "password123" });
+      // For creation, we also need a password, use provided or default
+      createMutation.mutate({ ...data, password: data.password || "password123" });
     }
   };
 
@@ -145,6 +146,22 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
             <p className="text-xs text-destructive">{errors.email.message}</p>
           )}
         </div>
+
+        {!initialData && (
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter password (default: password123)"
+              {...register("password")}
+              className={errors.password ? "border-destructive" : ""}
+            />
+            {errors.password && (
+              <p className="text-xs text-destructive">{errors.password.message}</p>
+            )}
+          </div>
+        )}
 
         <div className="grid gap-2">
           <Label>Branch</Label>
