@@ -40,17 +40,22 @@ export default function CreateGroupPage() {
   const currentUser = meData?.user;
 
   // Get branches
-  const { data: branchesData, isLoading: isLoadingBranches } = useBranchesQuery();
+  const { data: branchesData, isLoading: isLoadingBranches } =
+    useBranchesQuery();
   const branches = branchesData?.branches || [];
 
   // Get officers (Collection Officers)
-  const { data: userData } = useUsersQuery({ role: "COLLECTION_OFFICER", limit: 100 });
+  const { data: userData } = useUsersQuery({
+    role: "COLLECTION_OFFICER",
+    limit: 100,
+  });
   const {
     register,
     handleSubmit,
     setValue,
     watch,
     setError,
+    clearErrors,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -62,7 +67,8 @@ export default function CreateGroupPage() {
     },
   });
 
-  const isBranchSelectDisabled = currentUser?.role !== "ADMIN" && !!currentUser?.branchId;
+  const isBranchSelectDisabled =
+    currentUser?.role !== "ADMIN" && !!currentUser?.branchId;
 
   React.useEffect(() => {
     if (currentUser?.branchId && currentUser?.role !== "ADMIN") {
@@ -72,14 +78,17 @@ export default function CreateGroupPage() {
 
   const handleApiError = (error: any) => {
     const response = error.response?.data;
-    
+
     if (response?.error) {
       setServerError(response.error);
     }
 
     if (response?.fields) {
       Object.keys(response.fields).forEach((field: any) => {
-        setError(field as any, { type: "manual", message: response.fields[field] });
+        setError(field as any, {
+          type: "manual",
+          message: response.fields[field],
+        });
       });
     } else if (!response?.error) {
       setServerError("An error occurred. Please try again.");
@@ -114,7 +123,11 @@ export default function CreateGroupPage() {
         title="Create New Group"
         description="Initialize a new microfinance group with a name, branch, and collection schedule"
       >
-        <Button variant="outline" onClick={() => router.back()} className="gap-2">
+        <Button
+          variant="outline"
+          onClick={() => router.back()}
+          className="gap-2"
+        >
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
       </PageHeader>
@@ -138,23 +151,33 @@ export default function CreateGroupPage() {
                   <Input
                     id="name"
                     placeholder="e.g. Sunlight Group"
-                    {...register("name")}
+                    {...register("name", { onChange: () => clearErrors("name") })}
                     className={errors.name ? "border-destructive" : ""}
                   />
-                  {errors.name && <p className="text-xs text-destructive">{errors.name.message as string}</p>}
+                  {errors.name && (
+                    <p className="text-xs text-destructive">
+                      {errors.name.message as string}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
                   <Label>Branch</Label>
                   <Select
                     value={selectedBranchId || "none"}
-                    onValueChange={(val) => setValue("branchId", val && val !== "none" ? val : "")}
+                    onValueChange={(val) => {
+                      setValue("branchId", val && val !== "none" ? val : "");
+                      clearErrors("branchId");
+                    }}
                     disabled={isBranchSelectDisabled}
                   >
-                    <SelectTrigger className={errors.branchId ? "border-destructive" : ""}>
+                    <SelectTrigger
+                      className={errors.branchId ? "border-destructive" : ""}
+                    >
                       <SelectValue>
                         {selectedBranchId && selectedBranchId !== "none"
-                          ? (branches.find((b: any) => b.id === selectedBranchId)?.name || "Select branch")
+                          ? branches.find((b: any) => b.id === selectedBranchId)
+                              ?.name || "Select branch"
                           : "None / No Branch"}
                       </SelectValue>
                     </SelectTrigger>
@@ -169,10 +192,15 @@ export default function CreateGroupPage() {
                   </Select>
                   {isBranchSelectDisabled && (
                     <p className="text-[10px] text-muted-foreground font-semibold">
-                      Your branch is pre-selected and locked based on your user profile.
+                      Your branch is pre-selected and locked based on your user
+                      profile.
                     </p>
                   )}
-                  {errors.branchId && <p className="text-xs text-destructive">{errors.branchId.message as string}</p>}
+                  {errors.branchId && (
+                    <p className="text-xs text-destructive">
+                      {errors.branchId.message as string}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid gap-2">
@@ -180,10 +208,14 @@ export default function CreateGroupPage() {
                   <Input
                     id="location"
                     placeholder="e.g. Kaduwela, Malabe"
-                    {...register("location")}
+                    {...register("location", { onChange: () => clearErrors("location") })}
                     className={errors.location ? "border-destructive" : ""}
                   />
-                  {errors.location && <p className="text-xs text-destructive">{errors.location.message as string}</p>}
+                  {errors.location && (
+                    <p className="text-xs text-destructive">
+                      {errors.location.message as string}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -191,11 +223,19 @@ export default function CreateGroupPage() {
                     <Label>Collection Day</Label>
                     <Select
                       value={selectedDay?.toString()}
-                      onValueChange={(val) => setValue("collectionDay", Number(val))}
+                      onValueChange={(val) => {
+                        setValue("collectionDay", Number(val));
+                        clearErrors("collectionDay");
+                      }}
                     >
-                      <SelectTrigger className={errors.collectionDay ? "border-destructive" : ""}>
+                      <SelectTrigger
+                        className={
+                          errors.collectionDay ? "border-destructive" : ""
+                        }
+                      >
                         <SelectValue>
-                          {DAYS.find(d => d.id === Number(selectedDay))?.name || "Select day"}
+                          {DAYS.find((d) => d.id === Number(selectedDay))
+                            ?.name || "Select day"}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -206,18 +246,29 @@ export default function CreateGroupPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.collectionDay && <p className="text-xs text-destructive">{errors.collectionDay.message as string}</p>}
+                    {errors.collectionDay && (
+                      <p className="text-xs text-destructive">
+                        {errors.collectionDay.message as string}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid gap-2">
                     <Label>Collection Officer</Label>
                     <Select
                       value={selectedOfficer}
-                      onValueChange={(val) => setValue("officerId", val || "")}
+                      onValueChange={(val) => {
+                        setValue("officerId", val || "");
+                        clearErrors("officerId");
+                      }}
                     >
-                      <SelectTrigger className={errors.officerId ? "border-destructive" : ""}>
+                      <SelectTrigger
+                        className={errors.officerId ? "border-destructive" : ""}
+                      >
                         <SelectValue>
-                          {userData?.users?.find((u: any) => u.id === selectedOfficer)?.fullname || "Select officer"}
+                          {userData?.users?.find(
+                            (u: any) => u.id === selectedOfficer,
+                          )?.fullname || "Select officer"}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -228,14 +279,24 @@ export default function CreateGroupPage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.officerId && <p className="text-xs text-destructive">{errors.officerId.message as string}</p>}
+                    {errors.officerId && (
+                      <p className="text-xs text-destructive">
+                        {errors.officerId.message as string}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end pt-4 border-t">
-                <Button type="submit" disabled={createMutation.isPending} className="gap-2 w-full md:w-auto">
-                  {createMutation.isPending ? "Creating..." : (
+                <Button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="gap-2 w-full md:w-auto"
+                >
+                  {createMutation.isPending ? (
+                    "Creating..."
+                  ) : (
                     <>
                       <Save className="h-4 w-4" /> Save & Continue
                     </>
