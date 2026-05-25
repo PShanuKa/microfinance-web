@@ -20,7 +20,7 @@ type FormValues = {
   id?: string;
   fullname: string;
   email: string;
-  role: string;
+  roles: string[];
   status: boolean;
   branchId?: string;
   password?: string;
@@ -39,6 +39,8 @@ const ROLES = [
   "COLLECTION_OFFICER",
   "APPROVER",
   "AUDITOR",
+  "MORTGAGE_OFFICER",
+  "MORTGAGE_COLLECTION",
 ];
 
 export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
@@ -58,7 +60,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
     defaultValues: {
       fullname: "",
       email: "",
-      role: "LOAN_OFFICER",
+      roles: ["LOAN_OFFICER"],
       status: true,
       branchId: "",
     },
@@ -69,7 +71,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
       reset({
         fullname: initialData.fullname || "",
         email: initialData.email || "",
-        role: initialData.role || "LOAN_OFFICER",
+        roles: initialData.roles || ["LOAN_OFFICER"],
         status: initialData.status !== undefined ? initialData.status : true,
         branchId: initialData.branchId || initialData.branch?.id || "",
       });
@@ -107,7 +109,7 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
     }
   };
 
-  const selectedRole = watch("role");
+  const selectedRoles = watch("roles") || [];
   const selectedStatus = watch("status");
   const selectedBranchId = watch("branchId");
 
@@ -188,23 +190,35 @@ export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="grid gap-2">
-            <Label>Role</Label>
-            <Select
-              value={selectedRole}
-              onValueChange={(value) => setValue("role", value || "LOAN_OFFICER")}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLES.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {role.replace("_", " ")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid gap-2 col-span-2">
+            <Label>Roles</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 p-3 border rounded-md">
+              {ROLES.map((role) => (
+                <label key={role} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary"
+                    checked={selectedRoles.includes(role)}
+                    onChange={(e) => {
+                      const currentRoles = watch("roles") || [];
+                      if (e.target.checked) {
+                        setValue("roles", [...currentRoles, role], { shouldValidate: true });
+                      } else {
+                        setValue(
+                          "roles",
+                          currentRoles.filter((r) => r !== role),
+                          { shouldValidate: true }
+                        );
+                      }
+                    }}
+                  />
+                  <span className="text-sm font-medium">{role.replace("_", " ")}</span>
+                </label>
+              ))}
+            </div>
+            {errors.roles && (
+              <p className="text-xs text-destructive">{errors.roles.message}</p>
+            )}
           </div>
 
           <div className="grid gap-2">

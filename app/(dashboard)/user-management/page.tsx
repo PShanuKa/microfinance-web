@@ -180,9 +180,13 @@ export default function UserManagementPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="font-bold capitalize border-primary/20 text-primary">
-                          {user.role?.toLowerCase().replace("_", " ")}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {user.roles?.map((role: string) => (
+                            <Badge key={role} variant="outline" className="font-bold capitalize border-primary/20 text-primary whitespace-nowrap">
+                              {role.toLowerCase().replace("_", " ")}
+                            </Badge>
+                          ))}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {user.branch ? (

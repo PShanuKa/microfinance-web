@@ -20,10 +20,18 @@ export const RoleGate: React.FC<RoleGateProps> = ({
   children,
   fallback = null,
 }) => {
-  const { data: userData } = useGetMeQuery();
-  const userRole = userData?.user?.role;
+  const { data: userData, isLoading } = useGetMeQuery();
+  
+  if (isLoading) {
+    return null; // Don't render fallback immediately while loading
+  }
 
-  if (!userRole || !allowedRoles.includes(userRole)) {
+  let userRoles = userData?.user?.roles || [];
+  if (typeof userRoles === 'string') {
+    try { userRoles = JSON.parse(userRoles); } catch (e) { userRoles = []; }
+  }
+
+  if (userRoles.length === 0 || !userRoles.some((role: string) => allowedRoles.includes(role))) {
     return <>{fallback}</>;
   }
 
@@ -38,9 +46,15 @@ export const RoleGate: React.FC<RoleGateProps> = ({
  * const canEdit = useHasRole(["ADMIN", "LOAN_OFFICER"]);
  */
 export const useHasRole = (allowedRoles: string[]): boolean => {
-  const { data: userData } = useGetMeQuery();
-  const userRole = userData?.user?.role;
+  const { data: userData, isLoading } = useGetMeQuery();
+  
+  if (isLoading) return false;
 
-  if (!userRole) return false;
-  return allowedRoles.includes(userRole);
+  let userRoles = userData?.user?.roles || [];
+  if (typeof userRoles === 'string') {
+    try { userRoles = JSON.parse(userRoles); } catch (e) { userRoles = []; }
+  }
+
+  if (userRoles.length === 0) return false;
+  return userRoles.some((role: string) => allowedRoles.includes(role));
 };

@@ -96,10 +96,14 @@ export default function DashboardLayout({
   }, [setSideBar]);
 
   const pathname = usePathname();
-  const userRole = data?.user?.role;
+  let userRoles = data?.user?.roles || [];
+  if (typeof userRoles === 'string') {
+    try { userRoles = JSON.parse(userRoles); } catch (e) { userRoles = []; }
+  }
 
   // Find if there is a specific home redirect for the current role
-  const redirectTarget = pathname === "/" && userRole ? ROLE_HOME_REDIRECTS[userRole] : null;
+  const matchedRedirectRole = userRoles.find((role: string) => ROLE_HOME_REDIRECTS[role]);
+  const redirectTarget = pathname === "/" && matchedRedirectRole ? ROLE_HOME_REDIRECTS[matchedRedirectRole] : null;
   const isRedirecting = !!redirectTarget;
 
   useEffect(() => {
@@ -110,7 +114,7 @@ export default function DashboardLayout({
 
   // Check if user is allowed to access the current route
   const isAuthorized = (() => {
-    if (!userRole) return false;
+    if (userRoles.length === 0) return false;
     
     // If it's a redirecting state, consider it loaded/authorized temporarily during redirect
     if (isRedirecting) return true;
@@ -121,11 +125,11 @@ export default function DashboardLayout({
     // If no rule matches, it's public (e.g. Profile "/profile")
     if (!rule) {
       // If the current role has a home redirect from "/", they are not authorized to view the root "/" page
-      if (pathname === "/" && userRole && ROLE_HOME_REDIRECTS[userRole]) return false;
+      if (pathname === "/" && matchedRedirectRole) return false;
       return true;
     }
     
-    return rule.allowedRoles.includes(userRole);
+    return userRoles.some((role: string) => rule.allowedRoles.includes(role));
   })();
 
   // Show Premium Loading if either API is fetching OR our minimum timer is running OR we are redirecting
@@ -158,7 +162,7 @@ export default function DashboardLayout({
               <div>
                 <h2 className="text-xl font-black text-slate-900 tracking-tight leading-tight">Access Denied</h2>
                 <p className="text-sm font-semibold text-slate-500 mt-2 leading-relaxed">
-                  Your current account role (<strong className="text-slate-700 uppercase font-black">{userRole?.replace("_", " ")}</strong>) does not have permission to access <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono font-bold text-rose-600">{pathname}</code>.
+                  Your current account role (<strong className="text-slate-700 uppercase font-black">{userRoles.join(", ").replace(/_/g, " ")}</strong>) does not have permission to access <code className="bg-slate-100 px-1.5 py-0.5 rounded text-xs font-mono font-bold text-rose-600">{pathname}</code>.
                 </p>
               </div>
               <Button

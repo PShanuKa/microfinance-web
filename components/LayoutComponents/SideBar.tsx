@@ -96,8 +96,11 @@ const items: MenuGroup[] = [
 export default function SideBar() {
   const pathname = usePathname();
   const { toggleSideBar } = useUiStore();
-  const { data: userData } = useGetMeQuery();
-  const userRole = userData?.user?.role;
+  const { data: userData, isLoading } = useGetMeQuery();
+  let userRoles = userData?.user?.roles || [];
+  if (typeof userRoles === 'string') {
+    try { userRoles = JSON.parse(userRoles); } catch (e) { userRoles = []; }
+  }
 
   return (
     <div className="bg-(--sidebar-bg) h-screen w-full">
@@ -110,7 +113,8 @@ export default function SideBar() {
         <div className="w-full  flex flex-col gap-1 mt-5 px-2">
           {items.map((group, index) => {
             // Check group-level role access
-            if (group.allowedRoles && (!userRole || !group.allowedRoles.includes(userRole))) {
+            if (isLoading) return null;
+            if (group.allowedRoles && (userRoles.length === 0 || !userRoles.some((r: string) => group.allowedRoles!.includes(r)))) {
               return null;
             }
 
@@ -121,7 +125,7 @@ export default function SideBar() {
                 </p>
                 {group.items.map((item, innerIndex) => {
                   // Check item-level role access
-                  if (item.allowedRoles && (!userRole || !item.allowedRoles.includes(userRole))) {
+                  if (item.allowedRoles && (userRoles.length === 0 || !userRoles.some((r: string) => item.allowedRoles!.includes(r)))) {
                     return null;
                   }
 

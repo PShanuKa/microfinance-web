@@ -50,7 +50,7 @@ export default function ProfilePage() {
             <CardTitle className="text-2xl font-black text-slate-800">{user?.fullname}</CardTitle>
             <div className="flex justify-center mt-2">
               <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20 px-4 py-1 rounded-full font-bold uppercase text-[10px] tracking-wider">
-                {user?.role?.replace("_", " ")}
+                {user?.roles?.map((r: string) => r.replace("_", " ")).join(", ")}
               </Badge>
             </div>
           </CardHeader>
@@ -82,7 +82,7 @@ export default function ProfilePage() {
               <div className="space-y-1">
                 <LabelItem icon={<ShieldCheck className="w-4 h-4" />} label="System Role" />
                 <div className="flex items-center gap-2 ml-6">
-                  <span className="text-slate-800 font-bold">{user?.role?.replace("_", " ")}</span>
+                  <span className="text-slate-800 font-bold">{user?.roles?.map((r: string) => r.replace("_", " ")).join(", ")}</span>
                   <BadgeCheck className="w-4 h-4 text-emerald-500" />
                 </div>
               </div>
