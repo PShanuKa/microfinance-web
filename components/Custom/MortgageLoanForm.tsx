@@ -55,14 +55,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Mock clients to use if API is offline or empty
-const MOCK_CLIENTS = [
-  { id: "c1", fullname: "Samarasinghe Perera", nic: "198834920194", phone: "0771234567", clientNo: "CL-8921" },
-  { id: "c2", fullname: "Anura Bandaranaike", nic: "913948201V", phone: "0719876543", clientNo: "CL-2345" },
-  { id: "c3", fullname: "Priyantha Jayawardene", nic: "197549204910", phone: "0756543210", clientNo: "CL-5678" },
-  { id: "c4", fullname: "Fathima Rinosha", nic: "958392019V", phone: "0768832049", clientNo: "CL-4012" },
-  { id: "c5", fullname: "Karthik Subramaniam", nic: "199430294029", phone: "0724920194", clientNo: "CL-1192" },
-];
 
 const ASSET_TYPES = [
   { value: "VEHICLE", label: "Vehicle (Car, Bike, Lorry)" },
@@ -193,7 +185,7 @@ export function MortgageLoanForm({
   const assessedValue = Number(watch("assessedValue") || 0);
 
   // Filter clients based on search input
-  const allClients = clientsData?.clients?.length ? clientsData.clients : MOCK_CLIENTS;
+  const allClients = clientsData?.clients || [];
   const filteredClients = allClients.filter((c: any) =>
     c.fullname.toLowerCase().includes(searchQuery.toLowerCase()) ||
     c.nic.toLowerCase().includes(searchQuery.toLowerCase()) ||
