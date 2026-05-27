@@ -41,39 +41,115 @@ const items: MenuGroup[] = [
   {
     title: "Modules",
     items: [
-      { icon: LayoutDashboard, label: "Dashboard", href: "/", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] },
-      { icon: Users, label: "Clients", href: "/clients", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] },
+      // {
+      //   icon: LayoutDashboard,
+      //   label: "Dashboard",
+      //   href: "/",
+      //   allowedRoles: [
+      //     "ADMIN",
+      //     "BRANCH_MANAGER",
+      //     "LOAN_OFFICER",
+      //     "APPROVER",
+      //     "AUDITOR",
+      //   ],
+      // },
+      {
+        icon: Users,
+        label: "Clients",
+        href: "/clients",
+        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"],
+      },
     ],
   },
   {
     title: "Arunodayata Saviyak",
-    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"],
+    allowedRoles: [
+      "ADMIN",
+      "BRANCH_MANAGER",
+      "LOAN_OFFICER",
+      "APPROVER",
+      "AUDITOR",
+    ],
     items: [
+      {
+        icon: LayoutDashboard,
+        label: "Dashboard",
+        href: "/",
+        allowedRoles: [
+          "ADMIN",
+          "BRANCH_MANAGER",
+          "LOAN_OFFICER",
+          "APPROVER",
+          "AUDITOR",
+        ],
+      },
       { icon: UsersRound, label: "Groups", href: "/groups" },
       { icon: Wallet, label: "Loans", href: "/loans" },
+      {
+        icon: Receipt,
+        label: "Collections",
+        href: "/collections",
+        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"],
+      },
+      {
+        icon: ClipboardList,
+        label: "Collection Registry",
+        href: "/collection-registry",
+        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER"],
+      },
     ],
   },
   {
     title: "Mortgage Loans",
     // allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER" , "AUDITOR"],
-    items: [{ icon: Wallet, label: "Mortgage", href: "/mortgage-loans" },{ icon: Wallet, label: "Mortgage Collection", href: "/mortgage-collection" }],
-  },
-  {
-    title: "Collections",
-    // allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER", "AUDITOR", "APPROVER"],
     items: [
-      { icon: Receipt, label: "Collections", href: "/collections", allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"] },
       {
-        icon: ClipboardList,
-        label: "Collection Registry",
-        href: "/collection-registry",
-        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER"]
+        icon: Wallet,
+        label: "Mortgage",
+        href: "/mortgage-loans",
+        allowedRoles: [
+          "ADMIN",
+          "BRANCH_MANAGER",
+          "APPROVER",
+          "AUDITOR",
+          "MORTGAGE_OFFICER",
+        ],
+      },
+      {
+        icon: Wallet,
+        label: "Mortgage Collection",
+        href: "/mortgage-collection",
+        allowedRoles: [
+          "ADMIN",
+          "BRANCH_MANAGER",
+          "APPROVER",
+          "AUDITOR",
+          "MORTGAGE_COLLECTION",
+        ],
       },
     ],
   },
+  // {
+  //   title: "Collections",
+  //   // allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER", "AUDITOR", "APPROVER"],
+  //   items: [
+  //     {
+  //       icon: Receipt,
+  //       label: "Collections",
+  //       href: "/collections",
+  //       allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"],
+  //     },
+  //     {
+  //       icon: ClipboardList,
+  //       label: "Collection Registry",
+  //       href: "/collection-registry",
+  //       allowedRoles: ["ADMIN", "BRANCH_MANAGER", "COLLECTION_OFFICER"],
+  //     },
+  //   ],
+  // },
   {
     title: "Reports",
-    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER" ],
+    allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"],
     items: [
       { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
       // { icon: FileBarChart, label: "Reports", href: "/reports" },
@@ -83,12 +159,27 @@ const items: MenuGroup[] = [
     title: "System Settings",
     allowedRoles: ["ADMIN", "AUDITOR"],
     items: [
-      { icon: ShieldUser, label: "User Management", href: "/user-management", allowedRoles: ["ADMIN"] },
-      { icon: Building, label: "Branch Management", href: "/branches" , allowedRoles: ["ADMIN"] },
+      {
+        icon: ShieldUser,
+        label: "User Management",
+        href: "/user-management",
+        allowedRoles: ["ADMIN"],
+      },
+      {
+        icon: Building,
+        label: "Branch Management",
+        href: "/branches",
+        allowedRoles: ["ADMIN"],
+      },
       { icon: History, label: "Audit Logs", href: "/audit-logs" },
       { icon: CalendarDays, label: "Non-Collection Weeks", href: "/con-weeks" },
       // { icon: Target, label: "Collection Targets", href: "/col-targets" },
-      { icon: Cog, label: "Settings", href: "/settings" , allowedRoles: ["ADMIN"]},
+      {
+        icon: Cog,
+        label: "Settings",
+        href: "/settings",
+        allowedRoles: ["ADMIN"],
+      },
     ],
   },
 ];
@@ -98,8 +189,12 @@ export default function SideBar() {
   const { toggleSideBar } = useUiStore();
   const { data: userData, isLoading } = useGetMeQuery();
   let userRoles = userData?.user?.roles || [];
-  if (typeof userRoles === 'string') {
-    try { userRoles = JSON.parse(userRoles); } catch (e) { userRoles = []; }
+  if (typeof userRoles === "string") {
+    try {
+      userRoles = JSON.parse(userRoles);
+    } catch (e) {
+      userRoles = [];
+    }
   }
 
   return (
@@ -114,7 +209,11 @@ export default function SideBar() {
           {items.map((group, index) => {
             // Check group-level role access
             if (isLoading) return null;
-            if (group.allowedRoles && (userRoles.length === 0 || !userRoles.some((r: string) => group.allowedRoles!.includes(r)))) {
+            if (
+              group.allowedRoles &&
+              (userRoles.length === 0 ||
+                !userRoles.some((r: string) => group.allowedRoles!.includes(r)))
+            ) {
               return null;
             }
 
@@ -125,7 +224,13 @@ export default function SideBar() {
                 </p>
                 {group.items.map((item, innerIndex) => {
                   // Check item-level role access
-                  if (item.allowedRoles && (userRoles.length === 0 || !userRoles.some((r: string) => item.allowedRoles!.includes(r)))) {
+                  if (
+                    item.allowedRoles &&
+                    (userRoles.length === 0 ||
+                      !userRoles.some((r: string) =>
+                        item.allowedRoles!.includes(r),
+                      ))
+                  ) {
                     return null;
                   }
 

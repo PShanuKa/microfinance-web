@@ -35,7 +35,7 @@ export default function NavBar() {
         >
           <Menu size={20} className="text-slate-600" />
         </button>
-        <h1 className="font-bold text-xl text-slate-800 hidden md:block">Microfinance System</h1>
+        {/* <h1 className="font-bold text-xl text-slate-800 hidden md:block">Microfinance System</h1> */}
       </div>
 
       <div className="flex items-center gap-4">
