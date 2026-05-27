@@ -104,6 +104,18 @@ const items: MenuGroup[] = [
     // allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER" , "AUDITOR"],
     items: [
       {
+        icon: LayoutDashboard,
+        label: "Dashboard",
+        href: "/mortgage-dashboard",
+        allowedRoles: [
+          "ADMIN",
+          "BRANCH_MANAGER",
+          "APPROVER",
+          "AUDITOR",
+          "MORTGAGE_OFFICER",
+        ],
+      },
+      {
         icon: Wallet,
         label: "Mortgage",
         href: "/mortgage-loans",
