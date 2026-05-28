@@ -233,14 +233,14 @@ function CreateMortgageCollectionForm() {
                   </PopoverTrigger>
                   <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                     <Command>
-                      <CommandInput placeholder="Search loan no or client name..." />
+                      <CommandInput placeholder="Search loan no, client name, or NIC..." />
                       <CommandList>
                         <CommandEmpty>No mortgage loans found.</CommandEmpty>
                         <CommandGroup>
                           {activeLoans.map((loan: any) => (
                             <CommandItem
                               key={loan.id}
-                              value={`${loan.loanNo} ${loan.client?.fullname || ""}`}
+                              value={`${loan.loanNo} ${loan.client?.fullname || ""} ${loan.client?.nic || ""} ${loan.client?.clientNo || ""}`}
                               onSelect={() => {
                                 setSelectedLoanId(loan.id);
                                 setPaymentAmountStr("");
