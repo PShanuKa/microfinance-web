@@ -425,6 +425,9 @@ export default function MortgageLoanViewPage() {
   );
 
   const principalPaid = Number(loanDetails?.principalPaid || 0);
+  const remainingPrincipal = Math.max(0, Number(loanDetails?.lentAmount || 0) - principalPaid);
+  const currentMonthlyDue = remainingPrincipal * (Number(loanDetails?.interestRate || 0) / 100);
+  const currentDailyPenalty = currentMonthlyDue * 0.01;
 
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
@@ -634,10 +637,15 @@ export default function MortgageLoanViewPage() {
         <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md">
           <CardContent className="p-5 flex flex-col gap-1 text-left">
             <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1">
-              <Wallet className="h-3.5 w-3.5 text-indigo-500" /> Monthly Due
+              <Wallet className="h-3.5 w-3.5 text-indigo-500" /> Current Monthly Due
             </span>
-            <span className="text-2xl font-black text-indigo-600">
-              {formatCurrency(loanDetails.monthlyDueAmount)}
+            <span className="text-2xl font-black text-indigo-600 flex items-baseline gap-2">
+              {formatCurrency(currentMonthlyDue)}
+              {currentMonthlyDue < Number(loanDetails.monthlyDueAmount) && (
+                 <span className="text-xs font-semibold text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                   Reduced from {formatCurrency(loanDetails.monthlyDueAmount)}
+                 </span>
+              )}
             </span>
           </CardContent>
         </Card>
@@ -800,10 +808,10 @@ export default function MortgageLoanViewPage() {
             </div>
             <div className="flex justify-between border-b pb-2">
               <span className="text-muted-foreground">
-                Monthly Interest Payment
+                Current Monthly Interest Payment
               </span>
               <span className="font-bold text-indigo-600">
-                {formatCurrency(loanDetails.monthlyDueAmount)}
+                {formatCurrency(currentMonthlyDue)}
               </span>
             </div>
             <div className="flex justify-between border-b pb-2 md:border-0 md:pb-0">
@@ -814,10 +822,10 @@ export default function MortgageLoanViewPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">
-                Daily Late Penalty (1% of monthly)
+                Current Daily Late Penalty (1% of monthly)
               </span>
               <span className="font-bold text-rose-500">
-                {formatCurrency(loanDetails.dailyPenaltyAmount)} / day
+                {formatCurrency(currentDailyPenalty)} / day
               </span>
             </div>
           </div>
