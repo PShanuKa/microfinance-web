@@ -19,10 +19,12 @@ import {
   ClipboardList,
   History,
   Building,
+  FileUser,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGetMeQuery } from "@/services/authApi";
+
 
 interface MenuItem {
   icon: any;
@@ -69,6 +71,7 @@ const items: MenuGroup[] = [
       "LOAN_OFFICER",
       "APPROVER",
       "AUDITOR",
+      "COLLECTION_OFFICER",
     ],
     items: [
       {
@@ -83,8 +86,18 @@ const items: MenuGroup[] = [
           "AUDITOR",
         ],
       },
-      { icon: UsersRound, label: "Groups", href: "/groups" },
-      { icon: Wallet, label: "Loans", href: "/loans" },
+      { 
+        icon: UsersRound, 
+        label: "Groups", 
+        href: "/groups",
+        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"]
+      },
+      { 
+        icon: Wallet, 
+        label: "Loans", 
+        href: "/loans",
+        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"]
+      },
       {
         icon: Receipt,
         label: "Collections",
@@ -164,6 +177,7 @@ const items: MenuGroup[] = [
     allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"],
     items: [
       { icon: ShieldAlert, label: "Blacklist", href: "/blacklist" },
+      { icon: FileUser, label: "Client Wise Report", href: "/client-wise-report" },
       // { icon: FileBarChart, label: "Reports", href: "/reports" },
     ],
   },

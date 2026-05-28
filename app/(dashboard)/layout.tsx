@@ -12,6 +12,9 @@ import { CommonDialog } from "@/components/common/Dialog";
 
 // Define route patterns and the roles allowed to access them
 const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
+  // Dashboard & Root
+  { pattern: /^\/$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] },
+
   // Admin & Settings
   { pattern: /^\/user-management(\/|$)/, allowedRoles: ["ADMIN"] },
   { pattern: /^\/branches(\/|$)/, allowedRoles: ["ADMIN"] },
@@ -101,9 +104,13 @@ export default function DashboardLayout({
     try { userRoles = JSON.parse(userRoles); } catch (e) { userRoles = []; }
   }
 
-  // Find if there is a specific home redirect for the current role
+  // Check if they are allowed to access root dashboard
+  const rootRule = ROUTE_PERMISSIONS.find((p) => p.pattern.test("/"));
+  const canAccessRoot = rootRule ? userRoles.some((r: string) => rootRule.allowedRoles.includes(r)) : true;
+
+  // Find if there is a specific home redirect for the current role (only if they can't access root)
   const matchedRedirectRole = userRoles.find((role: string) => ROLE_HOME_REDIRECTS[role]);
-  const redirectTarget = pathname === "/" && matchedRedirectRole ? ROLE_HOME_REDIRECTS[matchedRedirectRole] : null;
+  const redirectTarget = pathname === "/" && !canAccessRoot && matchedRedirectRole ? ROLE_HOME_REDIRECTS[matchedRedirectRole] : null;
   const isRedirecting = !!redirectTarget;
 
   useEffect(() => {
@@ -124,8 +131,6 @@ export default function DashboardLayout({
     
     // If no rule matches, it's public (e.g. Profile "/profile")
     if (!rule) {
-      // If the current role has a home redirect from "/", they are not authorized to view the root "/" page
-      if (pathname === "/" && matchedRedirectRole) return false;
       return true;
     }
     
