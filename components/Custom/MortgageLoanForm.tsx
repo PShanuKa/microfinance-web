@@ -24,6 +24,8 @@ import { Badge } from "@/components/ui/badge";
 import { 
   useClientsQuery 
 } from "@/services/clientApi";
+import { useGetMeQuery } from "@/services/authApi";
+import { useBranchesQuery } from "@/services/branchApi";
 import { 
   useUploadAttachmentMutation,
   useDeleteAttachmentMutation
@@ -74,6 +76,7 @@ type TitledFileItem = {
 
 type FormValues = {
   clientId: string;
+  branchId: string;
   lentAmount: number;
   interestRate: number;
   assetType: string;
@@ -112,6 +115,8 @@ export function MortgageLoanForm({
   const [titledAttachments, setTitledAttachments] = useState<Array<TitledFileItem>>([]);
 
   // Queries & Mutations
+  const { data: userData } = useGetMeQuery();
+  const { data: branchesData } = useBranchesQuery();
   const { data: clientsData, isLoading: isClientsLoading } = useClientsQuery({ limit: 100 });
   const uploadAttachmentMutation = useUploadAttachmentMutation();
   const deleteAttachmentMutation = useDeleteAttachmentMutation();
@@ -140,6 +145,10 @@ export function MortgageLoanForm({
 
   // Pre-populate values for edit mode
   useEffect(() => {
+    if (userData?.user?.branchId) {
+      setValue("branchId", userData.user.branchId);
+    }
+    
     if (initialData) {
       if (initialData.client) {
         setSelectedClient(initialData.client);
@@ -455,7 +464,28 @@ export function MortgageLoanForm({
               </CardTitle>
               <CardDescription className="font-semibold text-xs">Search for an active client to bind to this mortgage agreement</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6 space-y-4">
+            <CardContent className="pt-6 space-y-6">
+              {/* Branch Selection */}
+              <div className="grid gap-2">
+                <Label className="text-sm font-bold text-slate-700">Operating Branch</Label>
+                <Select 
+                  value={watch("branchId") || ""}
+                  onValueChange={(val) => setValue("branchId", val)}
+                  disabled={!!userData?.user?.branchId}
+                >
+                  <SelectTrigger className="h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg text-slate-900 font-bold">
+                    <SelectValue placeholder="Select a branch for this loan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branchesData?.branches?.map((branch: any) => (
+                      <SelectItem key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid gap-2 relative" ref={dropdownRef}>
                 <Label htmlFor="clientSearch" className="text-sm font-bold text-slate-700">Select Client</Label>
                 <div className="relative">

@@ -24,6 +24,8 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGetMeQuery } from "@/services/authApi";
+import logoDonAndDonS from "@/assets/don_and_don,s.png"
+import Image from "next/image";
 
 
 interface MenuItem {
@@ -226,8 +228,11 @@ export default function SideBar() {
   return (
     <div className="bg-(--sidebar-bg) h-screen w-full">
       <div className="border-b border-(--sidebar-border) w-full h-[60px] flex items-center justify-between px-4">
-        <h1 className="text-white text-2xl font-bold">Don and Dons</h1>
-        <X className="text-white" size={18} onClick={() => toggleSideBar()} />
+        {/* <h1 className="text-white text-2xl font-bold">Don and Dons</h1> */}
+        <Image src={logoDonAndDonS} alt="logo" width={100} />
+        <div onClick={() => toggleSideBar()} className="cursor-pointer p-2 hover:bg-gray-800 rounded-md transition-colors duration-200" >
+        <X className="text-white" size={18}  />
+        </div>
       </div>
 
       <div>
