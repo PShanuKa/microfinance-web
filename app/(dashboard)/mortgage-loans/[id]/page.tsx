@@ -86,6 +86,7 @@ import {
   useSendMortgageLoanForApprovalMutation,
   useRecordMortgagePaymentMutation,
   useMortgageCollectionQuery,
+  mortgageLoanService,
 } from "@/services/mortgageLoanApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
 import { CommonButton }  from "@/components/common/Button";
@@ -111,6 +112,7 @@ export default function MortgageLoanViewPage() {
   const [selectedCollectionId, setSelectedCollectionId] = useState<
     string | null
   >(null);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const { data: detailsData, isLoading: detailsLoading } =
     useMortgageCollectionQuery(selectedCollectionId || "", {
@@ -119,6 +121,25 @@ export default function MortgageLoanViewPage() {
   const selectedCollection = detailsData?.collection;
 
   const loanDetails = data?.mortgage;
+
+  const handlePrint = async () => {
+    try {
+      setIsPrinting(true);
+      const blob = await mortgageLoanService.exportMortgageLoanToPdf(id as string);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Mortgage-${loanDetails?.loanNo || id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Print failed:", error);
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   const handleSendForApproval = () => {
     sendForApprovalMutation.mutate(id as string, {
@@ -540,9 +561,11 @@ export default function MortgageLoanViewPage() {
 
           <CommonButton
             variant="outline"
-            leftIcon={<Printer className="h-4 w-4" />}
+            leftIcon={isPrinting ? <Clock className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+            onClick={handlePrint}
+            isLoading={isPrinting}
           >
-            Print
+            {isPrinting ? "Generating..." : "Print"}
           </CommonButton>
         </div>
       </div>

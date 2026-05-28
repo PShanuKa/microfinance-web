@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const loanService = {
+export const loanService = {
   getLoans: async (params: { page?: number; limit?: number; search?: string; status?: string } = {}) => {
     const response = await api.get("/loans", { params });
     return response.data;
@@ -40,6 +40,10 @@ const loanService = {
   },
   updateLoanStatus: async ({ id, status, approvedById, rejectionReason }: { id: string; status: string; approvedById?: string; rejectionReason?: string }) => {
     const response = await api.patch(`/loans/${id}/status`, { status, approvedById, rejectionReason });
+    return response.data;
+  },
+  exportLoanToPdf: async (id: string) => {
+    const response = await api.get(`/loans/${id}/export/pdf`, { responseType: 'blob' });
     return response.data;
   },
 };

@@ -84,6 +84,7 @@ import {
   useApproveLoanMutation,
   useRejectLoanMutation,
   useUpdateLoanStatusMutation,
+  loanService,
 } from "@/services/loanApi";
 import { format } from "date-fns";
 // import { toast } from "sonner";
@@ -110,6 +111,26 @@ export default function LoanViewPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  const handlePrint = async () => {
+    try {
+      setIsPrinting(true);
+      const blob = await loanService.exportLoanToPdf(id as string);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Loan-${data?.loan?.loanNo || id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Print failed:", error);
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   const handleSendForApprovalConfirm = () => {
     setIsSendForApprovalOpen(false);
@@ -436,8 +457,14 @@ export default function LoanViewPage() {
             </Button>
           )}
           </RoleGate>
-          <Button variant="outline" className="gap-2 h-11 px-6 font-bold">
-            <Printer className="h-4 w-4" /> Print
+          <Button 
+            variant="outline" 
+            className="gap-2 h-11 px-6 font-bold"
+            onClick={handlePrint}
+            disabled={isPrinting}
+          >
+            {isPrinting ? <Clock className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+            {isPrinting ? "Generating..." : "Print"}
           </Button>
         </div>
       </div>

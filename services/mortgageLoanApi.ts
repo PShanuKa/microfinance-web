@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const mortgageLoanService = {
+export const mortgageLoanService = {
   getMortgageLoans: async (params: { page?: number; limit?: number; search?: string; status?: string; branchId?: string } = {}) => {
     const response = await api.get("/mortgage-loans", { params });
     return response.data;
@@ -36,6 +36,10 @@ const mortgageLoanService = {
   },
   rejectMortgageLoan: async ({ id, rejectionReason }: { id: string; rejectionReason: string }) => {
     const response = await api.put(`/mortgage-loans/${id}/reject`, { rejectionReason });
+    return response.data;
+  },
+  exportMortgageLoanToPdf: async (id: string) => {
+    const response = await api.get(`/mortgage-loans/${id}/export/pdf`, { responseType: 'blob' });
     return response.data;
   },
   recordMortgagePayment: async ({ id, amount, notes }: { id: string; amount: number; notes?: string }) => {
