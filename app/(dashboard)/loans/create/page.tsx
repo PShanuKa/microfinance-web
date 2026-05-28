@@ -136,7 +136,7 @@ export default function CreateLoanPage() {
     createMutation.mutate({
       ...data,
       totalWeeks: Number(data.totalWeeks),
-      processingFee: Number(data.processingFee),
+      processingFee: Number(data.processingFee) * (totalMembers || 1),
       leaderLentAmount: Number(data.leaderLentAmount),
       leaderWeeklyAmount: Number(data.leaderWeeklyAmount),
       memberLentAmount: Number(data.memberLentAmount),
@@ -453,7 +453,7 @@ export default function CreateLoanPage() {
                     <Receipt className="w-3 h-3 text-amber-400" /> Processing Income
                  </span>
                  <span className="text-3xl font-black text-amber-400">
-                    Rs. {(Number(watch("processingFee") || 0) ).toLocaleString()}
+                    Rs. {(Number(watch("processingFee") || 0) * (totalMembers || 1)).toLocaleString()}
                  </span>
               </div>
             </div>
