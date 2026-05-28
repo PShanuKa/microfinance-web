@@ -448,7 +448,7 @@ export default function LoanViewPage() {
               </>
             )}
 
-            {(loan.status === "ACTIVE" || loan.status === "APPROVED") && stats?.balance <= 0 && (
+            {(loan.status === "ACTIVE" || loan.status === "APPROVED") && stats && stats.balance <= 0 && (
               <Button
                 onClick={() => {
                   openDialog({

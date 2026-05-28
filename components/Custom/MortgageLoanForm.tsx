@@ -470,7 +470,7 @@ export function MortgageLoanForm({
                 <Label className="text-sm font-bold text-slate-700">Operating Branch</Label>
                 <Select 
                   value={watch("branchId") || ""}
-                  onValueChange={(val) => setValue("branchId", val)}
+                  onValueChange={(val) => setValue("branchId", val || "")}
                   disabled={!!userData?.user?.branchId}
                 >
                   <SelectTrigger className="h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg text-slate-900 font-bold">
