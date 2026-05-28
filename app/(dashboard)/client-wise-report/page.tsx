@@ -26,14 +26,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
-import { useClientWiseReportQuery } from "@/services/reportApi";
+import { useClientWiseReportQuery, reportService } from "@/services/reportApi";
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from "date-fns";
+import { Printer, Clock } from "lucide-react";
 
 export default function ClientWiseReportPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(100);
   const [paymentStatus, setPaymentStatus] = useState("ALL");
+  const [isPrinting, setIsPrinting] = useState(false);
 
   // Date Range State
   const [dateRange, setDateRange] = useState<{
@@ -62,6 +64,31 @@ export default function ClientWiseReportPage() {
   };
 
   const reportData = data?.data || [];
+
+  const handlePrint = async () => {
+    try {
+      setIsPrinting(true);
+      const params = {
+        startDate: dateRange.from,
+        endDate: dateRange.to,
+        search: searchTerm,
+        paymentStatus: paymentStatus !== "ALL" ? paymentStatus : undefined,
+      };
+      const blob = await reportService.exportClientWiseReportToPdf(params);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Client-Wise-Report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Print failed:", error);
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   const handleShortcut = (type: "today" | "week" | "month" | "all") => {
     const today = new Date();
@@ -106,10 +133,21 @@ export default function ClientWiseReportPage() {
 
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
-      <PageHeader
-        title="Client Wise Report"
-        description="View payment status and outstanding balances for each client within a selected time period."
-      />
+      <div className="flex justify-between items-start">
+        <PageHeader
+          title="Client Wise Report"
+          description="View payment status and outstanding balances for each client within a selected time period."
+        />
+        <Button 
+          variant="outline" 
+          className="gap-2 font-bold mt-2"
+          onClick={handlePrint}
+          disabled={isPrinting}
+        >
+          {isPrinting ? <Clock className="h-4 w-4 animate-spin" /> : <Printer className="h-4 w-4" />}
+          {isPrinting ? "Generating..." : "Print Report"}
+        </Button>
+      </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
