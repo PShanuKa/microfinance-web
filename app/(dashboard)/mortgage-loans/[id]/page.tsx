@@ -86,6 +86,7 @@ import {
   useSendMortgageLoanForApprovalMutation,
   useRecordMortgagePaymentMutation,
   useMortgageCollectionQuery,
+  useCompleteMortgageLoanMutation,
   mortgageLoanService,
 } from "@/services/mortgageLoanApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
@@ -103,6 +104,7 @@ export default function MortgageLoanViewPage() {
   const rejectMutation = useRejectMortgageLoanMutation();
   const sendForApprovalMutation = useSendMortgageLoanForApprovalMutation();
   const recordPaymentMutation = useRecordMortgagePaymentMutation();
+  const completeMutation = useCompleteMortgageLoanMutation();
 
   const { setOpen } = useDialogStore();
 
@@ -551,6 +553,40 @@ export default function MortgageLoanViewPage() {
                 // className="shadow-lg shadow-emerald-600/20 h-11 px-6 font-bold transition-all"
               >
                 New Collection
+              </CommonButton>
+            )}
+          </RoleGate>
+
+          <RoleGate allowedRoles={["APPROVER", "BRANCH_MANAGER", "ADMIN"]}>
+            {loanDetails.status === "APPROVED" && remainingPrincipal <= 0 && (
+              <CommonButton
+                onClick={() => {
+                  setOpen({
+                    open: true,
+                    type: "confirmation",
+                    title: "Complete Mortgage Loan",
+                    message: "Are you sure you want to mark this mortgage loan as completed?",
+                    onConfirm: () => {
+                      completeMutation.mutate(id as string, {
+                        onSuccess: () => {
+                          setOpen({
+                            open: true,
+                            type: "success",
+                            title: "Action Complete",
+                            message: "Mortgage Loan successfully marked as completed!",
+                            onConfirm: () => router.refresh()
+                          });
+                        }
+                      });
+                    }
+                  });
+                }}
+                variant="default"
+                className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20"
+                leftIcon={<CheckCircle2 className="h-4 w-4" />}
+                isLoading={completeMutation.isPending}
+              >
+                Complete Loan
               </CommonButton>
             )}
           </RoleGate>
