@@ -34,8 +34,9 @@ const groupService = {
     const response = await api.delete(`/groups/${id}`);
     return response.data;
   },
-  getCollectionSheet: async (groupId: string, week: number) => {
-    const response = await api.get(`/groups/${groupId}/collection-sheet`, { params: { week } });
+  getCollectionSheet: async (groupId: string, week?: number) => {
+    const params = week ? { week } : {};
+    const response = await api.get(`/groups/${groupId}/collection-sheet`, { params });
     return response.data;
   },
 };
@@ -47,11 +48,11 @@ export const useGroupsQuery = (params: any = {}) => {
   });
 };
 
-export const useCollectionSheetQuery = (groupId: string, week: number) => {
+export const useCollectionSheetQuery = (groupId: string, week?: number) => {
   return useQuery({
     queryKey: ["CollectionSheet", groupId, week],
     queryFn: () => groupService.getCollectionSheet(groupId, week),
-    enabled: !!groupId && !!week,
+    enabled: !!groupId,
   });
 };
 

@@ -42,6 +42,10 @@ export const loanService = {
     const response = await api.patch(`/loans/${id}/status`, { status, approvedById, rejectionReason });
     return response.data;
   },
+  completeLoan: async (id: string) => {
+    const response = await api.post(`/loans/${id}/complete`);
+    return response.data;
+  },
   exportLoanToPdf: async (id: string) => {
     const response = await api.get(`/loans/${id}/export/pdf`, { responseType: 'blob' });
     return response.data;
@@ -93,6 +97,19 @@ export const useApproveLoanMutation = (options: any = {}) => {
     ...options,
     onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({ queryKey: ["Loan", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["Loans"] });
+      if (options.onSuccess) options.onSuccess(data, variables, context);
+    },
+  });
+};
+
+export const useCompleteLoanMutation = (options: any = {}) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: loanService.completeLoan,
+    ...options,
+    onSuccess: (data: any, variables: any, context: any) => {
+      queryClient.invalidateQueries({ queryKey: ["Loan", variables] });
       queryClient.invalidateQueries({ queryKey: ["Loans"] });
       if (options.onSuccess) options.onSuccess(data, variables, context);
     },

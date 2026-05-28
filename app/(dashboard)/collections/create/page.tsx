@@ -63,13 +63,11 @@ export default function CreateCollectionPage() {
     setValue,
     watch,
     control,
-    reset,
     formState: { errors },
   } = useForm({
     defaultValues: {
       groupId: "",
       date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
-      instalmentNumber: 1,
       bankReference: "",
       breakdownNotes: "",
       payments: [] as any[],
@@ -82,9 +80,8 @@ export default function CreateCollectionPage() {
   });
 
   const selectedGroupId = watch("groupId");
-  const selectedWeek = watch("instalmentNumber");
 
-  const { data: sheetData, isLoading: sheetLoading } = useCollectionSheetQuery(selectedGroupId, Number(selectedWeek));
+  const { data: sheetData, isLoading: sheetLoading } = useCollectionSheetQuery(selectedGroupId);
 
   useEffect(() => {
     if (sheetData?.members) {
@@ -93,7 +90,8 @@ export default function CreateCollectionPage() {
         fullname: m.fullname,
         isLeader: m.isLeader,
         dueAmount: m.remainingDue,
-        amount: m.remainingDue, // Default to paying full due
+        amount: m.remainingDue, // Default to paying full remaining due across all weeks
+        unpaidInstalments: m.unpaidInstalments || []
       }));
       replace(initialPayments);
     } else {
@@ -106,14 +104,29 @@ export default function CreateCollectionPage() {
 
   const onSubmit = (data: any) => {
     setServerError(null);
-    createMutation.mutate({
-      ...data,
-      instalmentNumber: Number(data.instalmentNumber),
-      collectorId: "system",
-      payments: data.payments.map((p: any) => ({
-        clientId: p.clientId,
+
+    // Map payments to backend expected format
+    const breakdownData = data.payments
+      .filter((p: any) => Number(p.amount) > 0 && p.unpaidInstalments && p.unpaidInstalments.length > 0)
+      .map((p: any) => ({
+        // We pass the FIRST unpaid instalment ID, the backend will waterfall across ALL of them automatically.
+        instalmentId: p.unpaidInstalments[0].id,
         amount: Number(p.amount),
-      })),
+        memberName: p.fullname
+      }));
+
+    if (breakdownData.length === 0) {
+      setServerError("Please enter at least one valid payment amount for a member with unpaid instalments.");
+      return;
+    }
+
+    createMutation.mutate({
+      groupId: data.groupId,
+      date: new Date(data.date).toISOString(),
+      bankReference: data.bankReference,
+      breakdownNotes: data.breakdownNotes,
+      collectorId: "system",
+      breakdownData,
     });
   };
 
@@ -157,15 +170,6 @@ export default function CreateCollectionPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="grid gap-2">
-                <Label>Collection Week</Label>
-                <Input
-                  type="number"
-                  className="bg-background/50"
-                  {...register("instalmentNumber", { required: true, min: 1 })}
-                />
               </div>
 
               <div className="grid gap-2">
@@ -242,35 +246,95 @@ export default function CreateCollectionPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  fields.map((field, index) => (
-                    <TableRow key={field.id} className="hover:bg-primary/5 transition-colors group">
-                      <TableCell className="font-bold flex items-center gap-2 py-4">
-                        {field.fullname}
-                        {field.isLeader && (
-                          <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] font-bold">
-                            <Crown className="w-3 h-3 mr-1" /> LEADER
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px] font-bold">
-                          {field.isLeader ? "LEADER" : "MEMBER"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-mono text-rose-500 font-bold">
-                        Rs. {Number(field.dueAmount).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="relative">
-                          <Input
-                            type="number"
-                            className="bg-background/80 h-10 text-right pr-4 font-bold border-emerald-500/20 focus:border-emerald-500"
-                            {...register(`payments.${index}.amount` as const)}
-                          />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  fields.map((field: any, index: number) => {
+                    const currentAmount = watch(`payments.${index}.amount`) || 0;
+                    
+                    // Calculate waterfall
+                    let remainingToAllocate = Number(currentAmount);
+                    const affectedWeeks: any[] = [];
+                    
+                    if (field.unpaidInstalments) {
+                      field.unpaidInstalments.forEach((inst: any) => {
+                        if (remainingToAllocate <= 0) return;
+                        
+                        const amountToThisInst = Math.min(remainingToAllocate, inst.remainingDue);
+                        affectedWeeks.push({
+                          weekNumber: inst.weekNumber,
+                          amountAllocated: amountToThisInst,
+                          isFullyPaid: amountToThisInst === inst.remainingDue
+                        });
+                        remainingToAllocate -= amountToThisInst;
+                      });
+                    }
+                    
+                    const hasOverpayment = remainingToAllocate > 0 && field.unpaidInstalments && field.unpaidInstalments.length > 0;
+
+                    return (
+                      <React.Fragment key={field.id}>
+                        <TableRow className="hover:bg-primary/5 transition-colors group">
+                          <TableCell className="font-bold flex items-center gap-2 py-4 border-b-0">
+                            {field.fullname}
+                            {field.isLeader && (
+                              <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] font-bold">
+                                <Crown className="w-3 h-3 mr-1" /> LEADER
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="border-b-0">
+                            <Badge variant="outline" className="text-[10px] font-bold">
+                              {field.isLeader ? "LEADER" : "MEMBER"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-rose-500 font-bold border-b-0">
+                            Rs. {Number(field.dueAmount).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right border-b-0">
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                className="bg-background/80 h-10 text-right pr-4 font-bold border-emerald-500/20 focus:border-emerald-500"
+                                {...register(`payments.${index}.amount` as const)}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow className="bg-slate-50/50">
+                          <TableCell colSpan={4} className="py-2 px-4">
+                            <div className="flex flex-col gap-1 w-full bg-white rounded-md p-3 shadow-sm border border-slate-100">
+                              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                                <History className="w-3 h-3" /> Affected Weeks Preview
+                              </div>
+                              {affectedWeeks.length === 0 ? (
+                                <span className="text-xs text-slate-400 italic">No payments allocated</span>
+                              ) : (
+                                <div className="flex flex-wrap gap-2">
+                                  {affectedWeeks.map((wk, idx) => (
+                                    <Badge 
+                                      key={idx} 
+                                      className={cn(
+                                        "text-xs px-2 py-1 flex gap-2 items-center font-medium",
+                                        wk.isFullyPaid ? "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200" : "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200"
+                                      )}
+                                      variant="outline"
+                                    >
+                                      <span>Week {wk.weekNumber}</span>
+                                      <span className="font-bold border-l pl-2 border-current/20">Rs. {wk.amountAllocated.toLocaleString()}</span>
+                                    </Badge>
+                                  ))}
+                                  {hasOverpayment && (
+                                    <Badge className="text-xs px-2 py-1 flex gap-2 items-center font-medium bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200" variant="outline">
+                                      <span>Advance (Overpayment)</span>
+                                      <span className="font-bold border-l pl-2 border-current/20">Rs. {remainingToAllocate.toLocaleString()}</span>
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

@@ -82,9 +82,10 @@ import {
   useLoanQuery,
   useLoanInstalmentsQuery,
   useApproveLoanMutation,
-  useRejectLoanMutation,
   useUpdateLoanStatusMutation,
+  useCompleteLoanMutation,
   loanService,
+  useRejectLoanMutation,
 } from "@/services/loanApi";
 import { format } from "date-fns";
 // import { toast } from "sonner";
@@ -92,10 +93,12 @@ import { LoanGuarantorViewModal } from "@/components/Custom/LoanGuarantorViewMod
 import { AuditHistory } from "@/components/Custom/AuditHistory";
 import TableAuditLogs from "../../audit-logs/Table";
 import { RoleGate } from "@/components/Custom/RoleGate";
+import { useDialogStore } from "@/store/useDialogStore";
 
 export default function LoanViewPage() {
   const router = useRouter();
   const { id } = useParams();
+  const { setOpen: openDialog } = useDialogStore();
 
   const { data, isLoading: isLoanLoading } = useLoanQuery(id as string);
   const { data: instalmentsData, isLoading: isInstalmentsLoading } =
@@ -104,6 +107,7 @@ export default function LoanViewPage() {
   const approveMutation = useApproveLoanMutation();
   const rejectMutation = useRejectLoanMutation();
   const statusMutation = useUpdateLoanStatusMutation();
+  const completeMutation = useCompleteLoanMutation();
 
   const [isSendForApprovalOpen, setIsSendForApprovalOpen] = useState(false);
   const [isApproveOpen, setIsApproveOpen] = useState(false);
@@ -442,6 +446,33 @@ export default function LoanViewPage() {
                   <XCircle className="h-4 w-4" /> Reject
                 </Button>
               </>
+            )}
+
+            {(loan.status === "ACTIVE" || loan.status === "APPROVED") && stats?.balance <= 0 && (
+              <Button
+                onClick={() => {
+                  openDialog({
+                    open: true,
+                    type: "confirmation",
+                    title: "Complete Loan",
+                    message: "Are you sure you want to mark this loan as completed?",
+                    onConfirm: () => {
+                      completeMutation.mutate(id as string, {
+                        onSuccess: () => {
+                          setSuccessMessage("Loan successfully marked as completed!");
+                          setIsSuccessOpen(true);
+                        }
+                      });
+                    }
+                  });
+                }}
+                variant="default"
+                className="gap-2 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20 h-11 px-6 font-bold"
+                disabled={completeMutation.isPending}
+              >
+                <CheckCircle2 className="h-4 w-4" /> 
+                {completeMutation.isPending ? "Completing..." : "Complete Loan"}
+              </Button>
             )}
           </RoleGate>
           <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
