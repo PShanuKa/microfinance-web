@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ArrowLeft, Edit3 } from "lucide-react";
+import { ArrowLeft, Edit3, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter, useParams } from "next/navigation";
@@ -14,6 +14,8 @@ export default function MortgageLoanEditPage() {
 
   const { data, isLoading, isError } = useMortgageLoanQuery(id as string);
   const mortgage = data?.mortgage;
+
+  const isNotEditable = mortgage?.status && mortgage.status !== "DRAFT" && mortgage.status !== "PENDING";
 
   const handleSuccess = () => {
     // Redirect back to details page on successful update
@@ -66,8 +68,15 @@ export default function MortgageLoanEditPage() {
         </div>
       </div>
 
+      {isNotEditable && (
+        <div className="bg-rose-500/10 border-2 border-rose-500/50 text-rose-600 font-black p-4 rounded-xl flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 duration-300 shadow-xl shadow-rose-500/10">
+          <AlertCircle className="w-6 h-6 text-rose-600 animate-pulse" /> 
+          This mortgage loan is {mortgage.status} and cannot be edited.
+        </div>
+      )}
+
       {/* Render the pre-populated Form */}
-      <Card className="border-none shadow-xl bg-card/40 backdrop-blur-md overflow-hidden p-2">
+      <Card className={`border-none shadow-xl bg-card/40 backdrop-blur-md overflow-hidden p-2 ${isNotEditable ? "opacity-60 pointer-events-none grayscale-[0.2]" : ""}`}>
         <CardContent className="p-4 md:p-6">
           <MortgageLoanForm
             loanId={id as string}

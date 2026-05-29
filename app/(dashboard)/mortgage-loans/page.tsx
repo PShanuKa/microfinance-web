@@ -483,13 +483,15 @@ export default function MortgageLoansPage() {
                               <Eye className="h-4 w-4 text-primary" />
                               View Full Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => router.push(`/mortgage-loans/${loan.id}/edit`)}
-                              className="gap-2 cursor-pointer"
-                            >
-                              <FileText className="h-4 w-4 text-amber-500" />
-                              Edit Mortgage
-                            </DropdownMenuItem>
+                            {(loan.status === "DRAFT" || loan.status === "PENDING") && (
+                              <DropdownMenuItem
+                                onClick={() => router.push(`/mortgage-loans/${loan.id}/edit`)}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <FileText className="h-4 w-4 text-amber-500" />
+                                Edit Mortgage
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

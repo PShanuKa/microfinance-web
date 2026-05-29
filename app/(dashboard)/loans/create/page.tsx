@@ -113,6 +113,14 @@ export default function CreateLoanPage() {
   const memberWeekly = Number(watch("memberWeeklyAmount") || 0);
   const totalMembers = selectedGroup?.members?.length || 0;
 
+  // Check existing loans against settings constraint
+  const activeLoansCount = selectedGroup?.loans?.filter(
+    (l: any) => ["DRAFT", "PENDING", "APPROVED", "ACTIVE"].includes(l.status)
+  ).length || 0;
+  
+  const maxAllowed = settings?.maxActiveLoansGroup || 1;
+  const isLimitReached = activeLoansCount >= maxAllowed;
+
   // Global Calculations
   const totalLentAmount = selectedGroup 
     ? leaderLent + (memberLent * (totalMembers - 1)) 
@@ -164,6 +172,16 @@ export default function CreateLoanPage() {
         {serverError && (
           <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 text-sm font-black p-4 rounded-xl text-center flex items-center justify-center gap-2 animate-in fade-in zoom-in-95 duration-300 shadow-lg shadow-rose-500/5">
             <AlertCircle className="w-5 h-5" /> {serverError}
+          </div>
+        )}
+
+        {isLimitReached && (
+          <div className="bg-rose-500/10 border-2 border-rose-500/50 text-rose-600 text-sm font-black p-6 rounded-xl text-center flex flex-col items-center justify-center gap-2 animate-in fade-in zoom-in-95 duration-300 shadow-xl shadow-rose-500/10">
+            <AlertCircle className="w-8 h-8 text-rose-600 animate-pulse" />
+            <span className="text-lg">Cannot Register New Loan</span>
+            <span className="font-medium text-rose-600/80">
+              This group already has {activeLoansCount} active/pending loan(s) (any status). The system limit is set to {maxAllowed} per group.
+            </span>
           </div>
         )}
 
@@ -479,7 +497,7 @@ export default function CreateLoanPage() {
           <Button 
             type="submit" 
             size="lg" 
-            disabled={createMutation.isPending || !selectedGroupId}
+            disabled={createMutation.isPending || !selectedGroupId || isLimitReached}
             className="gap-2 px-10 h-14 font-black shadow-xl shadow-primary/30 bg-primary hover:bg-primary/90 text-lg transition-all"
           >
             {createMutation.isPending ? "Saving..." : (
