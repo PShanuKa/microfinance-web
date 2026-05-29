@@ -20,7 +20,8 @@ import {
   ClipboardList,
   TrendingUp,
   Landmark,
-  BadgePercent
+  BadgePercent,
+  Download
 } from "lucide-react";
 import {
   Table,
@@ -53,7 +54,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { useMortgageCollectionsQuery, useMortgageCollectionQuery } from "@/services/mortgageLoanApi";
+import { useMortgageCollectionsQuery, useMortgageCollectionQuery, mortgageLoanService } from "@/services/mortgageLoanApi";
 import TablePagination from "@/components/Custom/TablePagination";
 import { format } from "date-fns";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
@@ -63,8 +64,10 @@ export default function MortgageCollectionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   
-  const { data, isLoading } = useMortgageCollectionsQuery({ page, limit: 20, search: searchTerm });
+  const { data, isLoading } = useMortgageCollectionsQuery({ page, limit: 20, search: searchTerm, startDate, endDate });
   const collections = data?.collections || [];
   const totalPages = data?.pagination?.totalPages || 1;
 
@@ -74,19 +77,53 @@ export default function MortgageCollectionsPage() {
 
   const selectedCollection = detailsData?.collection;
 
+  const [isExporting, setIsExporting] = useState(false);
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await mortgageLoanService.exportMortgageCollectionsToPdf({
+        search: searchTerm,
+        startDate,
+        endDate
+      });
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Mortgage-Collections-${new Date().toISOString().split("T")[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      console.error("Export failed", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
         title="Mortgage Collections"
         description="Track all mortgage loan repayments, penalties collected, and principal reductions."
       >
-        <Button
-          onClick={() => router.push("/mortgage-collection/create")}
-          className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
-        >
-          <Plus className="h-4 w-4" />
-          New Collection
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleExport}
+            disabled={isExporting}
+            variant="outline"
+            className="gap-2 shadow-sm transition-all duration-300 border-primary/20 hover:bg-primary/5"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? "Exporting..." : "Download Report"}
+          </Button>
+          <Button
+            onClick={() => router.push("/mortgage-collection/create")}
+            className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <Plus className="h-4 w-4" />
+            New Collection
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Summary Stats Placeholder for UI consistency */}
@@ -147,8 +184,45 @@ export default function MortgageCollectionsPage() {
               setSearchTerm(val);
               setPage(1);
             }}
-            searchPlaceholder="Search by loan no or client name..."
-          />
+            searchPlaceholder="Search by loan no, client name or NIC..."
+          >
+            <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <span className="text-xs text-muted-foreground ml-1">Start Date</span>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+                    className="pl-10 pr-4 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg font-bold w-full md:w-[180px]"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <span className="text-xs text-muted-foreground ml-1">End Date</span>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+                    className="pl-10 pr-4 h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg font-bold w-full md:w-[180px]"
+                  />
+                </div>
+              </div>
+              {(startDate || endDate) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => { setStartDate(""); setEndDate(""); setPage(1); }}
+                  className="text-rose-500 hover:text-rose-600 h-11 mb-0"
+                >
+                  Clear Dates
+                </Button>
+              )}
+            </div>
+          </SearchFilterPanel>
 
           <div className="overflow-x-auto">
             <Table>
@@ -214,7 +288,7 @@ export default function MortgageCollectionsPage() {
                           <div className="flex flex-col text-sm">
                             <span className="font-bold">{col.client?.fullname}</span>
                             <span className="text-[10px] text-muted-foreground uppercase">
-                              {col.client?.clientNo}
+                              {col.client?.nic}
                             </span>
                           </div>
                         </TableCell>
@@ -260,12 +334,12 @@ export default function MortgageCollectionsPage() {
                 )}
               </TableBody>
             </Table>
-            <TablePagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-            />
           </div>
+          <TablePagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 
