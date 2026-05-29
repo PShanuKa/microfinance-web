@@ -58,6 +58,9 @@ import { useMortgageCollectionsQuery, useMortgageCollectionQuery, mortgageLoanSe
 import TablePagination from "@/components/Custom/TablePagination";
 import { format } from "date-fns";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
+import { useBranchesQuery } from "@/services/branchApi";
+import { useGetMeQuery } from "@/services/authApi";
+import { RoleGate } from "@/components/Custom/RoleGate";
 
 export default function MortgageCollectionsPage() {
   const router = useRouter();
@@ -66,8 +69,25 @@ export default function MortgageCollectionsPage() {
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  
-  const { data, isLoading } = useMortgageCollectionsQuery({ page, limit: 20, search: searchTerm, startDate, endDate });
+  const [branchFilter, setBranchFilter] = useState("All");
+
+  const { data: meData } = useGetMeQuery();
+  const currentUser = meData?.user;
+
+  const isBranchSelectDisabled = currentUser?.role !== "ADMIN" && !!currentUser?.branchId;
+  const effectiveBranchFilter = isBranchSelectDisabled ? currentUser.branchId : branchFilter;
+
+  const { data: branchesData } = useBranchesQuery();
+  const branches = branchesData?.branches || [];
+
+  const { data, isLoading } = useMortgageCollectionsQuery({ 
+    page, 
+    limit: 20, 
+    search: searchTerm, 
+    startDate, 
+    endDate,
+    branchId: effectiveBranchFilter
+  });
   const collections = data?.collections || [];
   const totalPages = data?.pagination?.totalPages || 1;
 
@@ -84,7 +104,8 @@ export default function MortgageCollectionsPage() {
       const blob = await mortgageLoanService.exportMortgageCollectionsToPdf({
         search: searchTerm,
         startDate,
-        endDate
+        endDate,
+        branchId: effectiveBranchFilter
       });
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement("a");
@@ -221,6 +242,23 @@ export default function MortgageCollectionsPage() {
                   Clear Dates
                 </Button>
               )}
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <span className="text-xs text-muted-foreground ml-1">Branch</span>
+                <div className="relative">
+                  <select
+                    value={effectiveBranchFilter}
+                    onChange={(e) => { setBranchFilter(e.target.value); setPage(1); }}
+                    disabled={isBranchSelectDisabled}
+                    className="pl-4 pr-10 h-11 bg-background/50 border border-input/50 focus:ring-primary/20 rounded-lg font-bold w-full md:w-[180px] appearance-none disabled:opacity-50"
+                  >
+                    <option value="All">All Branches</option>
+                    {branches.map((b: any) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                  <Filter className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                </div>
+              </div>
             </div>
           </SearchFilterPanel>
 

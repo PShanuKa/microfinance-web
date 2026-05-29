@@ -6,11 +6,11 @@ export const mortgageLoanService = {
     const response = await api.get("/mortgage-loans", { params });
     return response.data;
   },
-  getMortgageCollections: async (params: { page?: number; limit?: number; search?: string; startDate?: string; endDate?: string } = {}) => {
+  getMortgageCollections: async (params: { page?: number; limit?: number; search?: string; startDate?: string; endDate?: string; branchId?: string } = {}) => {
     const response = await api.get("/mortgage-loans/collections", { params });
     return response.data;
   },
-  exportMortgageCollectionsToPdf: async (params: { search?: string; startDate?: string; endDate?: string } = {}) => {
+  exportMortgageCollectionsToPdf: async (params: { search?: string; startDate?: string; endDate?: string; branchId?: string } = {}) => {
     const response = await api.get("/mortgage-loans/collections/export/pdf", { params, responseType: 'blob' });
     return response.data;
   },
