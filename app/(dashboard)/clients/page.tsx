@@ -197,7 +197,7 @@ export default function ClientsPage() {
         title="Clients"
         description="Manage client profiles, contact information, and registration status"
       >
-        <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
+        <RoleGate allowedRoles={["LOAN_OFFICER", "MORTGAGE_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
         <Button
           onClick={handleCreate}
           className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -390,7 +390,7 @@ export default function ClientsPage() {
                               <Eye className="w-4 h-4 text-primary" /> View
                               Details
                             </DropdownMenuItem>
-                            <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
+                            <RoleGate allowedRoles={["LOAN_OFFICER", "MORTGAGE_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
 
                             <DropdownMenuItem
                               onClick={() => handleEdit(client)}

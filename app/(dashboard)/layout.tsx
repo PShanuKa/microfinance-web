@@ -29,10 +29,10 @@ const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
   { pattern: /^\/reports(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR", "APPROVER"] },
   
   // Clients precise routing
-  { pattern: /^\/clients\/new\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
-  { pattern: /^\/clients\/[^\/]+\/edit\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },
-  { pattern: /^\/clients\/[^\/]+\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR"] },
-  { pattern: /^\/clients\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"] },
+  { pattern: /^\/clients\/new\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "MORTGAGE_OFFICER"] },
+  { pattern: /^\/clients\/[^\/]+\/edit\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "MORTGAGE_OFFICER"] },
+  { pattern: /^\/clients\/[^\/]+\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "AUDITOR", "MORTGAGE_OFFICER"] },
+  { pattern: /^\/clients\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "MORTGAGE_OFFICER"] },
   
   // Groups precise routing
   { pattern: /^\/groups\/create\/?$/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER"] },

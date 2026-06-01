@@ -510,7 +510,7 @@ export default function MortgageLoanViewPage() {
             )}
           </RoleGate>
 
-          <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+          <RoleGate allowedRoles={["LOAN_OFFICER", "MORTGAGE_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
             {loanDetails.status === "DRAFT" && (
               <CommonButton
                 onClick={handleSendForApproval}
@@ -523,7 +523,7 @@ export default function MortgageLoanViewPage() {
             )}
           </RoleGate>
 
-          <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+          <RoleGate allowedRoles={["LOAN_OFFICER", "MORTGAGE_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
             {(loanDetails.status === "DRAFT" ||
               loanDetails.status === "PENDING") && (
               // <Button
@@ -539,7 +539,7 @@ export default function MortgageLoanViewPage() {
             )}
           </RoleGate>
 
-          <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+          <RoleGate allowedRoles={["LOAN_OFFICER", "MORTGAGE_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
             {(loanDetails.status === "APPROVED" ||
               loanDetails.status === "COMPLETED") && (
               <CommonButton

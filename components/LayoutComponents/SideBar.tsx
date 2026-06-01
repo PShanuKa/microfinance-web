@@ -61,7 +61,7 @@ const items: MenuGroup[] = [
         icon: Users,
         label: "Clients",
         href: "/clients",
-        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER"],
+        allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER", "MORTGAGE_OFFICER"],
       },
     ],
   },
