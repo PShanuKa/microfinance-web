@@ -277,7 +277,13 @@ export default function CollectionsPage() {
                   <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
                     <div className="flex items-center gap-2">
                       <Building className="h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder="Select Branch" />
+                      <SelectValue>
+                        {isBranchManager
+                          ? (branches.find((b: any) => b.id === user?.branchId)?.name || "Select Branch")
+                          : branchId && branchId !== "ALL"
+                            ? (branches.find((b: any) => b.id === branchId)?.name || "Select Branch")
+                            : "All Branches"}
+                      </SelectValue>
                     </div>
                   </SelectTrigger>
                   <SelectContent>

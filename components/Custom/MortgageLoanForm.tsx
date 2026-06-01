@@ -474,7 +474,11 @@ export function MortgageLoanForm({
                   disabled={!!userData?.user?.branchId}
                 >
                   <SelectTrigger className="h-11 bg-background/50 border-input/50 focus:ring-primary/20 rounded-lg text-slate-900 font-bold">
-                    <SelectValue placeholder="Select a branch for this loan" />
+                    <SelectValue>
+                      {watch("branchId") 
+                        ? (branchesData?.branches?.find((b: any) => b.id === watch("branchId"))?.name || "Select a branch for this loan")
+                        : "Select a branch for this loan"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {branchesData?.branches?.map((branch: any) => (
