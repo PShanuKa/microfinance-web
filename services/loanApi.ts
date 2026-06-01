@@ -50,6 +50,10 @@ export const loanService = {
     const response = await api.get(`/loans/${id}/export/pdf`, { responseType: 'blob' });
     return response.data;
   },
+  exportLoanToExcel: async (id: string) => {
+    const response = await api.get(`/loans/${id}/export-excel`, { responseType: 'blob' });
+    return response.data;
+  },
 };
 
 export const useLoansQuery = (params: any = {}) => {
