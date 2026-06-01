@@ -56,7 +56,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import TablePagination from "@/components/Custom/TablePagination";
-import { useLoansQuery } from "@/services/loanApi";
+import { loanService, useLoansQuery } from "@/services/loanApi";
 import { Label } from "@/components/ui/label";
 import { useGetMeQuery } from "@/services/authApi";
 import { useBranchesQuery } from "@/services/branchApi";
@@ -81,6 +81,7 @@ export default function LoansPage() {
 
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
 
   // Get current user profile for role and branch restriction
   const { data: meData } = useGetMeQuery();
@@ -113,7 +114,32 @@ export default function LoansPage() {
       }
     });
     router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
     setPage(1);
+  };
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const blob = await loanService.exportFilteredLoansToExcel({
+        search: searchTerm,
+        status: statusFilter === "All" ? undefined : statusFilter,
+        collectionDay: collectionDayFilter === "All" ? undefined : parseInt(collectionDayFilter),
+        branchId: effectiveBranchFilter === "All" ? undefined : effectiveBranchFilter,
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Batch_GroupLoans_Interest_Payments.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Batch Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const { data, isLoading } = useLoansQuery({
@@ -179,16 +205,27 @@ export default function LoansPage() {
         title="Loans"
         description="Monitor group-based loans, repayment schedules, and processing status"
       >
-        <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
-
-        <Button
-          onClick={() => router.push("/loans/create")}
-          className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
-        >
-          <Plus className="h-4 w-4" />
-          New Loan
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={isExporting}
+            className="gap-2 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800 font-bold"
+          >
+            {isExporting ? <Clock className="h-4 w-4 animate-spin" /> : <FileCheck className="h-4 w-4" />}
+            {isExporting ? "Exporting..." : "Export Excel"}
+          </Button>
+          
+          <RoleGate allowedRoles={["LOAN_OFFICER" , "BRANCH_MANAGER" , "ADMIN"]}>
+            <Button
+              onClick={() => router.push("/loans/create")}
+              className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Plus className="h-4 w-4" />
+              New Loan
+            </Button>
           </RoleGate>
+        </div>
       </PageHeader>
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
