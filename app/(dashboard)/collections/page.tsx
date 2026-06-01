@@ -251,7 +251,7 @@ export default function CollectionsPage() {
 
               <div className="flex flex-col gap-1.5 w-full md:w-auto">
                 <Label className="text-xs text-muted-foreground ml-1">Status</Label>
-                <Select value={status} onValueChange={setStatus}>
+                <Select value={status} onValueChange={(val) => setStatus(val || "All")}>
                   <SelectTrigger className="w-full md:w-[160px] h-10 bg-background/50">
                     <div className="flex items-center gap-2">
                       <Filter className="h-4 w-4 text-muted-foreground" />
