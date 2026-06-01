@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Don And Don's",
+  title: "Don And Don's | Microfinance",
   description: "Don And Don's Microfinance Web Application",
 };
 
