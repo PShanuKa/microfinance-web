@@ -6,7 +6,6 @@ import {
   Plus,
   MoreVertical,
   Search,
-  Filter,
   Wallet,
   Users,
   Calendar,
@@ -20,6 +19,8 @@ import {
   ClipboardList,
   TrendingUp,
   X,
+  Filter,
+  Building,
 } from "lucide-react";
 import {
   Table,
@@ -59,6 +60,7 @@ import { useBranchesQuery } from "@/services/branchApi";
 import TablePagination from "@/components/Custom/TablePagination";
 import { format } from "date-fns";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
+import { Label } from "@/components/ui/label";
 
 export default function CollectionsPage() {
   const router = useRouter();
@@ -219,78 +221,93 @@ export default function CollectionsPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row gap-4 mb-4 p-4 items-center border-b bg-muted/10">
-            <Input
-              placeholder="Search by group or collector..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
-              className="md:w-[300px]"
-            />
-            
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">From:</span>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-[140px]"
-              />
-              <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">To:</span>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-[140px]"
-              />
+          <SearchFilterPanel
+            searchTerm={searchTerm}
+            onSearchChange={(val) => {
+              setSearchTerm(val);
+              setPage(1);
+            }}
+            searchPlaceholder="Search by group, ID, leader, or member..."
+          >
+            <div className="flex flex-col md:flex-row items-end gap-4 w-full">
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">Date Range</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full md:w-[140px] h-10 bg-background/50"
+                  />
+                  <span className="text-xs font-bold text-muted-foreground">to</span>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full md:w-[140px] h-10 bg-background/50"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="w-full md:w-[160px] h-10 bg-background/50">
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Status" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Statuses</SelectItem>
+                    <SelectItem value="SUBMITTED">Pending</SelectItem>
+                    <SelectItem value="APPROVED">Verified</SelectItem>
+                    <SelectItem value="REJECTED">Disputed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                <Label className="text-xs text-muted-foreground ml-1">Branch</Label>
+                <Select 
+                  value={isBranchManager ? user?.branchId : branchId} 
+                  onValueChange={setBranchId}
+                  disabled={isBranchManager}
+                >
+                  <SelectTrigger className="w-full md:w-[180px] h-10 bg-background/50">
+                    <div className="flex items-center gap-2">
+                      <Building className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder="Select Branch" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Branches</SelectItem>
+                    {branches.map((b: any) => (
+                      <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {(startDate || endDate || status !== "ALL" || (!isBranchManager && branchId !== "ALL")) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStartDate("");
+                    setEndDate("");
+                    setStatus("ALL");
+                    if (!isBranchManager) setBranchId("ALL");
+                    setPage(1);
+                  }}
+                  className="text-rose-500 hover:text-rose-600 h-10 mb-0.5"
+                >
+                  Clear Filters
+                </Button>
+              )}
             </div>
-
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="SUBMITTED">Pending</SelectItem>
-                <SelectItem value="APPROVED">Verified</SelectItem>
-                <SelectItem value="REJECTED">Disputed</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select 
-              value={isBranchManager ? user?.branchId : branchId} 
-              onValueChange={setBranchId}
-              disabled={isBranchManager}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select Branch" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Branches</SelectItem>
-                {branches.map((b: any) => (
-                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setSearchTerm("");
-                setStartDate("");
-                setEndDate("");
-                setStatus("ALL");
-                if (!isBranchManager) setBranchId("ALL");
-                setPage(1);
-              }}
-              title="Clear Filters"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          </SearchFilterPanel>
 
           <div className="overflow-x-auto">
             <Table>
