@@ -24,7 +24,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGetMeQuery } from "@/services/authApi";
-import logoDonAndDonS from "@/assets/don_and_don,s.png"
+import logoDonAndDonS from "@/assets/logo.dod.png"
 import Image from "next/image";
 
 
