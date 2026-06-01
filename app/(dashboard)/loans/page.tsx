@@ -63,6 +63,7 @@ import { useBranchesQuery } from "@/services/branchApi";
 import { RoleGate } from "@/components/Custom/RoleGate";
 import { useGroupsQuery } from "@/services/groupApi";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
+import { format } from "date-fns";
 
 const DAYS = [
   "Monday",
@@ -82,6 +83,7 @@ export default function LoansPage() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingInfo, setIsExportingInfo] = useState(false);
 
   // Get current user profile for role and branch restriction
   const { data: meData } = useGetMeQuery();
@@ -139,6 +141,30 @@ export default function LoansPage() {
       console.error("Batch Export failed:", error);
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleExportInfo = async () => {
+    try {
+      setIsExportingInfo(true);
+      const blob = await loanService.exportFilteredLoanInfoToExcel({
+        search: searchTerm,
+        status: statusFilter === "All" ? undefined : statusFilter,
+        collectionDay: collectionDayFilter === "All" ? undefined : parseInt(collectionDayFilter),
+        branchId: effectiveBranchFilter === "All" ? undefined : effectiveBranchFilter,
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Batch_GroupLoans_Information.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Batch Export Info failed:", error);
+    } finally {
+      setIsExportingInfo(false);
     }
   };
 
@@ -206,6 +232,15 @@ export default function LoansPage() {
         description="Monitor group-based loans, repayment schedules, and processing status"
       >
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportInfo}
+            disabled={isExportingInfo}
+            className="gap-2 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800 font-bold"
+          >
+            {isExportingInfo ? <Clock className="h-4 w-4 animate-spin" /> : <FileCheck className="h-4 w-4" />}
+            {isExportingInfo ? "Exporting..." : "Export Info"}
+          </Button>
           <Button
             variant="outline"
             onClick={handleExport}
@@ -351,6 +386,9 @@ export default function LoansPage() {
                     Duration
                   </TableHead>
                   <TableHead className="font-bold text-foreground">
+                    Approval Date
+                  </TableHead>
+                  <TableHead className="font-bold text-foreground">
                     Status
                   </TableHead>
                   <TableHead className="text-right font-bold text-foreground">
@@ -362,7 +400,7 @@ export default function LoansPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={10}
                       className="h-32 text-center text-muted-foreground"
                     >
                       Loading loans...
@@ -371,7 +409,7 @@ export default function LoansPage() {
                 ) : data?.loans?.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={7}
+                      colSpan={10}
                       className="h-32 text-center text-muted-foreground"
                     >
                       No loans found.
@@ -461,6 +499,11 @@ export default function LoansPage() {
                           <Calendar className="h-3.5 w-3.5" />
                           {loan.totalWeeks} Weeks
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {loan.approvedAt ? format(new Date(loan.approvedAt), 'dd/MM/yyyy') : '-'}
+                        </span>
                       </TableCell>
                       <TableCell>{getStatusBadge(loan.status)}</TableCell>
                       <TableCell className="text-right">

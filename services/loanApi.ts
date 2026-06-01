@@ -54,8 +54,16 @@ export const loanService = {
     const response = await api.get(`/loans/${id}/export-excel`, { responseType: 'blob' });
     return response.data;
   },
+  exportLoanInfoToExcel: async (id: string) => {
+    const response = await api.get(`/loans/${id}/export-info-excel`, { responseType: 'blob' });
+    return response.data;
+  },
   exportFilteredLoansToExcel: async (params: any = {}) => {
     const response = await api.get("/loans/export-batch-excel", { params, responseType: 'blob' });
+    return response.data;
+  },
+  exportFilteredLoanInfoToExcel: async (params: any = {}) => {
+    const response = await api.get("/loans/export-batch-info-excel", { params, responseType: 'blob' });
     return response.data;
   },
 };

@@ -117,6 +117,7 @@ export default function LoanViewPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isPrinting, setIsPrinting] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [isExportingInfo, setIsExportingInfo] = useState(false);
 
   const handleExportExcel = async () => {
     try {
@@ -134,6 +135,25 @@ export default function LoanViewPage() {
       console.error("Export Excel failed:", error);
     } finally {
       setIsExportingExcel(false);
+    }
+  };
+
+  const handleExportInfo = async () => {
+    try {
+      setIsExportingInfo(true);
+      const blob = await loanService.exportLoanInfoToExcel(id as string);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `GroupLoan_${data?.loan?.loanNo || id}_Information.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Export Info failed:", error);
+    } finally {
+      setIsExportingInfo(false);
     }
   };
 
@@ -508,6 +528,15 @@ export default function LoanViewPage() {
             </Button>
           )}
           </RoleGate>
+          <Button 
+            variant="outline" 
+            className="gap-2 h-11 px-6 font-bold bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800"
+            onClick={handleExportInfo}
+            disabled={isExportingInfo}
+          >
+            {isExportingInfo ? <Clock className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+            {isExportingInfo ? "Exporting..." : "Export Info"}
+          </Button>
           <Button 
             variant="outline" 
             className="gap-2 h-11 px-6 font-bold bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800"
