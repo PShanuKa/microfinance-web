@@ -19,6 +19,7 @@ import {
   FileUp,
   ClipboardList,
   TrendingUp,
+  X,
 } from "lucide-react";
 import {
   Table,
@@ -53,6 +54,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { useCollectionsQuery, useDailyRegistryQuery } from "@/services/collectionApi";
+import { useGetMeQuery } from "@/services/authApi";
+import { useBranchesQuery } from "@/services/branchApi";
 import TablePagination from "@/components/Custom/TablePagination";
 import { format } from "date-fns";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
@@ -61,8 +64,24 @@ export default function CollectionsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
-  
-  const { data, isLoading } = useCollectionsQuery();
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [status, setStatus] = useState("ALL");
+  const [branchId, setBranchId] = useState("ALL");
+
+  const { data: userData } = useGetMeQuery();
+  const user = userData?.user;
+  const isBranchManager = user?.roles?.includes("BRANCH_MANAGER");
+
+  const { data: branchesData } = useBranchesQuery();
+  const branches = branchesData?.branches || [];
+
+  const { data, isLoading } = useCollectionsQuery({
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+    status: status === "ALL" ? undefined : status,
+    branchId: isBranchManager ? user?.branchId : (branchId === "ALL" ? undefined : branchId),
+  });
   const collections = data?.collections || [];
 
   const { data: registryData } = useDailyRegistryQuery();
@@ -75,10 +94,18 @@ export default function CollectionsPage() {
   const outstandingAmount = Math.max(0, todaysExpected - todaysCollected);
   const groupsWithOutstanding = dailyRegistry.filter((g: any) => g.status !== "PAID").length;
 
-  const filteredData = collections.filter((col: any) => 
-    col.groupName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    col.groupNo?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = collections.filter((col: any) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      col.groupName?.toLowerCase().includes(term) ||
+      col.groupNo?.toLowerCase().includes(term) ||
+      col.id?.toLowerCase().includes(term) ||
+      col.leader?.toLowerCase().includes(term) ||
+      col.group?.members?.some((m: any) => m.client?.fullname?.toLowerCase().includes(term)) ||
+      col.group?.members?.some((m: any) => m.client?.clientNo?.toLowerCase().includes(term)) ||
+      col.group?.members?.some((m: any) => m.client?.nic?.toLowerCase().includes(term))
+    );
+  });
 
   const ITEMS_PER_PAGE = 20;
   const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
@@ -192,19 +219,86 @@ export default function CollectionsPage() {
 
       <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
         <CardContent className="p-0">
-          <SearchFilterPanel
-            searchTerm={searchTerm}
-            onSearchChange={(val) => {
-              setSearchTerm(val);
-              setPage(1);
-            }}
-            searchPlaceholder="Search by group or collector..."
-          />
+          <div className="flex flex-col md:flex-row gap-4 mb-4 p-4 items-center border-b bg-muted/10">
+            <Input
+              placeholder="Search by group or collector..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
+              className="md:w-[300px]"
+            />
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">From:</span>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-[140px]"
+              />
+              <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">To:</span>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-[140px]"
+              />
+            </div>
+
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="SUBMITTED">Pending</SelectItem>
+                <SelectItem value="APPROVED">Verified</SelectItem>
+                <SelectItem value="REJECTED">Disputed</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select 
+              value={isBranchManager ? user?.branchId : branchId} 
+              onValueChange={setBranchId}
+              disabled={isBranchManager}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select Branch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Branches</SelectItem>
+                {branches.map((b: any) => (
+                  <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setSearchTerm("");
+                setStartDate("");
+                setEndDate("");
+                setStatus("ALL");
+                if (!isBranchManager) setBranchId("ALL");
+                setPage(1);
+              }}
+              title="Clear Filters"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
 
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30 hover:bg-muted/30 border-b">
+                  <TableHead className="font-bold text-foreground">
+                    Date & ID
+                  </TableHead>
                   <TableHead className="font-bold text-foreground">
                     Group No / Name
                   </TableHead>
@@ -243,13 +337,13 @@ export default function CollectionsPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="h-32 text-center text-muted-foreground font-medium italic">
+                    <TableCell colSpan={12} className="h-32 text-center text-muted-foreground font-medium italic">
                       Loading collections...
                     </TableCell>
                   </TableRow>
                 ) : paginatedData.length === 0 ? (
                    <TableRow>
-                    <TableCell colSpan={11} className="h-32 text-center text-muted-foreground font-medium italic">
+                    <TableCell colSpan={12} className="h-32 text-center text-muted-foreground font-medium italic">
                       No collections found.
                     </TableCell>
                   </TableRow>
@@ -265,6 +359,14 @@ export default function CollectionsPage() {
                         key={col.id}
                         className="hover:bg-primary/5 transition-colors group"
                       >
+                        <TableCell>
+                          <div className="flex flex-col text-sm">
+                            <span className="font-bold whitespace-nowrap">{col.date ? format(new Date(col.date), "dd MMM yyyy") : "N/A"}</span>
+                            <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest" title={col.id}>
+                              ID: {col.id.substring(0, 8)}...
+                            </span>
+                          </div>
+                        </TableCell>
                         <TableCell className="font-bold text-foreground group-hover:text-primary transition-colors">
                           <div className="flex flex-col">
                             <span>{col.groupNo || col.group?.groupNo}</span>
