@@ -185,7 +185,7 @@ function CreateMortgageCollectionForm() {
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
-        title="Record Mortgage Payment"
+        title="Record Property Payment"
         description="Simulate and securely record a payment transaction with live seniority-first allocation."
       >
         <Button variant="outline" onClick={() => router.back()} className="gap-2">
@@ -209,7 +209,7 @@ function CreateMortgageCollectionForm() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-2">
-                <Label>Select Mortgage Loan</Label>
+                <Label>Select Property Loan</Label>
                 <Popover open={openLoanSelect} onOpenChange={setOpenLoanSelect}>
                   <PopoverTrigger
                     aria-expanded={openLoanSelect}
@@ -235,7 +235,7 @@ function CreateMortgageCollectionForm() {
                     <Command>
                       <CommandInput placeholder="Search loan no, client name, or NIC..." />
                       <CommandList>
-                        <CommandEmpty>No mortgage loans found.</CommandEmpty>
+                        <CommandEmpty>No property loans found.</CommandEmpty>
                         <CommandGroup>
                           {activeLoans.map((loan: any) => (
                             <CommandItem
@@ -398,7 +398,7 @@ function CreateMortgageCollectionForm() {
               </div>
             ) : !mortgage ? (
               <div className="p-12 text-center text-muted-foreground italic font-medium">
-                Please select a mortgage loan to load its repayment schedule.
+                Please select a property loan to load its repayment schedule.
               </div>
             ) : mortgage.instalments.length === 0 ? (
               <div className="p-12 text-center text-muted-foreground italic font-medium">

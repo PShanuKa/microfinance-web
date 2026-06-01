@@ -110,7 +110,7 @@ export default function MortgageCollectionsPage() {
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `Mortgage-Collections-${new Date().toISOString().split("T")[0]}.pdf`);
+      link.setAttribute("download", `Property-Collections-${new Date().toISOString().split("T")[0]}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
@@ -124,8 +124,8 @@ export default function MortgageCollectionsPage() {
   return (
     <div className="flex flex-col gap-6 w-full md:px-4 pb-10">
       <PageHeader
-        title="Mortgage Collections"
-        description="Track all mortgage loan repayments, penalties collected, and principal reductions."
+        title="Property Collections"
+        description="Track all property loan repayments, penalties collected, and principal reductions."
       >
         <div className="flex items-center gap-2">
           <Button
@@ -295,7 +295,7 @@ export default function MortgageCollectionsPage() {
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="h-32 text-center text-muted-foreground font-medium italic">
-                      Loading mortgage collections...
+                      Loading property collections...
                     </TableCell>
                   </TableRow>
                 ) : collections.length === 0 ? (

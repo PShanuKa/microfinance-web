@@ -131,7 +131,7 @@ export default function MortgageLoanViewPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Mortgage-${loanDetails?.loanNo || id}.pdf`;
+      a.download = `Property-${loanDetails?.loanNo || id}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -150,7 +150,7 @@ export default function MortgageLoanViewPage() {
           open: true,
           type: "success",
           title: "Action Complete",
-          message: "Mortgage application sent for approval successfully!",
+          message: "Property application sent for approval successfully!",
           onConfirm: () => router.refresh()
         });
       },
@@ -174,8 +174,8 @@ export default function MortgageLoanViewPage() {
     setOpen({
       open: true,
       type: "approve",
-      title: "Approve Mortgage Loan Application",
-      message: "Are you sure you want to approve this mortgage agreement? This will transition the status to APPROVED, authorizing financial release.",
+      title: "Approve Property Loan Application",
+      message: "Are you sure you want to approve this property agreement? This will transition the status to APPROVED, authorizing financial release.",
       onConfirm: () => {
         approveMutation.mutate(id as string, {
           onSuccess: () => {
@@ -183,7 +183,7 @@ export default function MortgageLoanViewPage() {
               open: true,
               type: "success",
               title: "Action Complete",
-              message: "Mortgage application approved successfully!",
+              message: "Property application approved successfully!",
               onConfirm: () => router.refresh()
             });
           },
@@ -196,7 +196,7 @@ export default function MortgageLoanViewPage() {
     setOpen({
       open: true,
       type: "confirmation",
-      title: "Reject Mortgage Loan Application",
+      title: "Reject Property Loan Application",
       message: "Please enter the reason for rejecting this application. This updates the status back to DRAFT so the officer can modify and resubmit.",
       showInput: true,
       onConfirm: (reason) => {
@@ -209,7 +209,7 @@ export default function MortgageLoanViewPage() {
                 open: true,
                 type: "success",
                 title: "Action Complete",
-                message: "Mortgage application has been successfully rejected to Draft status.",
+                message: "Property application has been successfully rejected to Draft status.",
                 onConfirm: () => router.refresh()
               });
             },
@@ -390,7 +390,7 @@ export default function MortgageLoanViewPage() {
   if (isLoanLoading) {
     return (
       <div className="p-10 text-center font-medium animate-pulse">
-        Loading mortgage loan details...
+        Loading property loan details...
       </div>
     );
   }
@@ -398,7 +398,7 @@ export default function MortgageLoanViewPage() {
   if (!loanDetails) {
     return (
       <div className="p-10 text-center font-medium">
-        Mortgage loan not found.
+        Property loan not found.
       </div>
     );
   }
@@ -495,7 +495,7 @@ export default function MortgageLoanViewPage() {
                   isLoading={approveMutation.isPending}
                  
                 >
-                  Approve Mortgage
+                  Approve Property
                 </CommonButton>
                 <CommonButton
                   onClick={openRejectDialog}
@@ -533,9 +533,13 @@ export default function MortgageLoanViewPage() {
               // >
               //   <FileText className="h-4 w-4 text-amber-500" /> Edit Mortgage
               // </Button>
-              <CommonButton variant="outline" leftIcon={<FileText className="h-4 w-4 text-amber-500" />}>
-             Edit Mortgage
-            </CommonButton>
+              <CommonButton 
+                variant="outline" 
+                leftIcon={<FileText className="h-4 w-4 text-amber-500" />}
+                onClick={() => router.push(`/mortgage-loans/${id}/edit`)}
+              >
+                Edit Property
+              </CommonButton>
             )}
           </RoleGate>
 
@@ -564,8 +568,8 @@ export default function MortgageLoanViewPage() {
                   setOpen({
                     open: true,
                     type: "confirmation",
-                    title: "Complete Mortgage Loan",
-                    message: "Are you sure you want to mark this mortgage loan as completed?",
+                    title: "Complete Property Loan",
+                    message: "Are you sure you want to mark this property loan as completed?",
                     onConfirm: () => {
                       completeMutation.mutate(id as string, {
                         onSuccess: () => {
@@ -573,7 +577,7 @@ export default function MortgageLoanViewPage() {
                             open: true,
                             type: "success",
                             title: "Action Complete",
-                            message: "Mortgage Loan successfully marked as completed!",
+                            message: "Property Loan successfully marked as completed!",
                             onConfirm: () => router.refresh()
                           });
                         }
@@ -618,7 +622,7 @@ export default function MortgageLoanViewPage() {
             </div>
             <div className="space-y-1 text-left">
               <h4 className="text-sm font-black uppercase tracking-wider text-rose-800">
-                Mortgage Application Rejected to Draft
+                Property Application Rejected to Draft
               </h4>
               <p className="text-sm font-semibold text-rose-700 leading-relaxed">
                 {loanDetails.rejectionReason}
@@ -697,7 +701,7 @@ export default function MortgageLoanViewPage() {
               Registration
             </CardTitle>
             <CardDescription className="font-medium text-xs">
-              Primary identification details mapped to this mortgage contract
+              Primary identification details mapped to this property contract
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
@@ -1096,7 +1100,7 @@ export default function MortgageLoanViewPage() {
         </div>
       )}
 
-      {/* Mortgage Instalments / Payment Schedule */}
+      {/* Property Instalments / Payment Schedule */}
       {loanDetails.instalments && loanDetails.instalments.length > 0 ? (
         <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md overflow-hidden">
           <CardHeader className="bg-muted/10 border-b">
@@ -1238,7 +1242,7 @@ export default function MortgageLoanViewPage() {
               </h4>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto leading-relaxed">
                 The repayment schedule and first month upfront interest payment
-                will be automatically generated once this mortgage loan is
+                will be automatically generated once this property loan is
                 approved by an authorized manager.
               </p>
             </div>
@@ -1256,7 +1260,7 @@ export default function MortgageLoanViewPage() {
             </CardTitle>
             <CardDescription className="font-medium text-xs">
               History of all payments and principal reductions processed for
-              this mortgage loan.
+              this property loan.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
@@ -1354,7 +1358,7 @@ export default function MortgageLoanViewPage() {
         <DialogContent className="bg-card border max-w-md p-6 shadow-2xl">
           <DialogHeader className="text-left">
             <DialogTitle className="text-lg font-black text-slate-800 flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-primary" /> Record Mortgage
+              <Wallet className="h-5 w-5 text-primary" /> Record Property
               Payment
             </DialogTitle>
             <DialogDescription className="text-xs font-semibold text-slate-500 mt-1 leading-relaxed">

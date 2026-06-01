@@ -222,8 +222,8 @@ export default function MortgageLoansPage() {
   return (
     <div className="flex flex-col gap-3 w-full md:px-4 pb-10">
       <PageHeader
-        title="Mortgage Loans"
-        description="Monitor and manage asset-secured mortgage contracts, collateral documents, and risk valuation"
+        title="Property Loans"
+        description="Monitor and manage asset-secured property contracts, collateral documents, and risk valuation"
       >
         <RoleGate allowedRoles={["LOAN_OFFICER", "MORTGAGE_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
           <Button
@@ -231,7 +231,7 @@ export default function MortgageLoansPage() {
             className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
           >
             <Plus className="h-4 w-4" />
-            New Mortgage Loan
+            New Property Loan
           </Button>
         </RoleGate>
       </PageHeader>
@@ -355,7 +355,7 @@ export default function MortgageLoansPage() {
                     <TableCell colSpan={8} className="h-48 text-center">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <Spinner className="h-6 w-6 text-primary" />
-                        <span className="text-muted-foreground font-medium">Loading mortgage loans...</span>
+                        <span className="text-muted-foreground font-medium">Loading property loans...</span>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -364,7 +364,7 @@ export default function MortgageLoansPage() {
                     <TableCell colSpan={8} className="h-48 text-center">
                       <div className="flex flex-col items-center justify-center gap-1.5 text-muted-foreground">
                         <AlertTriangle className="h-6 w-6 text-amber-500/80" />
-                        <p className="font-bold">No mortgage loans found</p>
+                        <p className="font-bold">No property loans found</p>
                         <p className="text-xs">Try broadening your search criteria or add a new record.</p>
                       </div>
                     </TableCell>
@@ -473,7 +473,7 @@ export default function MortgageLoansPage() {
                             className="w-56 bg-card/95 backdrop-blur-md border border-muted"
                           >
                             <DropdownMenuGroup>
-                              <DropdownMenuLabel>Mortgage Actions</DropdownMenuLabel>
+                              <DropdownMenuLabel>Property Actions</DropdownMenuLabel>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -490,7 +490,7 @@ export default function MortgageLoansPage() {
                                   className="gap-2 cursor-pointer"
                                 >
                                   <FileText className="h-4 w-4 text-amber-500" />
-                                  Edit Mortgage
+                                  Edit Property
                                 </DropdownMenuItem>
                               </RoleGate>
                             )}

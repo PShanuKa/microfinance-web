@@ -115,7 +115,7 @@ const items: MenuGroup[] = [
     ],
   },
   {
-    title: "Mortgage Loans",
+    title: "Property Loans",
     // allowedRoles: ["ADMIN", "BRANCH_MANAGER", "LOAN_OFFICER", "APPROVER" , "AUDITOR"],
     items: [
       {
@@ -132,7 +132,7 @@ const items: MenuGroup[] = [
       },
       {
         icon: Wallet,
-        label: "Mortgage",
+        label: "Property",
         href: "/mortgage-loans",
         allowedRoles: [
           "ADMIN",
@@ -145,7 +145,7 @@ const items: MenuGroup[] = [
       },
       {
         icon: Wallet,
-        label: "Mortgage Collection",
+        label: "Property Collection",
         href: "/mortgage-collection",
         allowedRoles: [
           "ADMIN",
