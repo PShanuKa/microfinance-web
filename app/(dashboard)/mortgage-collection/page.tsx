@@ -137,7 +137,7 @@ export default function MortgageCollectionsPage() {
             <Download className="h-4 w-4" />
             {isExporting ? "Exporting..." : "Download Report"}
           </Button>
-          <RoleGate allowedRoles={["ADMIN", "BRANCH_MANAGER", "MORTGAGE_OFFICER", "MORTGAGE_COLLECTOR"]}>
+          <RoleGate allowedRoles={["ADMIN", "BRANCH_MANAGER", "MORTGAGE_OFFICER", "MORTGAGE_COLLECTION"]}>
             <Button
               onClick={() => router.push("/mortgage-collection/create")}
               className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"

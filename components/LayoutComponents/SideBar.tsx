@@ -140,6 +140,7 @@ const items: MenuGroup[] = [
           "APPROVER",
           "AUDITOR",
           "MORTGAGE_OFFICER",
+          "MORTGAGE_COLLECTION",
         ],
       },
       {

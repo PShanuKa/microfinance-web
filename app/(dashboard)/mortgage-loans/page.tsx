@@ -225,7 +225,7 @@ export default function MortgageLoansPage() {
         title="Mortgage Loans"
         description="Monitor and manage asset-secured mortgage contracts, collateral documents, and risk valuation"
       >
-        <RoleGate allowedRoles={["LOAN_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
+        <RoleGate allowedRoles={["LOAN_OFFICER", "MORTGAGE_OFFICER", "BRANCH_MANAGER", "ADMIN"]}>
           <Button
             onClick={() => router.push("/mortgage-loans/Create")}
             className="gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
@@ -244,7 +244,7 @@ export default function MortgageLoansPage() {
               setSearchTerm(val);
               setPage(1);
             }}
-            searchPlaceholder="Search by ID, Client Name, Client No..."
+            searchPlaceholder="Search by ID, Name, NIC, Mobile..."
           >
             <div className="flex flex-col md:flex-row items-end gap-4 w-full">
               {/* Status Filter */}
@@ -484,13 +484,15 @@ export default function MortgageLoansPage() {
                               View Full Details
                             </DropdownMenuItem>
                             {(loan.status === "DRAFT" || loan.status === "PENDING") && (
-                              <DropdownMenuItem
-                                onClick={() => router.push(`/mortgage-loans/${loan.id}/edit`)}
-                                className="gap-2 cursor-pointer"
-                              >
-                                <FileText className="h-4 w-4 text-amber-500" />
-                                Edit Mortgage
-                              </DropdownMenuItem>
+                              <RoleGate allowedRoles={["ADMIN", "BRANCH_MANAGER", "MORTGAGE_OFFICER", "LOAN_OFFICER"]}>
+                                <DropdownMenuItem
+                                  onClick={() => router.push(`/mortgage-loans/${loan.id}/edit`)}
+                                  className="gap-2 cursor-pointer"
+                                >
+                                  <FileText className="h-4 w-4 text-amber-500" />
+                                  Edit Mortgage
+                                </DropdownMenuItem>
+                              </RoleGate>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>

@@ -82,11 +82,13 @@ import TablePagination from "@/components/Custom/TablePagination";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { RoleGate } from "@/components/Custom/RoleGate";
 import { SearchFilterPanel } from "@/components/Custom/SearchFilterPanel";
+import { useDialogStore } from "@/store/useDialogStore";
 
 export default function ClientsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { setOpen } = useDialogStore();
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -125,10 +127,12 @@ export default function ClientsPage() {
       setDeleteConfirmId(null);
     },
     onError: (error: any) => {
-      alert(
-        error.response?.data?.error ||
-          "Failed to delete client. They might have active loans or group associations.",
-      );
+      setOpen({
+        open: true,
+        type: "error",
+        title: "Deletion Failed",
+        message: error.response?.data?.error || "Failed to delete client. They might have active loans or group associations.",
+      });
       setDeleteConfirmId(null);
     },
   });
