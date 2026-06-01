@@ -574,7 +574,7 @@ export function MortgageLoanForm({
           <Card className="border-none shadow-xl bg-card/60 backdrop-blur-md ">
             <CardHeader className="bg-muted/10 border-b">
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-800">
-                <Coins className="w-5 h-5 text-primary" /> Mortgage Loan Terms
+                <Coins className="w-5 h-5 text-primary" /> Loan Terms
               </CardTitle>
               <CardDescription className="font-semibold text-xs">Set principal lent amount and monthly interest rates</CardDescription>
             </CardHeader>

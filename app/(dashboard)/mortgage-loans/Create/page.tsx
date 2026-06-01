@@ -25,8 +25,8 @@ export default function CreateMortgageLoanPage() {
       
       {/* Dynamic, visually premium breadcrumb page header */}
       <PageHeader
-        title="Create Mortgage Loan"
-        description="Establish a new asset-secured mortgage contract with real-time financial calculations and risk valuation metrics"
+        title="Create Property Loan"
+        description="Establish a new asset-secured loan contract with real-time financial calculations and risk valuation metrics"
       >
         <Button 
           variant="outline" 
