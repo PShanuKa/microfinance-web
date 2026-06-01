@@ -7,6 +7,7 @@ import {
   useCollectionQuery,
   useApproveCollectionMutation,
   useRejectCollectionMutation,
+  collectionService,
 } from "@/services/collectionApi";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,7 @@ export default function CollectionDetailPage() {
   const queryClient = useQueryClient();
 
   const { setOpen } = useDialogStore();
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const { data, isLoading } = useCollectionQuery(collectionId);
   const collection = data?.collection;
@@ -254,6 +256,31 @@ export default function CollectionDetailPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <CommonButton
+            variant="outline"
+            className="font-bold border-slate-200 hover:bg-muted text-slate-800"
+            onClick={async () => {
+              try {
+                setIsPrinting(true);
+                const blob = await collectionService.exportCollectionToPdf(collectionId);
+                const url = window.URL.createObjectURL(new Blob([blob]));
+                const link = document.createElement("a");
+                link.href = url;
+                link.setAttribute("download", `collection-${collectionId}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+              } catch (error) {
+                console.error("Failed to print", error);
+              } finally {
+                setIsPrinting(false);
+              }
+            }}
+            isLoading={isPrinting}
+            leftIcon={<Download className="h-4 w-4 mr-2 text-primary" />}
+          >
+            Print Receipt
+          </CommonButton>
           {collection.loanId && (
             <CommonButton
               variant="outline"

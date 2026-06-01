@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const collectionService = {
+export const collectionService = {
   getDailyRegistry: async (params: { date?: string } = {}) => {
     const response = await api.get("/collections/daily-registry", { params });
     return response.data;
@@ -28,6 +28,10 @@ const collectionService = {
     const id = typeof payload === "string" ? payload : payload.id;
     const body = typeof payload === "string" ? {} : { rejectionReason: payload.rejectionReason };
     const response = await api.post(`/collections/${id}/reject`, body);
+    return response.data;
+  },
+  exportCollectionToPdf: async (id: string) => {
+    const response = await api.get(`/collections/${id}/export/pdf`, { responseType: 'blob' });
     return response.data;
   },
 };
