@@ -50,7 +50,7 @@ export default function CreateCollectionPage() {
   const { data: groupsData } = useGroupsQuery({ limit: 100 });
   const createMutation = useCreateCollectionMutation({
     onSuccess: () => {
-      router.push("/groups");
+      router.back();
     },
     onError: (error: any) => {
       setServerError(error.response?.data?.error || "Failed to process collection");

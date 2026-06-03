@@ -281,16 +281,20 @@ export default function CollectionDetailPage() {
           >
             Print Receipt
           </CommonButton>
-          {collection.loanId && (
-            <CommonButton
-              variant="outline"
-              className="font-bold border-slate-200 hover:bg-muted text-slate-800"
-              onClick={() => router.push(`/loans/${collection.loanId}`)}
-              leftIcon={<Banknote className="h-4 w-4 mr-2 text-primary" />}
-            >
-              View Loan
-            </CommonButton>
-          )}
+          {(() => {
+            const resolvedLoanId = collection.loanId || (collection.items && collection.items.length > 0 ? collection.items[0]?.instalment?.loanId : null);
+            if (!resolvedLoanId) return null;
+            return (
+              <CommonButton
+                variant="outline"
+                className="font-bold border-slate-200 hover:bg-muted text-slate-800"
+                onClick={() => router.push(`/loans/${resolvedLoanId}`)}
+                leftIcon={<Banknote className="h-4 w-4 mr-2 text-primary" />}
+              >
+                View Loan
+              </CommonButton>
+            );
+          })()}
           <CommonButton
             variant="outline"
             className="font-bold border-slate-200 hover:bg-muted text-slate-800"
