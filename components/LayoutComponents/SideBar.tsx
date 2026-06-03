@@ -20,6 +20,7 @@ import {
   History,
   Building,
   FileUser,
+  Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -207,6 +208,12 @@ const items: MenuGroup[] = [
         icon: Cog,
         label: "Settings",
         href: "/settings",
+        allowedRoles: ["ADMIN"],
+      },
+      {
+        icon: Mail,
+        label: "Report Settings",
+        href: "/report-settings",
         allowedRoles: ["ADMIN"],
       },
     ],

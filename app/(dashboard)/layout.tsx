@@ -21,6 +21,7 @@ const ROUTE_PERMISSIONS: { pattern: RegExp; allowedRoles: string[] }[] = [
   { pattern: /^\/audit-logs(\/|$)/, allowedRoles: ["ADMIN" , "AUDITOR"] },
   { pattern: /^\/con-weeks(\/|$)/, allowedRoles: ["ADMIN", "AUDITOR"] },
   { pattern: /^\/settings(\/|$)/, allowedRoles: ["ADMIN"] },
+  { pattern: /^\/report-settings(\/|$)/, allowedRoles: ["ADMIN"] },
   
   // Collections & registries
   { pattern: /^\/collections(\/|$)/, allowedRoles: ["ADMIN", "BRANCH_MANAGER", "AUDITOR" , "APPROVER"] },
