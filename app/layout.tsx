@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Don And Don's | Microfinance",
   description: "Don And Don's Microfinance Web Application",
+  keywords: ["microfinance", "loans", "financial services", "Don And Don's"],
 };
 
 export default function RootLayout({
